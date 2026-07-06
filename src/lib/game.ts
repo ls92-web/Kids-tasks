@@ -351,6 +351,24 @@ export function companionLevel(xp: number): number {
   return level;
 }
 
+/* Level + progress-within-level for a companion (for the Hall detail card). */
+export function companionProgress(xp: number): {
+  level: number;
+  into: number;
+  needed: number;
+  pct: number;
+} {
+  let level = 1;
+  let remaining = xp;
+  while (level < 100 && remaining >= xpForNext(level)) {
+    remaining -= xpForNext(level);
+    level += 1;
+  }
+  if (level >= 100) return { level: 100, into: 0, needed: 0, pct: 100 };
+  const needed = xpForNext(level);
+  return { level, into: remaining, needed, pct: Math.min(100, (remaining / needed) * 100) };
+}
+
 /* How a locked companion joins the roster. Starters are free at first pick;
    the rest unlock through meaningful progression. Display/pick gating here —
    the same rules are ENFORCED server-side in bond_companion() (and starters

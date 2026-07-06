@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { CompanionPortrait } from "@/components/CompanionPortrait";
@@ -23,8 +23,10 @@ import {
   petFormProgress,
   petElement,
   companionLevel,
+  companionProgress,
   LEGEND_XP,
   COMPANION_UNLOCKS,
+  UnlockRule,
   speciesUnlocked,
   unlockHint,
   CompanionBond,
@@ -44,6 +46,7 @@ export default function HeroHub() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [family, setFamily] = useState<Profile[]>([]);
   const [bonds, setBonds] = useState<CompanionBond[]>([]);
+  const [hallPick, setHallPick] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -171,14 +174,17 @@ export default function HeroHub() {
         </div>
       </motion.div>
 
-      {/* hero hall — the lifelong companion collection */}
+      {/* hero hall — the permanent companion collection */}
       <section>
         <div className="mb-3 flex items-center gap-2">
           <Icon name="sparkle" size={18} className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">Hero Hall</h2>
+          <span className="text-display text-xs font-bold text-[var(--gold)]">
+            {bonds.filter((b) => b.status === "legend").length} Legend
+            {bonds.filter((b) => b.status === "legend").length === 1 ? "" : "s"}
+          </span>
           <span className="text-display text-xs font-bold text-[var(--text-dim)]">
-            {bonds.filter((b) => b.status === "legend").length} legends —{" "}
-            {bonds.length}/{PETS.length} met
+            • {bonds.length}/{PETS.length} unlocked
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
         </div>
@@ -190,15 +196,19 @@ export default function HeroHub() {
             const awake = speciesUnlocked(p.id, profile, done);
             const el = ELEMENTS[p.element];
             return (
-              <motion.div
+              <motion.button
                 key={p.id}
+                type="button"
+                onClick={() => setHallPick(p.id)}
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.03 }}
-                className="panel relative flex flex-col items-center p-3 text-center"
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.96 }}
+                className="panel relative flex cursor-pointer flex-col items-center p-3 text-center"
                 style={
                   isLegend
-                    ? { boxShadow: "0 0 0 1.5px #ffb45e66, 0 0 22px -8px #ffb45e" }
+                    ? { boxShadow: "0 0 0 2px #ffb45e88, 0 0 22px -6px #ffb45e" }
                     : isActive
                       ? { boxShadow: `0 0 0 1.5px ${el.color}55, 0 0 20px -8px ${el.color}` }
                       : {}
@@ -214,7 +224,7 @@ export default function HeroHub() {
                     Partner
                   </span>
                 )}
-                <div className={bond ? "" : "opacity-35 grayscale"}>
+                <div className={bond ? "" : awake ? "opacity-80" : "opacity-35 grayscale"}>
                   <Companion
                     species={p.id}
                     level={bond ? companionLevel(bond.xp) : 1}
@@ -223,7 +233,7 @@ export default function HeroHub() {
                   />
                 </div>
                 <p className={`text-display mt-1 text-xs font-black ${bond ? "" : "text-[var(--text-dim)]"}`}>
-                  {bond ? p.name : awake ? p.name : "???"}
+                  {bond || awake ? p.name : "???"}
                 </p>
                 <p className="text-[9px] font-bold leading-tight text-[var(--text-dim)]">
                   {isLegend
@@ -234,10 +244,24 @@ export default function HeroHub() {
                         ? "Awake — waiting for you"
                         : unlockHint(COMPANION_UNLOCKS[p.id])}
                 </p>
-              </motion.div>
+              </motion.button>
             );
           })}
         </div>
+
+        {/* tap a companion → their story so far */}
+        <AnimatePresence>
+          {hallPick && (
+            <HallDetail
+              species={hallPick}
+              profile={profile}
+              bonds={bonds}
+              tasks={tasks}
+              worldsDone={done}
+              onClose={() => setHallPick(null)}
+            />
+          )}
+        </AnimatePresence>
       </section>
 
       {/* worlds journey */}
@@ -390,5 +414,209 @@ function MiniStat({ label, value }: { label: string; value: string | number }) {
       <div className="text-display text-xl font-black text-[var(--accent-2)]">{value}</div>
       <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">{label}</div>
     </div>
+  );
+}
+
+/* Where this companion comes from — shown in the Hall detail card. */
+function originText(rule: UnlockRule): string {
+  switch (rule.kind) {
+    case "starter":
+      return "A starter companion — with you from the very first day";
+    case "world":
+      return `Unlocked by completing ${WORLD_MAPS[rule.world].name}`;
+    case "heroLevel":
+      return `Awakens when you reach hero level ${rule.level}`;
+    case "quests":
+      return `Awakens after ${rule.count} completed quests`;
+    case "coins":
+      return `Awakens after earning ${rule.total} coins in total`;
+  }
+}
+
+/* Tap a Hall card → the companion's story: who they are, how far you've
+   travelled together, and how the next one joins. Never a swap button —
+   partners only change through the Legend Ceremony. */
+function HallDetail({
+  species,
+  profile,
+  bonds,
+  tasks,
+  worldsDone,
+  onClose,
+}: {
+  species: string;
+  profile: Profile;
+  bonds: CompanionBond[];
+  tasks: Task[];
+  worldsDone: number;
+  onClose: () => void;
+}) {
+  const meta = PETS.find((p) => p.id === species) ?? PETS[0];
+  const el = ELEMENTS[meta.element];
+  const bond = bonds.find((b) => b.species === species);
+  const activeBond = bonds.find((b) => b.status === "active");
+  const awake = speciesUnlocked(species, profile, worldsDone);
+
+  const status = bond
+    ? bond.status === "active"
+      ? "Active"
+      : "Legendary"
+    : awake
+      ? "Available"
+      : "Locked";
+  const statusColor =
+    status === "Active"
+      ? el.color
+      : status === "Legendary"
+        ? "var(--gold)"
+        : status === "Available"
+          ? "var(--success)"
+          : "var(--text-dim)";
+
+  const prog = bond ? companionProgress(bond.xp) : null;
+  const form = bond ? petForm(prog!.level) : null;
+
+  // quests conquered together = quests approved while this bond was active
+  const questsTogether = bond
+    ? tasks.filter(
+        (t) =>
+          t.status === "completed" &&
+          t.completed_at &&
+          t.completed_at >= bond.bonded_at &&
+          (bond.legend_at ? t.completed_at <= bond.legend_at : true)
+      ).length
+    : 0;
+
+  const activeMeta = activeBond ? PETS.find((p) => p.id === activeBond.species) : null;
+  const activeIsLegendReady = !!activeBond && activeBond.xp >= LEGEND_XP;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94 }}
+        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        className="panel panel-glow relative w-full max-w-sm p-6 text-center"
+        onClick={(e) => e.stopPropagation()}
+        style={
+          status === "Legendary"
+            ? { boxShadow: "0 0 0 2px #ffb45e88, 0 0 34px -8px #ffb45e" }
+            : undefined
+        }
+      >
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-black/30 text-[var(--text-dim)] hover:text-white"
+          aria-label="Close"
+        >
+          <Icon name="x" size={15} />
+        </button>
+
+        <div className={`mx-auto w-fit ${bond || awake ? "" : "opacity-40 grayscale"}`}>
+          <Companion
+            species={species}
+            level={prog?.level ?? 1}
+            size={120}
+            float={status === "Active"}
+          />
+        </div>
+
+        <h3 className="text-display mt-2 text-2xl font-black">
+          {bond || awake ? meta.name : "???"}
+        </h3>
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5">
+          <span
+            className="text-display rounded-md bg-black/35 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider"
+            style={{ color: statusColor }}
+          >
+            {status}
+          </span>
+          {(bond || awake) && (
+            <>
+              <span
+                className="text-display rounded-md bg-black/35 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: el.color }}
+              >
+                {el.label}
+              </span>
+              <span className="text-display rounded-md bg-black/35 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--accent-2)]">
+                {meta.personality}
+              </span>
+            </>
+          )}
+        </div>
+
+        {(bond || awake) && (
+          <p className="mt-2 text-xs leading-relaxed text-[var(--text-dim)]">{meta.blurb}</p>
+        )}
+
+        {/* the journey together */}
+        {bond && prog && form && (
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-black/25 p-4 text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-display text-sm font-black">
+                Level {prog.level}{" "}
+                <span className="text-xs font-bold text-[var(--accent-2)]">— {form.name} Form</span>
+              </span>
+              <span className="text-display text-[10px] font-bold text-[var(--text-dim)]">
+                {prog.level >= 100 ? "Fully evolved" : `${prog.into}/${prog.needed} XP`}
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-black/40">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${prog.pct}%`,
+                  background: `linear-gradient(90deg, var(--accent-deep), ${el.color})`,
+                  boxShadow: `0 0 8px ${el.color}`,
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-dim)]">
+              <Icon name="trophy" size={13} className="text-[var(--gold)]" />
+              {questsTogether} quest{questsTogether === 1 ? "" : "s"} conquered together
+            </div>
+          </div>
+        )}
+
+        {/* origin + what happens next */}
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
+          <Icon name="map" size={12} className="shrink-0 text-[var(--accent-2)]" />
+          {originText(COMPANION_UNLOCKS[species])}
+        </p>
+
+        {status === "Available" && activeBond && activeMeta && (
+          <p className="mt-2 rounded-xl bg-black/25 px-3 py-2 text-[11px] font-bold text-[var(--text-dim)]">
+            {activeIsLegendReady ? (
+              <>Ready to join you — choose them at the Legend Ceremony!</>
+            ) : (
+              <>
+                {meta.name} will wait for you. A new bond begins when{" "}
+                <span style={{ color: "var(--gold)" }}>{activeMeta.name}</span> becomes Legendary
+                at level 100.
+              </>
+            )}
+          </p>
+        )}
+        {status === "Locked" && (
+          <p className="mt-2 rounded-xl bg-black/25 px-3 py-2 text-[11px] font-bold text-[var(--text-dim)]">
+            A mysterious companion still sleeps... {unlockHint(COMPANION_UNLOCKS[species])}.
+          </p>
+        )}
+        {status === "Legendary" && bond?.legend_at && (
+          <p className="mt-2 text-[11px] font-bold text-[var(--gold)]">
+            Became a Legend on {new Date(bond.legend_at).toLocaleDateString()} — forever in your
+            Hall.
+          </p>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
