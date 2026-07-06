@@ -64,16 +64,20 @@ const SPECS: WorldSpec[] = [
     theme: "ninja",
     map: "/worlds/shadow-ninja-village/map.png",
     accent: "#6ea8ff",
-    // winding stone path: bottom-left cluster → bridge → castle top-right
+    // winding stone path: bottom-left cluster → across the bridge → then
+    // switchbacks up the hillside to the great pagoda at the top
     anchors: [
       { x: 34, y: 74 },
-      { x: 27, y: 63 },
-      { x: 39, y: 56 },
-      { x: 50, y: 53 },
-      { x: 58, y: 47 },
-      { x: 65, y: 42 },
-      { x: 70, y: 33 },
-      { x: 72, y: 24 },
+      { x: 28, y: 63 },
+      { x: 33, y: 57 },
+      { x: 44, y: 52 },
+      { x: 60, y: 47 },
+      { x: 47, y: 40 },
+      { x: 64, y: 36 },
+      { x: 49, y: 29 },
+      { x: 63, y: 26 },
+      { x: 54, y: 20 },
+      { x: 60, y: 16 },
     ],
     stops: [
       "Bamboo Gate",
@@ -89,7 +93,7 @@ const SPECS: WorldSpec[] = [
       icon: "sword",
       blurb: "Face the village elders at the Shadow Citadel and prove your focus.",
     },
-    reward: { companion: "ninja", blurb: "Kage the Tiny Ninja awakens" },
+    reward: { companion: "fox", blurb: "Frost the Crystal Fox awakens" },
   },
   {
     id: "legend-samurai",
@@ -97,16 +101,20 @@ const SPECS: WorldSpec[] = [
     theme: "samurai",
     map: "/worlds/legend-samurai/map.png",
     accent: "#f4b740",
-    // golden path: bottom-centre → red bridges → castle top-right
+    // golden road: village gate → wooden bridge → winding climb with a left
+    // bulge → small zigzag → the castle entrance
     anchors: [
-      { x: 49, y: 82 },
-      { x: 49, y: 70 },
-      { x: 53, y: 60 },
-      { x: 56, y: 50 },
-      { x: 57, y: 42 },
-      { x: 56, y: 34 },
-      { x: 61, y: 27 },
-      { x: 66, y: 19 },
+      { x: 43, y: 79 },
+      { x: 47, y: 70 },
+      { x: 49, y: 62 },
+      { x: 48, y: 54 },
+      { x: 45, y: 49 },
+      { x: 45, y: 44 },
+      { x: 49, y: 38 },
+      { x: 52, y: 33 },
+      { x: 57, y: 29 },
+      { x: 55, y: 26 },
+      { x: 63, y: 23 },
     ],
     stops: [
       "Village Gate",
@@ -130,16 +138,24 @@ const SPECS: WorldSpec[] = [
     theme: "speed",
     map: "/worlds/speed-realm/map.png",
     accent: "#22d3ee",
-    // neon racetrack: bottom-centre → loop → trophy tower top-centre
+    // neon racetrack: launch pad → right sweep → left sweep across the sky
+    // bridge → final switchback up into the trophy tower
     anchors: [
-      { x: 50, y: 88 },
-      { x: 55, y: 77 },
-      { x: 64, y: 67 },
-      { x: 68, y: 56 },
-      { x: 58, y: 48 },
-      { x: 49, y: 42 },
-      { x: 49, y: 32 },
-      { x: 53, y: 20 },
+      { x: 48, y: 85 },
+      { x: 48, y: 77 },
+      { x: 51, y: 70 },
+      { x: 56, y: 63 },
+      { x: 62, y: 57 },
+      { x: 65, y: 51 },
+      { x: 60, y: 45 },
+      { x: 52, y: 42 },
+      { x: 44, y: 40 },
+      { x: 41, y: 35 },
+      { x: 46, y: 30 },
+      { x: 54, y: 27 },
+      { x: 60, y: 29 },
+      { x: 56, y: 23 },
+      { x: 53, y: 19 },
     ],
     stops: [
       "Launch Pad",

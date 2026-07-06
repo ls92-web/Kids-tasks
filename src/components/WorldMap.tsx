@@ -1,48 +1,120 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Icon } from "./Icon";
-import { CompanionPortrait } from "./CompanionPortrait";
-import { ThemeId } from "@/lib/game";
+import { Companion } from "./Companion";
+import { useWorld } from "./ThemeProvider";
+import { sfx } from "@/lib/sound";
+import { ThemeId, companionLevel } from "@/lib/game";
+import { companionLine } from "@/lib/companion";
 import { WORLD_MAPS, nodeStates, MapNode, NodeState } from "@/lib/worlds";
 
-/* The chapter map: 36 steps painted onto the world for the child's theme.
-   Every completed quest lights one more step along the path. Small dots are
-   ordinary steps, named landmarks are medallions, and step 36 is the chapter's
-   final challenge — a boss-style trial that closes the chapter. The child's
-   companion is perched wherever they stand right now. */
+/* The chapter map — the emotional center of the child's world.
+
+   36 steps painted onto the world: quiet dots for ordinary steps, named
+   landmark medallions, and the gold chapter finale at step 36. The child's
+   companion stands wherever they are right now.
+
+   THE ADVANCE SEQUENCE: the map remembers how many steps it showed last time
+   (localStorage, per child). When quests were approved since then, it replays
+   the difference — each new node lights up in turn, the glowing path extends,
+   and the companion hops forward to the new current node. Progress isn't a
+   number changing; it's a journey the child watches happen. */
+
+const seenKey = (childId: string) => `qf_map_seen_${childId}`;
 
 export function WorldMap({
   theme,
   tasksCompleted,
   species,
+  holdAnimation = false,
   className = "",
 }: {
   theme: ThemeId;
   tasksCompleted: number;
   species?: string;
+  /** Keep the pre-approval state on screen (e.g. while a celebration overlay
+      is up); the advance sequence starts once this flips false. */
+  holdAnimation?: boolean;
   className?: string;
 }) {
+  const { profile, companion: bond } = useWorld();
   const world = WORLD_MAPS[theme];
-  const states = nodeStates(world.levels, tasksCompleted);
+
+  // What the map currently DISPLAYS — trails tasksCompleted during the sequence.
+  const [displayed, setDisplayed] = useState<number>(() => {
+    if (typeof window === "undefined" || !profile) return tasksCompleted;
+    const stored = parseInt(localStorage.getItem(seenKey(profile.id)) ?? "", 10);
+    if (Number.isNaN(stored)) return tasksCompleted;
+    return Math.min(Math.max(stored, 0), tasksCompleted);
+  });
+  const [advancing, setAdvancing] = useState(false);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // a tiny reaction when the journey moves forward
+  const [bubble, setBubble] = useState<string | null>(null);
+  const wasAdvancing = useRef(false);
+  useEffect(() => {
+    const justFinished = wasAdvancing.current && !advancing;
+    wasAdvancing.current = advancing;
+    if (justFinished) {
+      setBubble(companionLine("nodeUnlocked"));
+      const t = setTimeout(() => setBubble(null), 4500);
+      return () => clearTimeout(t);
+    }
+  }, [advancing]);
+
+  // Play the advance: one step at a time, a heartbeat apart.
+  useEffect(() => {
+    if (!profile || holdAnimation) return;
+    if (displayed >= tasksCompleted) {
+      localStorage.setItem(seenKey(profile.id), String(tasksCompleted));
+      return;
+    }
+    setAdvancing(true);
+    // one heartbeat per step, but cap the whole journey at ~4s for big gaps
+    const gap = tasksCompleted - displayed;
+    const stepMs = Math.max(300, Math.min(700, Math.round(4000 / gap)));
+    const start = setTimeout(() => {
+      timer.current = setInterval(() => {
+        setDisplayed((d) => {
+          const next = Math.min(d + 1, tasksCompleted);
+          if (next >= tasksCompleted) {
+            if (timer.current) clearInterval(timer.current);
+            localStorage.setItem(seenKey(profile.id), String(tasksCompleted));
+            sfx.complete();
+            setTimeout(() => setAdvancing(false), 800);
+          } else {
+            sfx.coin();
+          }
+          return next;
+        });
+      }, stepMs);
+    }, 900); // let the screen settle before the journey moves
+    return () => {
+      clearTimeout(start);
+      if (timer.current) clearInterval(timer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdAnimation, tasksCompleted, profile?.id]);
+
+  const states = nodeStates(world.levels, displayed);
   const currentIdx = states.indexOf("current");
   const completed = states.filter((s) => s === "completed").length;
+  const currentNode =
+    currentIdx >= 0 ? world.levels[currentIdx] : world.levels[world.levels.length - 1];
 
-  // Which node's label to float — defaults to where the hero is now.
-  const [selected, setSelected] = useState<number>(currentIdx >= 0 ? currentIdx : 0);
+  // Which node's label to float — follows the hero unless the child taps around.
+  const [selected, setSelected] = useState<number | null>(null);
+  const labelIdx = selected ?? (currentIdx >= 0 ? currentIdx : world.levels.length - 1);
 
-  // Dotted connector tracing the step order, so progression reads even where
-  // the painted path dips behind scenery.
   const linePath = world.levels
     .map((n, i) => `${i === 0 ? "M" : "L"} ${n.x} ${n.y}`)
     .join(" ");
-  const doneCount = Math.max(1, completed);
-  const donePath = world.levels
-    .slice(0, doneCount)
-    .map((n, i) => `${i === 0 ? "M" : "L"} ${n.x} ${n.y}`)
-    .join(" ");
+  const doneNodes = world.levels.slice(0, Math.max(1, completed));
+  const donePath = doneNodes.map((n, i) => `${i === 0 ? "M" : "L"} ${n.x} ${n.y}`).join(" ");
 
   return (
     <div
@@ -60,7 +132,7 @@ export function WorldMap({
       {/* soft vignette so nodes + labels stay legible over bright artwork */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_40%,transparent_55%,rgba(0,0,0,0.35))]" />
 
-      {/* connector path */}
+      {/* connector path — the glowing stretch extends as steps are cleared */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
@@ -83,7 +155,7 @@ export function WorldMap({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {doneCount > 1 && (
+        {completed > 1 && (
           <motion.path
             d={donePath}
             fill="none"
@@ -93,7 +165,7 @@ export function WorldMap({
             strokeLinejoin="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 1.4, ease: "easeInOut" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
             style={{ filter: `drop-shadow(0 0 1.5px ${world.accent})` }}
           />
         )}
@@ -108,13 +180,55 @@ export function WorldMap({
           state={states[i]}
           accent={world.accent}
           finaleIcon={world.finale.icon}
-          selected={selected === i}
-          onSelect={() => setSelected(i)}
-          species={states[i] === "current" ? species : undefined}
+          selected={labelIdx === i}
+          justLit={advancing && node.requires === displayed}
+          onSelect={() => setSelected(selected === i ? null : i)}
         />
       ))}
 
-      {/* progress chip */}
+      {/* the companion itself — full-body, form-aware art — walking the path.
+          When it evolves, the change is visible right here on the map. */}
+      {species && currentIdx >= 0 && (
+        <motion.div
+          className="pointer-events-none absolute z-40"
+          initial={false}
+          animate={{ left: `${currentNode.x}%`, top: `${currentNode.y}%` }}
+          transition={{ type: "spring", stiffness: 160, damping: 17 }}
+        >
+          {/* static wrapper owns centering — motion owns position + hop */}
+          <div className="-translate-x-1/2 -translate-y-[88%]">
+            {/* tiny reaction bubble when the path grows */}
+            {bubble && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className="absolute bottom-full left-1/2 mb-1 w-max max-w-[150px] -translate-x-1/2 rounded-xl bg-black/75 px-2.5 py-1.5 text-center backdrop-blur-sm"
+                style={{ borderBottomLeftRadius: 4 }}
+              >
+                <span className="text-display text-[10px] font-bold leading-tight text-white">
+                  {bubble}
+                </span>
+              </motion.div>
+            )}
+            <motion.div
+              key={currentIdx} // small hop each time the hero arrives somewhere new
+              initial={{ y: 0, scale: 1 }}
+              animate={{ y: [0, -12, 0], scale: [1, 1.1, 1] }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              style={{ filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.55))" }}
+            >
+              <Companion
+                species={species}
+                level={bond ? companionLevel(bond.xp) : 1}
+                size={58}
+                float={false}
+              />
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* progress chip — always pointing at the finale */}
       <div className="absolute bottom-2 left-2 z-20 rounded-lg bg-black/55 px-2.5 py-1 backdrop-blur-sm">
         <span className="text-display text-[10px] font-black text-white">
           {completed >= world.levels.length
@@ -133,8 +247,8 @@ function Node({
   accent,
   finaleIcon,
   selected,
+  justLit,
   onSelect,
-  species,
 }: {
   node: MapNode;
   index: number;
@@ -142,13 +256,12 @@ function Node({
   accent: string;
   finaleIcon: string;
   selected: boolean;
+  justLit: boolean;
   onSelect: () => void;
-  species?: string;
 }) {
   const isCurrent = state === "current";
   const isFinal = node.kind === "final";
   const isLandmark = node.kind === "landmark";
-  // ordinary steps are quiet dots; landmarks are medallions; the finale is big
   const size = isFinal ? 34 : isLandmark || isCurrent ? 24 : 11;
   const gold = "#ffd76a";
   const ring = isFinal ? gold : accent;
@@ -158,19 +271,16 @@ function Node({
       className="absolute -translate-x-1/2 -translate-y-1/2"
       style={{ left: `${node.x}%`, top: `${node.y}%`, zIndex: selected || isCurrent ? 30 : isFinal ? 20 : 10 }}
     >
-      {/* hero token perched above the current node */}
-      {species && isCurrent && (
-        <div className="absolute -top-1 left-1/2 z-30 -translate-x-1/2 -translate-y-full animate-floaty">
-          <CompanionPortrait species={species} size={34} />
-        </div>
-      )}
-
       <motion.button
         type="button"
         onClick={onSelect}
         initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1 + index * 0.02, type: "spring", stiffness: 260, damping: 16 }}
+        animate={justLit ? { scale: [1, 1.7, 1] } : { scale: 1 }}
+        transition={
+          justLit
+            ? { duration: 0.5, ease: "easeOut" }
+            : { delay: 0.1 + index * 0.02, type: "spring", stiffness: 260, damping: 16 }
+        }
         whileTap={{ scale: 0.9 }}
         className="relative grid cursor-pointer place-items-center rounded-full"
         style={{
@@ -183,15 +293,17 @@ function Node({
                 ? `radial-gradient(circle at 35% 30%, ${gold}, #b8860b)`
                 : `radial-gradient(circle at 35% 30%, ${accent}, ${accent}66)`,
           border: `2px solid ${state === "locked" ? (isFinal ? `${gold}88` : "rgba(255,255,255,0.28)") : ring}`,
-          boxShadow: isCurrent
-            ? `0 0 18px ${accent}`
-            : isFinal
-              ? state === "completed"
-                ? `0 0 20px ${gold}`
-                : `0 0 12px ${gold}66`
-              : state === "completed"
-                ? `0 0 8px ${accent}88`
-                : "0 2px 6px rgba(0,0,0,0.5)",
+          boxShadow: justLit
+            ? `0 0 26px ${accent}`
+            : isCurrent
+              ? `0 0 18px ${accent}`
+              : isFinal
+                ? state === "completed"
+                  ? `0 0 20px ${gold}`
+                  : `0 0 12px ${gold}66`
+                : state === "completed"
+                  ? `0 0 8px ${accent}88`
+                  : "0 2px 6px rgba(0,0,0,0.5)",
         }}
         aria-label={`${node.name} — ${state}`}
       >
@@ -217,7 +329,6 @@ function Node({
             {state === "locked" && <Icon name="lock" size={11} className="relative text-white/60" />}
           </>
         ) : (
-          // ordinary steps: a quiet dot, filled once cleared
           <span
             className="relative block rounded-full"
             style={{
@@ -229,7 +340,7 @@ function Node({
         )}
       </motion.button>
 
-      {/* floating label for the selected node */}
+      {/* floating label for the highlighted node */}
       {selected && (
         <motion.div
           initial={{ opacity: 0, y: 4 }}

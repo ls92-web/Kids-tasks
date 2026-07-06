@@ -20,7 +20,7 @@ const json = (body: unknown, status = 200) =>
 
 // A hero's FIRST companion must be a starter — everything else is earned
 // through progression (enforced again in the bond_companion RPC).
-const STARTERS = ["dragon", "fox", "turtle"];
+const STARTERS = ["dragon", "ninja", "turtle"];
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

@@ -8,12 +8,18 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
 import { Companion } from "@/components/Companion";
+import { CompanionPortrait } from "@/components/CompanionPortrait";
 import { Icon } from "@/components/Icon";
-import { PETS, ELEMENTS, COMPANION_UNLOCKS, unlockHint } from "@/lib/game";
+import { sfx } from "@/lib/sound";
+import { PETS, ELEMENTS, COMPANION_UNLOCKS } from "@/lib/game";
 
 /* A hero joins the family adventure with the Family Code their parent shares.
    Three tiny steps, then straight into the world:
-     code → hero name + PIN → choose your first companion */
+     code → hero name + PIN → meet the three starters and bond with ONE.
+
+   The companion choice is the emotional heart of onboarding — a lifelong
+   partner, not a settings picker. Only the starters appear here; the other
+   nine sleep in the Hero Hall until they're earned. */
 
 type Step = "code" | "identity" | "companion";
 
@@ -31,11 +37,14 @@ function JoinInner() {
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [species, setSpecies] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const starters = PETS.filter((p) => COMPANION_UNLOCKS[p.id]?.kind === "starter");
-  const locked = PETS.filter((p) => COMPANION_UNLOCKS[p.id]?.kind !== "starter");
+  const STARTER_ORDER = ["dragon", "ninja", "turtle"];
+  const starters = PETS.filter((p) => COMPANION_UNLOCKS[p.id]?.kind === "starter").sort(
+    (a, b) => STARTER_ORDER.indexOf(a.id) - STARTER_ORDER.indexOf(b.id)
+  );
 
   async function join() {
     if (!species) return;
@@ -182,67 +191,130 @@ function JoinInner() {
               </motion.form>
             )}
 
-            {step === "companion" && (
+            {step === "companion" && !confirming && (
               <motion.div
                 key="companion"
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3"
               >
                 <p className="text-center text-sm text-[var(--text-dim)]">
-                  Choose your <b className="text-[var(--accent-2)]">first companion</b> — your
-                  partner for the whole adventure
+                  Three companions have come to meet you.
+                  <br />
+                  <b className="text-[var(--accent-2)]">One</b> will share your whole adventure.
                 </p>
-                <div className="grid grid-cols-3 gap-3">
-                  {starters.map((p) => {
-                    const chosen = species === p.id;
-                    const el = ELEMENTS[p.element];
-                    return (
-                      <motion.button
-                        key={p.id}
-                        whileHover={{ y: -4 }}
-                        whileTap={{ scale: 0.94 }}
-                        onClick={() => setSpecies(p.id)}
-                        className={`flex cursor-pointer flex-col items-center rounded-2xl bg-black/25 p-3 transition-shadow ${
-                          chosen ? "ring-2 ring-[var(--accent)]" : ""
-                        }`}
-                        style={chosen ? { boxShadow: `0 0 24px -6px ${el.color}` } : {}}
-                      >
-                        <Companion species={p.id} level={1} size={84} float={chosen} />
-                        <span className="text-display mt-1 text-sm font-black">{p.name}</span>
-                        <span className="text-[10px] font-bold" style={{ color: el.color }}>
-                          {el.label}
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                {starters.map((p, i) => {
+                  const el = ELEMENTS[p.element];
+                  return (
+                    <motion.button
+                      key={p.id}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + i * 0.12 }}
+                      whileHover={{ y: -3, scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        sfx.click();
+                        setSpecies(p.id);
+                        setConfirming(true);
+                      }}
+                      className="flex cursor-pointer items-center gap-4 rounded-2xl bg-black/25 p-4 text-left transition-shadow hover:ring-2 hover:ring-[var(--accent)]"
+                      style={{ boxShadow: `0 0 22px -12px ${el.color}` }}
+                    >
+                      <div className="shrink-0">
+                        <Companion species={p.id} level={1} size={86} float={false} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-display text-lg font-black">{p.name}</span>
+                          <span
+                            className="text-display rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
+                            style={{ color: el.color, background: "rgba(0,0,0,0.35)" }}
+                          >
+                            {el.label}
+                          </span>
+                          <span className="text-display rounded-md bg-black/35 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[var(--accent-2)]">
+                            {p.personality}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-[var(--text-dim)]">{p.species}</p>
+                        <p className="mt-1 text-xs leading-snug text-[var(--text)]">{p.blurb}</p>
+                      </div>
+                      <Icon name="arrowRight" size={16} className="shrink-0 text-[var(--text-dim)]" />
+                    </motion.button>
+                  );
+                })}
+                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
+              </motion.div>
+            )}
 
-                {/* the rest of the roster sleeps, waiting to be earned */}
-                <div className="rounded-xl bg-black/20 p-3">
-                  <p className="text-display mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
-                    More companions await on your journey
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {locked.map((p) => (
-                      <div
-                        key={p.id}
-                        className="grid h-11 w-11 place-items-center rounded-full bg-black/40"
-                        title={unlockHint(COMPANION_UNLOCKS[p.id])}
-                      >
-                        <div className="opacity-30 grayscale">
-                          <Companion species={p.id} level={1} size={36} float={false} />
+            {step === "companion" && confirming && species && (
+              <motion.div
+                key="confirm"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center gap-3 text-center"
+              >
+                {(() => {
+                  const p = PETS.find((x) => x.id === species)!;
+                  const el = ELEMENTS[p.element];
+                  return (
+                    <>
+                      {/* the chosen one, front and center */}
+                      <div className="relative">
+                        <div
+                          className="fx-light absolute inset-[-20%] animate-pulse-glow rounded-full"
+                          style={{ background: `radial-gradient(circle, ${el.color}44, transparent 70%)` }}
+                        />
+                        <div className="relative animate-floaty">
+                          <Companion species={p.id} level={1} size={150} float={false} />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="flex items-center gap-3">
+                        <CompanionPortrait species={p.id} size={44} />
+                        <div className="text-left">
+                          <p className="text-display text-xl font-black leading-tight">{p.name}</p>
+                          <p className="text-xs text-[var(--text-dim)]">
+                            {p.species} —{" "}
+                            <span className="font-bold" style={{ color: el.color }}>
+                              {el.label}
+                            </span>{" "}
+                            — {p.personality}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="max-w-xs text-sm leading-relaxed text-[var(--text)]">{p.blurb}</p>
 
-                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
-                <GameButton onClick={join} disabled={!species || busy} className="w-full text-lg">
-                  {busy ? "Opening the gate..." : "Begin the Adventure"}
-                </GameButton>
+                      {/* this choice matters — say so */}
+                      <div className="w-full rounded-xl bg-black/30 px-4 py-3">
+                        <p className="text-display flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--gold)]">
+                          <Icon name="sparkle" size={13} filled />
+                          Your companion will travel with you until it becomes Legendary.
+                          Choose carefully!
+                        </p>
+                      </div>
+
+                      {error && (
+                        <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>
+                      )}
+                      <GameButton onClick={join} disabled={busy} className="w-full text-lg">
+                        {busy ? "Opening the gate..." : `I choose ${p.name}!`}
+                      </GameButton>
+                      <button
+                        onClick={() => {
+                          sfx.click();
+                          setConfirming(false);
+                          setSpecies(null);
+                        }}
+                        className="text-display cursor-pointer text-sm font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                      >
+                        Let me meet them again
+                      </button>
+                    </>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>

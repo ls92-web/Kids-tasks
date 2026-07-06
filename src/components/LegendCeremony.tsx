@@ -74,6 +74,8 @@ export function LegendCeremony({
       return;
     }
     sfx.complete();
+    // the new partner introduces itself on the next quest-board visit
+    localStorage.setItem("qf_say_legendary", "1");
     const { data: bond } = await supabase
       .from("companions")
       .select("*")

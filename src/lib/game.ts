@@ -290,23 +290,27 @@ export interface PetDef {
   name: string;
   species: string;
   element: ElementId;
+  /** One-word personality — how this creature carries itself. */
+  personality: string;
+  /** Child-friendly one-liner for pickers, ceremonies, and the Hero Hall. */
+  blurb: string;
 }
 
 /* The official 12 companions (see ART_DIRECTION.md). Each ships premium art at
-   /public/pets/<id>-<form>.png for all four evolution forms. */
+   /public/companions/<id>-<form>.png for all four evolution forms. */
 export const PETS: PetDef[] = [
-  { id: "dragon", name: "Ember", species: "Mini Dragon", element: "fire" },
-  { id: "fox", name: "Frost", species: "Crystal Fox", element: "ice" },
-  { id: "owl", name: "Professor Hoot", species: "Mage Owl", element: "arcane" },
-  { id: "wolf", name: "Shade", species: "Shadow Wolf", element: "dark" },
-  { id: "tiger", name: "Rai", species: "Thunder Tiger", element: "thunder" },
-  { id: "phoenix", name: "Blaze", species: "Young Phoenix", element: "light" },
-  { id: "turtle", name: "Shellby", species: "Guardian Turtle", element: "nature" },
-  { id: "forest", name: "Sprout", species: "Forest Spirit", element: "nature" },
-  { id: "robot", name: "Bolt", species: "Little Robot", element: "tech" },
-  { id: "ninja", name: "Kage", species: "Tiny Ninja", element: "shadow" },
-  { id: "samurai", name: "Kenji", species: "Baby Samurai", element: "honor" },
-  { id: "pirate", name: "Coco", species: "Treasure Pirate", element: "adventure" },
+  { id: "dragon", name: "Ember", species: "Mini Dragon", element: "fire", personality: "Brave", blurb: "A little dragon with a big heart who never, ever gives up." },
+  { id: "fox", name: "Frost", species: "Crystal Fox", element: "ice", personality: "Curious", blurb: "A sparkling fox who finds wonder in every snowflake." },
+  { id: "owl", name: "Professor Hoot", species: "Mage Owl", element: "arcane", personality: "Wise", blurb: "Knows a spell for everything — and a story for bedtime." },
+  { id: "wolf", name: "Shade", species: "Shadow Wolf", element: "dark", personality: "Loyal", blurb: "Quiet as dusk, and always right beside you." },
+  { id: "tiger", name: "Rai", species: "Thunder Tiger", element: "thunder", personality: "Fearless", blurb: "Charges at every challenge with a rumble of thunder." },
+  { id: "phoenix", name: "Blaze", species: "Young Phoenix", element: "light", personality: "Radiant", blurb: "Glows brightest exactly when you need it most." },
+  { id: "turtle", name: "Shellby", species: "Guardian Turtle", element: "nature", personality: "Kind", blurb: "A gentle guardian who always protects their friends." },
+  { id: "forest", name: "Sprout", species: "Forest Spirit", element: "nature", personality: "Playful", blurb: "Turns every chore into a game of hide-and-seek." },
+  { id: "robot", name: "Bolt", species: "Little Robot", element: "tech", personality: "Inventive", blurb: "Beep! Has a gadget for every problem — mostly." },
+  { id: "ninja", name: "Kage", species: "Tiny Ninja", element: "shadow", personality: "Clever", blurb: "A silent little ninja who loves secret missions." },
+  { id: "samurai", name: "Kenji", species: "Baby Samurai", element: "honor", personality: "Honorable", blurb: "Small sword, huge heart — keeps every promise." },
+  { id: "pirate", name: "Coco", species: "Treasure Pirate", element: "adventure", personality: "Adventurous", blurb: "Smells treasure from a mile away. Usually snacks." },
 ];
 
 export function petElement(id: string): (typeof ELEMENTS)[ElementId] & { id: ElementId } {
@@ -360,7 +364,7 @@ export type UnlockRule =
 
 export const COMPANION_UNLOCKS: Record<string, UnlockRule> = {
   dragon: { kind: "starter" },
-  fox: { kind: "starter" },
+  ninja: { kind: "starter" },
   turtle: { kind: "starter" },
   owl: { kind: "heroLevel", level: 10 },
   forest: { kind: "quests", count: 25 },
@@ -368,7 +372,7 @@ export const COMPANION_UNLOCKS: Record<string, UnlockRule> = {
   tiger: { kind: "heroLevel", level: 25 },
   pirate: { kind: "coins", total: 1000 },
   phoenix: { kind: "heroLevel", level: 40 },
-  ninja: { kind: "world", world: "ninja", label: "Complete Shadow Ninja Village" },
+  fox: { kind: "world", world: "ninja", label: "Complete Shadow Ninja Village" },
   samurai: { kind: "world", world: "samurai", label: "Complete Legend of the Samurai" },
   robot: { kind: "world", world: "speed", label: "Complete Speed Realm" },
 };

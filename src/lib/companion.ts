@@ -40,6 +40,79 @@ export function companionGreeting(theme: ThemeId): string {
   return `${c.name}, ${c.title}`;
 }
 
+/* ---------- Event reactions (not AI — tiny prewritten lines) ----------
+   Instant, warm, child-friendly one-liners for the moments that matter.
+   Anything in the app can call sayFromCompanion(event); the speech bubble
+   beside the companion picks it up. Never guilt, never pressure. */
+
+export type CompanionEvent =
+  | "open"
+  | "questDone"
+  | "coins"
+  | "levelUp"
+  | "allDone"
+  | "nodeUnlocked"
+  | "evolved"
+  | "legendary";
+
+export const COMPANION_LINES: Record<CompanionEvent, string[]> = {
+  open: [
+    "You're here! Today feels lucky.",
+    "Hi hero! Ready when you are.",
+    "I saved your spot. Let's go!",
+  ],
+  questDone: [
+    "You did it! I knew you would.",
+    "Another quest done — amazing!",
+    "That was so brave. High five!",
+    "We make the best team!",
+  ],
+  coins: [
+    "Ooh, shiny! Treasure looks good on you.",
+    "Cha-ching! Your pouch feels heavier.",
+    "Treasure! Let's save it for something special.",
+  ],
+  levelUp: [
+    "LEVEL UP! You're getting so strong!",
+    "A whole new level — I'm so proud of you!",
+    "Look at you grow, hero!",
+  ],
+  allDone: [
+    "All done! Time to play and rest.",
+    "Every quest finished — you're my hero!",
+    "The board is clear. You were wonderful today.",
+  ],
+  nodeUnlocked: [
+    "A new place on our map!",
+    "The path grows — onward!",
+    "Look how far we've come!",
+    "One step closer to the finale!",
+  ],
+  evolved: [
+    "Whoa... I evolved! Do I look bigger?",
+    "I feel stronger — thanks to you!",
+    "My new form! We did this together!",
+  ],
+  legendary: [
+    "A Legend rests in your Hall forever.",
+    "I'll make you proud, just like they did!",
+    "A brand new journey — together!",
+  ],
+};
+
+export function companionLine(event: CompanionEvent): string {
+  const pool = COMPANION_LINES[event];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+export const COMPANION_SAY_EVENT = "qf-companion-say";
+
+/** Fire-and-forget: the CompanionGuide bubble shows a line for this moment. */
+export function sayFromCompanion(event: CompanionEvent) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(COMPANION_SAY_EVENT, { detail: { event } }));
+}
+
 export function companionMessages(ctx: CompanionContext, theme: ThemeId): string[] {
   const { profile, tasks } = ctx;
   const seed = daySeed(profile.id);

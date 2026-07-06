@@ -15,8 +15,10 @@ import { MagicLoader } from "@/components/MagicLoader";
 import { CelebrationOverlay, CelebrationData } from "@/components/CelebrationOverlay";
 import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
-import { companionMessages } from "@/lib/companion";
-import { Task, Reward, Profile, levelFromXp, companionLevel, todaysEvent } from "@/lib/game";
+import { WorldMap } from "@/components/WorldMap";
+import { companionMessages, sayFromCompanion } from "@/lib/companion";
+import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
+import { WORLD_ORDER } from "@/lib/worlds";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -137,6 +139,24 @@ export default function DailyQuests() {
     ? STREAK_MILESTONES.find((m) => m > profile.streak_days)
     : undefined;
 
+  // companion reactions to the big moments: evolution + a finished Legend
+  useEffect(() => {
+    if (!profile || !companion) return;
+    if (localStorage.getItem("qf_say_legendary")) {
+      localStorage.removeItem("qf_say_legendary");
+      const t = setTimeout(() => sayFromCompanion("legendary"), 1500);
+      return () => clearTimeout(t);
+    }
+    const formIdx = petForm(companionLevel(companion.xp)).index;
+    const formKey = `qf_form_seen_${profile.id}`;
+    const prev = parseInt(localStorage.getItem(formKey) ?? "", 10);
+    localStorage.setItem(formKey, String(formIdx));
+    if (!Number.isNaN(prev) && formIdx > prev) {
+      const t = setTimeout(() => sayFromCompanion("evolved"), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [profile, companion]);
+
   function grantChest(r: { kind: string; bonus: number }) {
     if (!profile) return;
     if (r.kind === "xp") {
@@ -148,6 +168,7 @@ export default function DailyQuests() {
         total_coins_earned: profile.total_coins_earned + r.bonus,
         last_chest_date: todayISO,
       } as Profile);
+      sayFromCompanion("coins");
     }
   }
 
@@ -210,6 +231,26 @@ export default function DailyQuests() {
             </div>
           )}
         </motion.div>
+
+        {/* the journey itself — every approved quest moves the hero forward */}
+        {profile && (
+          <section>
+            <div className="mb-2 flex items-center gap-2">
+              <Icon name="map" size={16} className="text-[var(--accent-2)]" />
+              <h2 className="text-display text-sm font-black">Your Journey</h2>
+              <span className="text-display text-[11px] font-bold text-[var(--text-dim)]">
+                Chapter {WORLD_ORDER.indexOf(profile.theme) + 1} of {WORLD_ORDER.length}
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+            </div>
+            <WorldMap
+              theme={profile.theme}
+              tasksCompleted={profile.tasks_completed}
+              species={profile.pet}
+              holdAnimation={!!celebration}
+            />
+          </section>
+        )}
 
         {/* pet companion */}
         <CompanionGuide messages={messages} />
@@ -406,7 +447,18 @@ export default function DailyQuests() {
       </div>
 
       <MysteryChest active={chestActive} onClose={() => setChestActive(false)} onReward={grantChest} />
-      <CelebrationOverlay data={celebration} onClose={() => setCelebration(null)} />
+      <CelebrationOverlay
+        data={celebration}
+        onClose={() => {
+          // the companion reacts the moment the confetti clears
+          if (celebration) {
+            sayFromCompanion(
+              celebration.leveledUp ? "levelUp" : active.length === 0 ? "allDone" : "questDone"
+            );
+          }
+          setCelebration(null);
+        }}
+      />
       <ChapterComplete />
     </div>
   );

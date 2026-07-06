@@ -1,16 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWorld } from "./ThemeProvider";
 import { Companion } from "./Companion";
 import { PETS, companionLevel } from "@/lib/game";
+import { COMPANION_SAY_EVENT, CompanionEvent, companionLine } from "@/lib/companion";
 
 /* The quest-board guide: the child's bonded companion (real art, its own
-   level) floating beside a speech bubble with personalized encouragement. */
+   level) floating beside a speech bubble with personalized encouragement.
+   Instant event reactions (quest done, level up, evolution...) take over
+   the bubble for a few seconds, then the daily rotation resumes. */
 export function CompanionGuide({ messages }: { messages: string[] }) {
   const { profile, companion } = useWorld();
   const [shown, setShown] = useState(0);
+  const [eventLine, setEventLine] = useState<string | null>(null);
+  const eventTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setShown(0);
@@ -18,6 +23,22 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
     const t = setTimeout(() => setShown(1), 4200);
     return () => clearTimeout(t);
   }, [messages]);
+
+  // moment reactions: sayFromCompanion(event) anywhere → the bubble responds
+  useEffect(() => {
+    function onSay(e: Event) {
+      const ev = (e as CustomEvent<{ event: CompanionEvent }>).detail?.event;
+      if (!ev) return;
+      setEventLine(companionLine(ev));
+      if (eventTimer.current) clearTimeout(eventTimer.current);
+      eventTimer.current = setTimeout(() => setEventLine(null), 6000);
+    }
+    window.addEventListener(COMPANION_SAY_EVENT, onSay);
+    return () => {
+      window.removeEventListener(COMPANION_SAY_EVENT, onSay);
+      if (eventTimer.current) clearTimeout(eventTimer.current);
+    };
+  }, []);
 
   if (!profile || messages.length === 0) return null;
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
@@ -37,15 +58,15 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
         </p>
       </div>
       <motion.div
-        key={shown}
+        key={eventLine ?? shown}
         initial={{ opacity: 0, scale: 0.92, x: -8 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         className="panel relative mb-6 max-w-md px-4 py-3"
         style={{ borderBottomLeftRadius: 4 }}
       >
-        <p className="text-sm font-semibold leading-snug">{messages[shown]}</p>
-        {messages.length > 1 && (
+        <p className="text-sm font-semibold leading-snug">{eventLine ?? messages[shown]}</p>
+        {!eventLine && messages.length > 1 && (
           <div className="mt-2 flex gap-1">
             {messages.map((_, i) => (
               <button
