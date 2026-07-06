@@ -7,9 +7,9 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { useWorld } from "./ThemeProvider";
 import { sfx } from "@/lib/sound";
-import { ThemeId, companionLevel } from "@/lib/game";
+import { companionLevel } from "@/lib/game";
 import { companionLine } from "@/lib/companion";
-import { WORLD_MAPS, nodeStates, MapNode, NodeState } from "@/lib/worlds";
+import { WorldMapDef, nodeStates, MapNode, NodeState } from "@/lib/worlds";
 
 /* The campaign map — the emotional center of the child's world.
 
@@ -26,13 +26,14 @@ import { WORLD_MAPS, nodeStates, MapNode, NodeState } from "@/lib/worlds";
 const seenKey = (bondId: string) => `qf_map_seen_${bondId}`;
 
 export function WorldMap({
-  theme,
+  world,
   campaignStep,
   species,
   holdAnimation = false,
   className = "",
 }: {
-  theme: ThemeId;
+  /** The campaign world to render — shared or finale (see campaignWorld()). */
+  world: WorldMapDef;
   /** The active campaign's progress — the bond's quests_done. */
   campaignStep: number;
   species?: string;
@@ -42,7 +43,6 @@ export function WorldMap({
   className?: string;
 }) {
   const { companion: bond } = useWorld();
-  const world = WORLD_MAPS[theme];
 
   // What the map currently DISPLAYS — trails campaignStep during the sequence.
   const [displayed, setDisplayed] = useState<number>(() => {

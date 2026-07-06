@@ -32,14 +32,15 @@ export interface MapNode {
 export interface WorldMapDef {
   id: string; // matches the public/worlds/<id>/ folder
   name: string;
-  theme: ThemeId;
+  /** Set for the three shared worlds; finale worlds have no theme/palette. */
+  theme?: ThemeId;
   map: string; // path under /public
   accent: string; // themed glow colour for the path + nodes
   /** Hand-placed waypoints tracing the painted path — adjust these freely. */
   anchors: { x: number; y: number }[];
-  /** The boss-style milestone that closes the chapter (node 36). */
+  /** The boss-style milestone that closes the world (node 36). */
   finale: { name: string; icon: string; blurb: string };
-  /** What completing the chapter unlocks. */
+  /** What completing the world unlocks. */
   reward: { companion: string; blurb: string };
   levels: MapNode[];
 }
@@ -66,6 +67,11 @@ export interface FinaleWorldDef {
   name: string;
   accent: string;
   finale: { name: string; icon: string; blurb: string };
+  /** Painted map + path data — present once the world's art is delivered.
+      With all three set, the finale renders exactly like a shared world. */
+  map?: string;
+  anchors?: { x: number; y: number }[];
+  stops?: string[];
 }
 
 export const FINALE_WORLDS: Record<string, FinaleWorldDef> = {
@@ -74,6 +80,30 @@ export const FINALE_WORLDS: Record<string, FinaleWorldDef> = {
     name: "Dragon Volcano",
     accent: "#ff7a3d",
     finale: { name: "Trial of Flames", icon: "flame", blurb: "Climb the caldera and light the eternal fire with Ember." },
+    map: "/worlds/dragon-volcano/map.png",
+    // golden road: ashen shore at the bottom → winding up past the crystal
+    // cave and dragon gates → the grand ceremony gate under the light beam
+    anchors: [
+      { x: 50, y: 92 },
+      { x: 53, y: 83 },
+      { x: 48, y: 74 },
+      { x: 54, y: 66 },
+      { x: 48, y: 58 },
+      { x: 55, y: 51 },
+      { x: 49, y: 44 },
+      { x: 56, y: 37 },
+      { x: 52, y: 30 },
+      { x: 61, y: 22 },
+    ],
+    stops: [
+      "Ashen Shore",
+      "Ember Gate",
+      "Crystal Hollow",
+      "Lavafall Crossing",
+      "Spark Shrine",
+      "Dragon Steps",
+      "Molten Terrace",
+    ],
   },
   ninja: {
     id: "shadow-temple",
@@ -301,33 +331,66 @@ function tracePath(anchors: { x: number; y: number }[], count: number) {
   return pts;
 }
 
-function buildWorld(spec: WorldSpec, chapterIdx: number): WorldMapDef {
-  const pts = tracePath(spec.anchors, CHAPTER_SPAN);
-  const levels: MapNode[] = pts.map((p, i) => {
+/* 36 nodes along a path: quiet steps, 7 named landmarks, the trial at 36.
+   worldIdx positions the requires values within the campaign (0-3). */
+function buildLevels(
+  idPrefix: string,
+  anchors: { x: number; y: number }[],
+  stops: string[],
+  finaleName: string,
+  worldIdx: number
+): MapNode[] {
+  const pts = tracePath(anchors, CHAPTER_SPAN);
+  return pts.map((p, i) => {
     const step = i + 1;
     const landmarkIdx = LANDMARK_STEPS.indexOf(step);
     const kind: NodeKind =
       step === CHAPTER_SPAN ? "final" : landmarkIdx >= 0 ? "landmark" : "quest";
     return {
-      id: `${spec.theme}-${step}`,
+      id: `${idPrefix}-${step}`,
       name:
-        kind === "final"
-          ? spec.finale.name
-          : kind === "landmark"
-            ? spec.stops[landmarkIdx]
-            : `Step ${step}`,
+        kind === "final" ? finaleName : kind === "landmark" ? stops[landmarkIdx] : `Step ${step}`,
       x: p.x,
       y: p.y,
-      requires: chapterIdx * CHAPTER_SPAN + step,
+      requires: worldIdx * CHAPTER_SPAN + step,
       kind,
     };
   });
-  return { ...spec, levels };
+}
+
+function buildWorld(spec: WorldSpec, chapterIdx: number): WorldMapDef {
+  return {
+    ...spec,
+    levels: buildLevels(spec.theme, spec.anchors, spec.stops, spec.finale.name, chapterIdx),
+  };
 }
 
 export const WORLD_MAPS: Record<ThemeId, WorldMapDef> = Object.fromEntries(
   SPECS.map((s, i) => [s.theme, buildWorld(s, i)])
 ) as Record<ThemeId, WorldMapDef>;
+
+/* A finale world with delivered map art becomes a full, renderable world:
+   36 nodes at campaign steps 109..144, ending at the Legend Ceremony gate. */
+export function finaleWorldMap(species: string): WorldMapDef | null {
+  const fw = FINALE_WORLDS[species];
+  if (!fw?.map || !fw.anchors || !fw.stops) return null;
+  return {
+    id: fw.id,
+    name: fw.name,
+    map: fw.map,
+    accent: fw.accent,
+    anchors: fw.anchors,
+    finale: fw.finale,
+    reward: { companion: species, blurb: `${fw.name} complete — Legendary!` },
+    levels: buildLevels(
+      `${species}-finale`,
+      fw.anchors,
+      fw.stops,
+      fw.finale.name,
+      SHARED_WORLDS.length
+    ),
+  };
+}
 
 export type NodeState = "completed" | "current" | "locked";
 
@@ -415,6 +478,17 @@ export function currentChapter(step: number): ThemeId {
 export function nextChapter(theme: ThemeId): ThemeId | null {
   const idx = SHARED_WORLDS.indexOf(theme);
   return idx >= 0 && idx < SHARED_WORLDS.length - 1 ? SHARED_WORLDS[idx + 1] : null;
+}
+
+/** The world map the active campaign should RENDER right now:
+    the child's chosen shared world during worlds 1-3, then the companion's
+    exclusive finale world once its segment begins (falling back to the last
+    shared map for companions whose finale art hasn't been delivered yet). */
+export function campaignWorld(species: string, theme: ThemeId, step: number): WorldMapDef {
+  if (step >= CHAPTER_SPAN * SHARED_WORLDS.length) {
+    return finaleWorldMap(species) ?? WORLD_MAPS[currentChapter(step)];
+  }
+  return WORLD_MAPS[theme];
 }
 
 /* ---------- Lifetime progression (species unlocks only) ----------

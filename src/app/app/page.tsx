@@ -19,7 +19,7 @@ import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { sfx } from "@/lib/sound";
 import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
-import { campaignStep, campaignWorldIndex, WORLDS_PER_CAMPAIGN } from "@/lib/worlds";
+import { campaignStep, campaignWorld, campaignWorldIndex, WORLDS_PER_CAMPAIGN } from "@/lib/worlds";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -252,7 +252,7 @@ export default function DailyQuests() {
               </Link>
             </div>
             <WorldMap
-              theme={profile.theme}
+              world={campaignWorld(profile.pet, profile.theme, campaignStep(companion))}
               campaignStep={campaignStep(companion)}
               species={profile.pet}
               holdAnimation={!!celebration}

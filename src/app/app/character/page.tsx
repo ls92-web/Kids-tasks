@@ -39,6 +39,7 @@ import {
   WORLDS_PER_CAMPAIGN,
   worldProgress,
   campaignStep,
+  campaignWorld,
   campaignWorldIndex,
   campaignCompleted,
   inFinaleWorld,
@@ -97,7 +98,7 @@ export default function HeroHub() {
   const pElement = petElement(profile.pet);
   const pMood = petMood(profile, tasks);
   const step = campaignStep(companion);
-  const world = WORLD_MAPS[profile.theme];
+  const world = campaignWorld(profile.pet, profile.theme, step);
   const wProg = worldProgress(world, step);
   const worldNo = campaignWorldIndex(step) + 1;
   const finaleWorld = FINALE_WORLDS[profile.pet];
@@ -309,7 +310,7 @@ export default function HeroHub() {
           </Link>
         </div>
         <p className="mb-3 text-sm text-[var(--text-dim)]">
-          {inFinaleWorld(step) && finaleWorld ? (
+          {inFinaleWorld(step) && finaleWorld && world.id !== finaleWorld.id ? (
             <>
               You have reached{" "}
               <span className="font-bold" style={{ color: finaleWorld.accent }}>
@@ -338,11 +339,7 @@ export default function HeroHub() {
             </>
           )}
         </p>
-        <WorldMap
-          theme={profile.theme}
-          campaignStep={step}
-          species={profile.pet}
-        />
+        <WorldMap world={world} campaignStep={step} species={profile.pet} />
       </section>
 
       {/* trophy room */}

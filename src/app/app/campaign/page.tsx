@@ -62,7 +62,8 @@ export default function CampaignPage() {
             index: 3,
             name: finaleWorld.name,
             accent: finaleWorld.accent,
-            map: null as string | null,
+            // painted finale art when delivered; the accent gradient otherwise
+            map: (finaleWorld.map ?? null) as string | null,
             trial: finaleWorld.finale,
             reward: `${petMeta.name} becomes Legendary`,
             rewardSpecies: null as string | null,
