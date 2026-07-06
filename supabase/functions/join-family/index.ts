@@ -18,10 +18,9 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const SPECIES = [
-  "dragon", "fox", "owl", "wolf", "tiger", "phoenix",
-  "turtle", "forest", "robot", "ninja", "samurai", "pirate",
-];
+// A hero's FIRST companion must be a starter — everything else is earned
+// through progression (enforced again in the bond_companion RPC).
+const STARTERS = ["dragon", "fox", "turtle"];
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -57,7 +56,10 @@ Deno.serve(async (req: Request) => {
     if (String(pin || "").length < 4) {
       return json({ error: "PIN must be at least 4 characters" }, 400);
     }
-    const species = SPECIES.includes(pet) ? pet : "dragon";
+    if (!STARTERS.includes(pet)) {
+      return json({ error: "your first companion must be one of the starters" }, 400);
+    }
+    const species = pet;
 
     const { data: existing } = await admin
       .from("profiles").select("id").eq("username", cleanUsername).maybeSingle();

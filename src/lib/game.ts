@@ -348,8 +348,9 @@ export function companionLevel(xp: number): number {
 }
 
 /* How a locked companion joins the roster. Starters are free at first pick;
-   the rest unlock through meaningful progression. (Display + pick gating —
-   the celebrations are what make these feel earned.) */
+   the rest unlock through meaningful progression. Display/pick gating here —
+   the same rules are ENFORCED server-side in bond_companion() (and starters
+   in join-family); keep both in sync when changing them. */
 export type UnlockRule =
   | { kind: "starter" }
   | { kind: "world"; world: ThemeId; label: string }
