@@ -157,7 +157,8 @@ export default function SettingsPage() {
               </span>
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">
-              {petMeta.name} is your adventure partner. You&apos;ll journey together until they
+              {petMeta.name}
+              {" is your adventure partner. You'll journey together until they "}
               become a <b className="text-[var(--gold)]">Legend</b> at level 100 — then a new
               companion can join you. Visit the Hero Hall to see your whole collection.
             </p>

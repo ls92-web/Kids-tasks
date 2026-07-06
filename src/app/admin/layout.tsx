@@ -54,7 +54,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ThemeProvider initialProfile={profile}>
       <div className="relative min-h-screen">
-        <WorldBackground />
+        {/* parents get the calm gradient only — no game scenery */}
+        <WorldBackground variant="plain" />
         <div className="relative z-10 mx-auto flex w-[min(97%,1200px)] flex-col gap-5 py-5 lg:flex-row">
           {/* sidebar */}
           <aside className="panel h-fit shrink-0 p-3 lg:sticky lg:top-5 lg:w-56">

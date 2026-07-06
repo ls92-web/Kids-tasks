@@ -78,7 +78,10 @@ export default function HeroHub() {
   const earnedCount = BADGES.filter((b) => earned.has(b.key)).length;
 
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
-  const cLevel = companion ? companionLevel(companion.xp) : 1;
+  // no active bond + this species completed = a Legend resting in the Hall
+  const restingLegend =
+    !companion && bonds.some((b) => b.species === profile.pet && b.status === "legend");
+  const cLevel = companion ? companionLevel(companion.xp) : restingLegend ? 100 : 1;
   const pForm = petForm(cLevel);
   const pProg = petFormProgress(cLevel);
   const pElement = petElement(profile.pet);
@@ -88,15 +91,22 @@ export default function HeroHub() {
   const chapterNo = WORLD_ORDER.indexOf(profile.theme) + 1;
   const done = worldsCompleted(profile.tasks_completed);
   const legendReady = !!companion && companion.status === "active" && companion.xp >= LEGEND_XP;
+  // refresh-safe resume: Legend sealed but no successor chosen yet
+  const hasPickable = PETS.some(
+    (p) => !bonds.some((b) => b.species === p.id) && speciesUnlocked(p.id, profile, done)
+  );
+  const resumeChoose = !companion && bonds.length > 0 && hasPickable;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* the biggest moment in the app */}
-      {legendReady && companion && (
+      {/* the biggest moment in the app — full cinematic at level 100, or
+          resume straight at the choose step after a refresh */}
+      {(legendReady || resumeChoose) && (
         <LegendCeremony
           profile={profile}
-          companion={companion}
+          companion={legendReady ? companion : null}
           bonds={bonds}
+          initialStage={legendReady ? "glow" : "choose"}
           onComplete={(newBond) => {
             setCompanion(newBond);
             window.location.reload();
