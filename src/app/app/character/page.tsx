@@ -24,7 +24,6 @@ import {
   petElement,
   companionLevel,
   companionProgress,
-  LEGEND_XP,
   COMPANION_UNLOCKS,
   UnlockRule,
   speciesUnlocked,
@@ -33,7 +32,17 @@ import {
   Task,
   Profile,
 } from "@/lib/game";
-import { WORLD_MAPS, WORLD_ORDER, worldProgress, worldsCompleted } from "@/lib/worlds";
+import {
+  WORLD_MAPS,
+  FINALE_WORLDS,
+  WORLDS_PER_CAMPAIGN,
+  worldProgress,
+  campaignStep,
+  campaignWorldIndex,
+  campaignCompleted,
+  inFinaleWorld,
+  lifetimeWorldsCleared,
+} from "@/lib/worlds";
 
 interface Ach {
   key: string;
@@ -86,14 +95,20 @@ export default function HeroHub() {
   const pProg = petFormProgress(cLevel);
   const pElement = petElement(profile.pet);
   const pMood = petMood(profile, tasks);
+  const step = campaignStep(companion);
   const world = WORLD_MAPS[profile.theme];
-  const wProg = worldProgress(world, profile.tasks_completed);
-  const chapterNo = WORLD_ORDER.indexOf(profile.theme) + 1;
-  const done = worldsCompleted(profile.tasks_completed);
-  const legendReady = !!companion && companion.status === "active" && companion.xp >= LEGEND_XP;
+  const wProg = worldProgress(world, step);
+  const worldNo = campaignWorldIndex(step) + 1;
+  const finaleWorld = FINALE_WORLDS[profile.pet];
+  // species unlocks stay keyed to LIFETIME progress (a world cleared in any
+  // campaign stays cleared for unlock purposes — mirrors bond_companion SQL)
+  const lifetimeCleared = lifetimeWorldsCleared(profile.tasks_completed);
+  // Legendary = the active campaign's finale world is complete
+  const legendReady =
+    !!companion && companion.status === "active" && campaignCompleted(step);
   // refresh-safe resume: Legend sealed but no successor chosen yet
   const hasPickable = PETS.some(
-    (p) => !bonds.some((b) => b.species === p.id) && speciesUnlocked(p.id, profile, done)
+    (p) => !bonds.some((b) => b.species === p.id) && speciesUnlocked(p.id, profile, lifetimeCleared)
   );
   const resumeChoose = !companion && bonds.length > 0 && hasPickable;
 
@@ -203,7 +218,7 @@ export default function HeroHub() {
             const bond = bonds.find((b) => b.species === p.id);
             const isActive = bond?.status === "active";
             const isLegend = bond?.status === "legend";
-            const awake = speciesUnlocked(p.id, profile, done);
+            const awake = speciesUnlocked(p.id, profile, lifetimeCleared);
             const el = ELEMENTS[p.element];
             return (
               <motion.button
@@ -267,42 +282,58 @@ export default function HeroHub() {
               profile={profile}
               bonds={bonds}
               tasks={tasks}
-              worldsDone={done}
+              worldsDone={lifetimeCleared}
               onClose={() => setHallPick(null)}
             />
           )}
         </AnimatePresence>
       </section>
 
-      {/* worlds journey */}
+      {/* the active campaign's journey */}
       <section>
         <div className="mb-3 flex items-center gap-2">
           <Icon name="map" size={18} className="text-[var(--accent-2)]" />
-          <h2 className="text-display text-lg font-black">Your Journey</h2>
+          <h2 className="text-display text-lg font-black">
+            {petMeta.name}&apos;s Campaign
+          </h2>
           <span className="text-display text-xs font-bold text-[var(--text-dim)]">
-            Chapter {chapterNo} of {WORLD_ORDER.length}
+            World {worldNo} of {WORLDS_PER_CAMPAIGN}
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
         </div>
         <p className="mb-3 text-sm text-[var(--text-dim)]">
-          You are exploring{" "}
-          <span className="font-bold" style={{ color: world.accent }}>
-            {world.name}
-          </span>
-          {wProg.current
-            ? (() => {
-                const milestone = world.levels.find(
-                  (l) => l.kind !== "quest" && l.requires >= wProg.current!.requires
-                );
-                return milestone?.kind === "final"
-                  ? ` — the ${milestone.name} awaits at the end of this chapter (${wProg.completed}/${wProg.total} steps).`
-                  : ` — next stop: ${milestone?.name ?? world.finale.name} (${wProg.completed}/${wProg.total} steps).`;
-              })()
-            : " — chapter complete! The next world awaits."}
+          {inFinaleWorld(step) && finaleWorld ? (
+            <>
+              You have reached{" "}
+              <span className="font-bold" style={{ color: finaleWorld.accent }}>
+                {finaleWorld.name}
+              </span>{" "}
+              — {petMeta.name}&apos;s own world! The {finaleWorld.finale.name} awaits at its end.
+            </>
+          ) : (
+            <>
+              You are exploring{" "}
+              <span className="font-bold" style={{ color: world.accent }}>
+                {world.name}
+              </span>
+              {wProg.current
+                ? (() => {
+                    const milestone = world.levels.find(
+                      (l) => l.kind !== "quest" && l.requires >= wProg.current!.requires
+                    );
+                    return milestone?.kind === "final"
+                      ? ` — the ${milestone.name} awaits at the end of this world (${wProg.completed}/${wProg.total} steps).`
+                      : ` — next stop: ${milestone?.name ?? world.finale.name} (${wProg.completed}/${wProg.total} steps).`;
+                  })()
+                : finaleWorld
+                  ? ` — complete! Next: ${finaleWorld.name}.`
+                  : " — world complete! The next one awaits."}
+            </>
+          )}
         </p>
         <WorldMap
           theme={profile.theme}
-          tasksCompleted={profile.tasks_completed}
+          campaignStep={step}
           species={profile.pet}
         />
       </section>
@@ -486,19 +517,12 @@ function HallDetail({
   const prog = bond ? companionProgress(bond.xp) : null;
   const form = bond ? petForm(prog!.level) : null;
 
-  // quests conquered together = quests approved while this bond was active
-  const questsTogether = bond
-    ? tasks.filter(
-        (t) =>
-          t.status === "completed" &&
-          t.completed_at &&
-          t.completed_at >= bond.bonded_at &&
-          (bond.legend_at ? t.completed_at <= bond.legend_at : true)
-      ).length
-    : 0;
+  // the campaign counter IS "quests conquered together"
+  const questsTogether = bond?.quests_done ?? 0;
 
   const activeMeta = activeBond ? PETS.find((p) => p.id === activeBond.species) : null;
-  const activeIsLegendReady = !!activeBond && activeBond.xp >= LEGEND_XP;
+  // a new campaign can only begin once the active one is complete
+  const activeIsLegendReady = !!activeBond && campaignCompleted(campaignStep(activeBond));
 
   return (
     <motion.div
@@ -596,21 +620,30 @@ function HallDetail({
           </div>
         )}
 
-        {/* origin + what happens next */}
+        {/* origin + campaign finale + what happens next */}
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
           <Icon name="map" size={12} className="shrink-0 text-[var(--accent-2)]" />
           {originText(COMPANION_UNLOCKS[species])}
         </p>
+        {(bond || awake) && FINALE_WORLDS[species] && (
+          <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
+            <span className="shrink-0" style={{ color: FINALE_WORLDS[species].accent }}>
+              <Icon name={FINALE_WORLDS[species].finale.icon} size={12} />
+            </span>
+            Campaign finale: {FINALE_WORLDS[species].name}
+          </p>
+        )}
 
         {status === "Available" && activeBond && activeMeta && (
           <p className="mt-2 rounded-xl bg-black/25 px-3 py-2 text-[11px] font-bold text-[var(--text-dim)]">
             {activeIsLegendReady ? (
-              <>Ready to join you — choose them at the Legend Ceremony!</>
+              <>Ready to begin their campaign — choose them at the Legend Ceremony!</>
             ) : (
               <>
-                {meta.name} will wait for you. A new bond begins when{" "}
-                <span style={{ color: "var(--gold)" }}>{activeMeta.name}</span> becomes Legendary
-                at level 100.
+                {meta.name} will wait for you. A new campaign begins when{" "}
+                <span style={{ color: "var(--gold)" }}>{activeMeta.name}</span> completes{" "}
+                {FINALE_WORLDS[activeBond.species]?.name ?? "their finale world"} and becomes
+                Legendary.
               </>
             )}
           </p>

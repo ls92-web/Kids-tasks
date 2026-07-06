@@ -321,23 +321,32 @@ export function petElement(id: string): (typeof ELEMENTS)[ElementId] & { id: Ele
 
 export type PetMood = "excited" | "happy" | "proud" | "sleepy" | "cheer";
 
-/* ---------- Companion bonds (the Pokémon-starter model) ----------
-   A hero bonds with ONE companion at a time. It earns its own XP from every
-   approved quest and evolves on ITS level, not the hero's. At level 100 it
-   becomes a Legend (permanent Hero Hall) and only then can a new partner be
-   chosen. Locked companions = no bond row yet. */
+/* ---------- Companion bonds & campaigns ----------
+   A hero bonds with ONE companion at a time; that bond IS the active
+   CAMPAIGN. The companion earns its own XP from every approved quest (for
+   growth/evolution) and its campaign advances one step per quest
+   (quests_done). The campaign walks the three shared worlds and ends in the
+   companion's exclusive finale world (see FINALE_WORLDS in worlds.ts).
+   Completing the finale makes the companion LEGENDARY — permanent in the
+   Hero Hall — and only then can a new companion campaign begin. Companions
+   cannot be switched mid-campaign. Locked companions = no bond row yet. */
 
 export interface CompanionBond {
   id: string;
   child_id: string;
   species: string;
   xp: number;
+  /** Campaign progress: quests approved during this bond (0..CAMPAIGN_TOTAL). */
+  quests_done: number;
   status: "active" | "legend";
   bonded_at: string;
   legend_at: string | null;
 }
 
-/* Total XP to reach companion level 100 — mirrors legend_xp_threshold() in SQL. */
+/* Total XP to reach companion level 100. NOTE: since the Companion Campaigns
+   model, Legendary status is earned by COMPLETING THE CAMPAIGN (quests_done
+   >= CAMPAIGN_TOTAL, enforced by complete_legend in SQL) — this constant only
+   backs the level/evolution math. */
 export const LEGEND_XP = 300960;
 
 /* Companion level uses the same curve as the hero but can reach 100. */

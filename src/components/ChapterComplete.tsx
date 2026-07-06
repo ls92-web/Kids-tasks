@@ -9,43 +9,57 @@ import { GameButton } from "./GameButton";
 import { Icon } from "./Icon";
 import { sfx } from "@/lib/sound";
 import { PETS, THEMES, ThemeId } from "@/lib/game";
-import { WORLD_MAPS, WORLD_ORDER, worldCompleted, nextChapter } from "@/lib/worlds";
+import {
+  WORLD_MAPS,
+  FINALE_WORLDS,
+  SHARED_WORLDS,
+  worldCompleted,
+  nextChapter,
+  campaignStep,
+} from "@/lib/worlds";
 
-/* Closing a chapter is a milestone, not a number ticking over. When a world's
-   final challenge is cleared, this cinematic plays once (per chapter, per
-   device): the trial conquered, a companion awakened, the next world opened.
+/* Closing a campaign world is a milestone, not a number ticking over. When a
+   shared world's final trial is cleared, this cinematic plays once per world
+   PER CAMPAIGN (localStorage keyed by the bond): the trial conquered, a
+   companion awakened, the next world opened. After the third shared world it
+   teases the companion's exclusive finale world — completing THAT is the
+   Legend Ceremony's job.
 
    Shown from the quest board — the first place the child lands after the
-   parent approves the finale quest. */
+   parent approves the trial quest. */
 
-const seenKey = (theme: ThemeId) => `qf_chapter_${theme}`;
+const seenKey = (bondId: string, theme: ThemeId) => `qf_chapter_${bondId}_${theme}`;
 
 export function ChapterComplete() {
-  const { profile, setProfile } = useWorld();
+  const { profile, setProfile, companion } = useWorld();
   const [celebrating, setCelebrating] = useState<ThemeId | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const step = campaignStep(companion);
+
   useEffect(() => {
-    if (!profile) return;
-    // the newest completed chapter this device hasn't celebrated yet
-    for (const t of WORLD_ORDER) {
-      if (worldCompleted(t, profile.tasks_completed) && !localStorage.getItem(seenKey(t))) {
+    if (!profile || !companion) return;
+    // the newest completed shared world this campaign hasn't celebrated yet
+    for (const t of SHARED_WORLDS) {
+      if (worldCompleted(t, step) && !localStorage.getItem(seenKey(companion.id, t))) {
         setCelebrating(t);
         sfx.levelUp();
         break;
       }
     }
-  }, [profile]);
+  }, [profile, companion, step]);
 
-  if (!profile || !celebrating) return null;
+  if (!profile || !companion || !celebrating) return null;
 
   const world = WORLD_MAPS[celebrating];
-  const chapterNo = WORLD_ORDER.indexOf(celebrating) + 1;
+  const worldNo = SHARED_WORLDS.indexOf(celebrating) + 1;
   const next = nextChapter(celebrating);
+  const finaleWorld = FINALE_WORLDS[companion.species];
+  const activeMeta = PETS.find((p) => p.id === companion.species);
   const rewardPet = PETS.find((p) => p.id === world.reward.companion);
 
   function dismiss() {
-    localStorage.setItem(seenKey(celebrating!), "1");
+    localStorage.setItem(seenKey(companion!.id, celebrating!), "1");
     setCelebrating(null);
   }
 
@@ -54,7 +68,7 @@ export function ChapterComplete() {
     setBusy(true);
     const supabase = createClient();
     await supabase.from("profiles").update({ theme: next }).eq("id", profile.id);
-    localStorage.setItem(seenKey(celebrating!), "1");
+    localStorage.setItem(seenKey(companion!.id, celebrating!), "1");
     setProfile({ ...profile, theme: next });
     sfx.whoosh();
     setCelebrating(null);
@@ -63,7 +77,7 @@ export function ChapterComplete() {
 
   return (
     <div className="fixed inset-0 z-[85] grid place-items-center overflow-hidden bg-black/85 p-4 backdrop-blur-sm">
-      {/* golden confetti — a chapter deserves it */}
+      {/* golden confetti — a completed world deserves it */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {Array.from({ length: 26 }).map((_, i) => (
           <span
@@ -86,7 +100,7 @@ export function ChapterComplete() {
         className="panel panel-glow relative w-full max-w-md p-7 text-center"
       >
         <p className="text-display text-xs font-black uppercase tracking-[0.3em] text-[var(--gold)]">
-          Chapter {chapterNo} complete
+          World {worldNo} complete
         </p>
         <h2
           className="text-display text-glow mt-1 text-3xl font-black"
@@ -109,7 +123,7 @@ export function ChapterComplete() {
               {world.reward.blurb}!
             </p>
             <p className="mt-0.5 text-xs text-[var(--text-dim)]">
-              They&apos;re waiting in your Hero Hall for the day you need a new partner.
+              They&apos;re waiting in your Hero Hall for a future campaign.
             </p>
           </div>
         )}
@@ -118,7 +132,7 @@ export function ChapterComplete() {
           {next ? (
             <>
               <GameButton onClick={beginNext} disabled={busy} className="w-full text-lg">
-                Begin Chapter {chapterNo + 1}: {THEMES[next].name}
+                Begin World {worldNo + 1}: {THEMES[next].name}
               </GameButton>
               <GameButton variant="ghost" onClick={dismiss} className="w-full text-sm">
                 Stay in {world.name} a little longer
@@ -126,11 +140,14 @@ export function ChapterComplete() {
             </>
           ) : (
             <>
-              <p className="text-sm font-bold text-[var(--gold)]">
-                Every chapter complete — you are a true Legend of Questforge.
+              {/* all shared worlds done — the companion's own finale world begins */}
+              <p className="text-sm font-bold" style={{ color: finaleWorld?.accent ?? "var(--gold)" }}>
+                {finaleWorld && activeMeta
+                  ? `The shared worlds are behind you. Ahead lies ${finaleWorld.name} — ${activeMeta.name}'s own world, and the end of your campaign together.`
+                  : "The shared worlds are behind you — the campaign finale awaits."}
               </p>
               <GameButton onClick={dismiss} className="w-full text-lg">
-                Continue the Adventure
+                {finaleWorld ? `Onward to ${finaleWorld.name}` : "Continue the Adventure"}
               </GameButton>
             </>
           )}

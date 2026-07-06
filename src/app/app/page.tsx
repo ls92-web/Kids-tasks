@@ -18,7 +18,7 @@ import { MysteryChest } from "@/components/MysteryChest";
 import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
-import { WORLD_ORDER } from "@/lib/worlds";
+import { campaignStep, campaignWorldIndex, WORLDS_PER_CAMPAIGN } from "@/lib/worlds";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -232,20 +232,20 @@ export default function DailyQuests() {
           )}
         </motion.div>
 
-        {/* the journey itself — every approved quest moves the hero forward */}
+        {/* the active campaign — every approved quest moves it one step */}
         {profile && (
           <section>
             <div className="mb-2 flex items-center gap-2">
               <Icon name="map" size={16} className="text-[var(--accent-2)]" />
               <h2 className="text-display text-sm font-black">Your Journey</h2>
               <span className="text-display text-[11px] font-bold text-[var(--text-dim)]">
-                Chapter {WORLD_ORDER.indexOf(profile.theme) + 1} of {WORLD_ORDER.length}
+                World {campaignWorldIndex(campaignStep(companion)) + 1} of {WORLDS_PER_CAMPAIGN}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
             </div>
             <WorldMap
               theme={profile.theme}
-              tasksCompleted={profile.tasks_completed}
+              campaignStep={campaignStep(companion)}
               species={profile.pet}
               holdAnimation={!!celebration}
             />

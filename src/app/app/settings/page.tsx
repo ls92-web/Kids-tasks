@@ -18,7 +18,7 @@ import {
   petForm,
   petElement,
 } from "@/lib/game";
-import { worldUnlocked, WORLD_MAPS } from "@/lib/worlds";
+import { worldUnlocked, WORLD_MAPS, FINALE_WORLDS, campaignStep } from "@/lib/worlds";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -66,15 +66,15 @@ export default function SettingsPage() {
 
       {/* chapters — worlds unlock in order as the adventure progresses */}
       <section className="panel p-5">
-        <h2 className="text-display mb-1 text-lg font-black">Your chapters</h2>
+        <h2 className="text-display mb-1 text-lg font-black">Campaign worlds</h2>
         <p className="mb-3 text-xs text-[var(--text-dim)]">
-          Complete a world&apos;s map to open the next chapter of your adventure
+          Your campaign&apos;s worlds unlock in order — complete each map to open the next
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {(Object.keys(THEMES) as ThemeId[]).map((tid, i) => {
             const t = THEMES[tid];
             const active = profile.theme === tid;
-            const unlocked = worldUnlocked(tid, profile.tasks_completed);
+            const unlocked = worldUnlocked(tid, campaignStep(companion));
             const previews: Record<ThemeId, string> = {
               ninja: "linear-gradient(160deg, #0c1430, #101c3f 60%, #1c2c5c)",
               samurai: "linear-gradient(160deg, #2c160c, #3d2012 60%, #5c3018)",
@@ -158,9 +158,13 @@ export default function SettingsPage() {
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">
               {petMeta.name}
-              {" is your adventure partner. You'll journey together until they "}
-              become a <b className="text-[var(--gold)]">Legend</b> at level 100 — then a new
-              companion can join you. Visit the Hero Hall to see your whole collection.
+              {" is on their campaign with you — three shared worlds, then "}
+              <b style={{ color: FINALE_WORLDS[profile.pet]?.accent ?? "var(--gold)" }}>
+                {FINALE_WORLDS[profile.pet]?.name ?? "their own finale world"}
+              </b>
+              {". Completing it makes them a "}
+              <b className="text-[var(--gold)]">Legend</b>
+              {" — only then can a new campaign begin. Visit the Hero Hall to see your collection."}
             </p>
           </div>
         </div>

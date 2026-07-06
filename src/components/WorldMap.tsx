@@ -11,44 +11,45 @@ import { ThemeId, companionLevel } from "@/lib/game";
 import { companionLine } from "@/lib/companion";
 import { WORLD_MAPS, nodeStates, MapNode, NodeState } from "@/lib/worlds";
 
-/* The chapter map — the emotional center of the child's world.
+/* The campaign map — the emotional center of the child's world.
 
-   36 steps painted onto the world: quiet dots for ordinary steps, named
-   landmark medallions, and the gold chapter finale at step 36. The child's
-   companion stands wherever they are right now.
+   36 steps painted onto each world: quiet dots for ordinary steps, named
+   landmark medallions, and the gold trial at step 36. The child's companion
+   stands wherever they are in their campaign right now.
 
-   THE ADVANCE SEQUENCE: the map remembers how many steps it showed last time
-   (localStorage, per child). When quests were approved since then, it replays
-   the difference — each new node lights up in turn, the glowing path extends,
-   and the companion hops forward to the new current node. Progress isn't a
-   number changing; it's a journey the child watches happen. */
+   THE ADVANCE SEQUENCE: the map remembers how many campaign steps it showed
+   last time (localStorage, per BOND — a new campaign starts fresh). When
+   quests were approved since then, it replays the difference — each new node
+   lights up in turn, the glowing path extends, and the companion hops forward
+   to the new current node. */
 
-const seenKey = (childId: string) => `qf_map_seen_${childId}`;
+const seenKey = (bondId: string) => `qf_map_seen_${bondId}`;
 
 export function WorldMap({
   theme,
-  tasksCompleted,
+  campaignStep,
   species,
   holdAnimation = false,
   className = "",
 }: {
   theme: ThemeId;
-  tasksCompleted: number;
+  /** The active campaign's progress — the bond's quests_done. */
+  campaignStep: number;
   species?: string;
   /** Keep the pre-approval state on screen (e.g. while a celebration overlay
       is up); the advance sequence starts once this flips false. */
   holdAnimation?: boolean;
   className?: string;
 }) {
-  const { profile, companion: bond } = useWorld();
+  const { companion: bond } = useWorld();
   const world = WORLD_MAPS[theme];
 
-  // What the map currently DISPLAYS — trails tasksCompleted during the sequence.
+  // What the map currently DISPLAYS — trails campaignStep during the sequence.
   const [displayed, setDisplayed] = useState<number>(() => {
-    if (typeof window === "undefined" || !profile) return tasksCompleted;
-    const stored = parseInt(localStorage.getItem(seenKey(profile.id)) ?? "", 10);
-    if (Number.isNaN(stored)) return tasksCompleted;
-    return Math.min(Math.max(stored, 0), tasksCompleted);
+    if (typeof window === "undefined" || !bond) return campaignStep;
+    const stored = parseInt(localStorage.getItem(seenKey(bond.id)) ?? "", 10);
+    if (Number.isNaN(stored)) return campaignStep;
+    return Math.min(Math.max(stored, 0), campaignStep);
   });
   const [advancing, setAdvancing] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -68,22 +69,22 @@ export function WorldMap({
 
   // Play the advance: one step at a time, a heartbeat apart.
   useEffect(() => {
-    if (!profile || holdAnimation) return;
-    if (displayed >= tasksCompleted) {
-      localStorage.setItem(seenKey(profile.id), String(tasksCompleted));
+    if (!bond || holdAnimation) return;
+    if (displayed >= campaignStep) {
+      localStorage.setItem(seenKey(bond.id), String(campaignStep));
       return;
     }
     setAdvancing(true);
     // one heartbeat per step, but cap the whole journey at ~4s for big gaps
-    const gap = tasksCompleted - displayed;
+    const gap = campaignStep - displayed;
     const stepMs = Math.max(300, Math.min(700, Math.round(4000 / gap)));
     const start = setTimeout(() => {
       timer.current = setInterval(() => {
         setDisplayed((d) => {
-          const next = Math.min(d + 1, tasksCompleted);
-          if (next >= tasksCompleted) {
+          const next = Math.min(d + 1, campaignStep);
+          if (next >= campaignStep) {
             if (timer.current) clearInterval(timer.current);
-            localStorage.setItem(seenKey(profile.id), String(tasksCompleted));
+            localStorage.setItem(seenKey(bond.id), String(campaignStep));
             sfx.complete();
             setTimeout(() => setAdvancing(false), 800);
           } else {
@@ -98,7 +99,7 @@ export function WorldMap({
       if (timer.current) clearInterval(timer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [holdAnimation, tasksCompleted, profile?.id]);
+  }, [holdAnimation, campaignStep, bond?.id]);
 
   const states = nodeStates(world.levels, displayed);
   const currentIdx = states.indexOf("current");
