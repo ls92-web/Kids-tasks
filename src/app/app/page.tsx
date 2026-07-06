@@ -13,6 +13,7 @@ import { CompanionGuide } from "@/components/CompanionGuide";
 import { ChallengesPanel } from "@/components/ChallengesPanel";
 import { MagicLoader } from "@/components/MagicLoader";
 import { CelebrationOverlay, CelebrationData } from "@/components/CelebrationOverlay";
+import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
 import { companionMessages } from "@/lib/companion";
 import { Task, Reward, Profile, levelFromXp, companionLevel, todaysEvent } from "@/lib/game";
@@ -406,6 +407,7 @@ export default function DailyQuests() {
 
       <MysteryChest active={chestActive} onClose={() => setChestActive(false)} onReward={grantChest} />
       <CelebrationOverlay data={celebration} onClose={() => setCelebration(null)} />
+      <ChapterComplete />
     </div>
   );
 }

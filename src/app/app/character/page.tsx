@@ -256,7 +256,14 @@ export default function HeroHub() {
             {world.name}
           </span>
           {wProg.current
-            ? ` — next up: ${wProg.current.name} (${wProg.completed}/${wProg.total} levels cleared).`
+            ? (() => {
+                const milestone = world.levels.find(
+                  (l) => l.kind !== "quest" && l.requires >= wProg.current!.requires
+                );
+                return milestone?.kind === "final"
+                  ? ` — the ${milestone.name} awaits at the end of this chapter (${wProg.completed}/${wProg.total} steps).`
+                  : ` — next stop: ${milestone?.name ?? world.finale.name} (${wProg.completed}/${wProg.total} steps).`;
+              })()
             : " — chapter complete! The next world awaits."}
         </p>
         <WorldMap
