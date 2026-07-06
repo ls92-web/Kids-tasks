@@ -5,15 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
-import { ParticleField } from "@/components/ParticleField";
 import { HUD } from "@/components/HUD";
 import { ChildNav } from "@/components/ChildNav";
 import { MagicLoader } from "@/components/MagicLoader";
-import { Profile } from "@/lib/game";
+import { Profile, CompanionBond } from "@/lib/game";
 
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [companion, setCompanion] = useState<CompanionBond | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -23,11 +23,15 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         router.replace("/login");
         return;
       }
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", data.user.id)
-        .single();
+      const [{ data: p }, { data: bond }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", data.user.id).single(),
+        supabase
+          .from("companions")
+          .select("*")
+          .eq("child_id", data.user.id)
+          .eq("status", "active")
+          .maybeSingle(),
+      ]);
       if (!p) {
         router.replace("/login");
         return;
@@ -37,6 +41,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         return;
       }
       setProfile(p as Profile);
+      setCompanion((bond as CompanionBond) ?? null);
       setReady(true);
     });
   }, [router]);
@@ -46,10 +51,9 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <ThemeProvider initialProfile={profile}>
+    <ThemeProvider initialProfile={profile} initialCompanion={companion}>
       <div className="relative min-h-screen">
         <WorldBackground />
-        <ParticleField />
         <div className="relative z-10 pb-28">
           <HUD />
           <main className="mx-auto mt-5 w-[min(96%,900px)]">{children}</main>

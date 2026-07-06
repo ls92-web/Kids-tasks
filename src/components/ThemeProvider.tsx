@@ -1,13 +1,16 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { THEMES, ThemeConfig, ThemeId, Profile } from "@/lib/game";
+import { THEMES, ThemeConfig, ThemeId, Profile, CompanionBond } from "@/lib/game";
 
 interface ThemeCtx {
   theme: ThemeConfig;
   setTheme: (t: ThemeId) => void;
   profile: Profile | null;
   setProfile: (p: Profile) => void;
+  /** The child's active companion bond (null for parents / pre-login). */
+  companion: CompanionBond | null;
+  setCompanion: (c: CompanionBond | null) => void;
 }
 
 const Ctx = createContext<ThemeCtx>({
@@ -15,6 +18,8 @@ const Ctx = createContext<ThemeCtx>({
   setTheme: () => {},
   profile: null,
   setProfile: () => {},
+  companion: null,
+  setCompanion: () => {},
 });
 
 export function useWorld() {
@@ -23,12 +28,15 @@ export function useWorld() {
 
 export function ThemeProvider({
   initialProfile,
+  initialCompanion = null,
   children,
 }: {
   initialProfile: Profile | null;
+  initialCompanion?: CompanionBond | null;
   children: React.ReactNode;
 }) {
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
+  const [companion, setCompanion] = useState<CompanionBond | null>(initialCompanion);
   const [themeId, setThemeId] = useState<ThemeId>(initialProfile?.theme ?? "ninja");
 
   useEffect(() => {
@@ -49,6 +57,8 @@ export function ThemeProvider({
           setProfile(p);
           setThemeId(p.theme);
         },
+        companion,
+        setCompanion,
       }}
     >
       {children}

@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useWorld } from "./ThemeProvider";
 import { Companion } from "./Companion";
-import { PETS, levelFromXp } from "@/lib/game";
+import { PETS, companionLevel } from "@/lib/game";
 
-/* The quest-board guide: the child's chosen companion (real art, level-driven)
-   floating beside a speech bubble with personalized encouragement. */
+/* The quest-board guide: the child's bonded companion (real art, its own
+   level) floating beside a speech bubble with personalized encouragement. */
 export function CompanionGuide({ messages }: { messages: string[] }) {
-  const { profile } = useWorld();
+  const { profile, companion } = useWorld();
   const [shown, setShown] = useState(0);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
 
   if (!profile || messages.length === 0) return null;
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
-  const level = levelFromXp(profile.xp).level;
+  const level = companion ? companionLevel(companion.xp) : 1;
 
   return (
     <motion.div

@@ -6,10 +6,13 @@ import { useWorld } from "@/components/ThemeProvider";
 import { CompanionPortrait } from "@/components/CompanionPortrait";
 import { GameButton } from "@/components/GameButton";
 import { Input, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
-import { PETS, CHARACTER_CLASSES, Profile, levelFromXp } from "@/lib/game";
+import { Icon } from "@/components/Icon";
+import { PETS, CHARACTER_CLASSES, Profile, Family, levelFromXp } from "@/lib/game";
 
 export default function ChildrenPage() {
   const { profile } = useWorld();
+  const [family, setFamily] = useState<Family | null>(null);
+  const [copied, setCopied] = useState(false);
   const [children, setChildren] = useState<Profile[]>([]);
   const [username, setUsername] = useState("");
   const [nickname, setNickname] = useState("");
@@ -23,13 +26,21 @@ export default function ChildrenPage() {
   const load = useCallback(async () => {
     if (!profile) return;
     const supabase = createClient();
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("family_id", profile.family_id)
-      .eq("role", "child")
-      .order("created_at");
+    const [{ data }, { data: fam }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("family_id", profile.family_id)
+        .eq("role", "child")
+        .order("created_at"),
+      supabase
+        .from("families")
+        .select("id, name, crest, code")
+        .eq("id", profile.family_id)
+        .single(),
+    ]);
     setChildren((data as Profile[]) ?? []);
+    setFamily((fam as Family) ?? null);
   }, [profile]);
 
   useEffect(() => {
@@ -77,8 +88,40 @@ export default function ChildrenPage() {
     <div className="flex flex-col gap-5">
       <h1 className="text-display text-glow text-2xl font-black">Heroes</h1>
 
+      {/* the family code IS the invitation */}
+      {family && (
+        <SectionCard
+          title="Invite a hero"
+          subtitle="Your child opens the app, taps “Join with your Family Code”, and enters this code"
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(family.code);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              className="text-display cursor-pointer rounded-xl bg-black/30 px-6 py-3 text-2xl font-black tracking-[0.2em] text-[var(--gold)] transition-transform hover:scale-[1.03]"
+              title="Copy"
+            >
+              {family.code}
+            </button>
+            <p className="text-sm text-[var(--text-dim)]">
+              {copied ? (
+                <span className="font-bold text-[var(--success)]">Copied!</span>
+              ) : (
+                <>
+                  <Icon name="users" size={14} className="mr-1 inline" />
+                  {family.name} — they pick their own hero name, PIN and first companion
+                </>
+              )}
+            </p>
+          </div>
+        </SectionCard>
+      )}
+
       <SectionCard
-        title="Create a hero"
+        title="Or create a hero yourself"
         subtitle="They sign in with hero name + secret PIN — no email needed"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -219,6 +219,26 @@ export const TASK_TYPES = [
   { id: "other", label: "Other" },
 ] as const;
 
+/* ---------- Families ---------- */
+/* Crest choices for family creation (ids map to Icon names). */
+export const CRESTS = [
+  { id: "shield", label: "Shield of Dawn" },
+  { id: "sword", label: "Blade of Courage" },
+  { id: "flame", label: "Eternal Flame" },
+  { id: "star", label: "Guiding Star" },
+  { id: "lightning", label: "Storm Sigil" },
+  { id: "trophy", label: "Champion's Cup" },
+  { id: "book", label: "Tome of Wisdom" },
+  { id: "sparkle", label: "Spark of Magic" },
+] as const;
+
+export interface Family {
+  id: string;
+  name: string;
+  crest: string;
+  code: string;
+}
+
 export interface Profile {
   id: string;
   family_id: string;
@@ -297,7 +317,93 @@ export function petElement(id: string): (typeof ELEMENTS)[ElementId] & { id: Ele
 
 export type PetMood = "excited" | "happy" | "proud" | "sleepy" | "cheer";
 
-/* The four canonical evolution forms, gated by the hero's level. */
+/* ---------- Companion bonds (the Pokémon-starter model) ----------
+   A hero bonds with ONE companion at a time. It earns its own XP from every
+   approved quest and evolves on ITS level, not the hero's. At level 100 it
+   becomes a Legend (permanent Hero Hall) and only then can a new partner be
+   chosen. Locked companions = no bond row yet. */
+
+export interface CompanionBond {
+  id: string;
+  child_id: string;
+  species: string;
+  xp: number;
+  status: "active" | "legend";
+  bonded_at: string;
+  legend_at: string | null;
+}
+
+/* Total XP to reach companion level 100 — mirrors legend_xp_threshold() in SQL. */
+export const LEGEND_XP = 300960;
+
+/* Companion level uses the same curve as the hero but can reach 100. */
+export function companionLevel(xp: number): number {
+  let level = 1;
+  let remaining = xp;
+  while (level < 100 && remaining >= xpForNext(level)) {
+    remaining -= xpForNext(level);
+    level += 1;
+  }
+  return level;
+}
+
+/* How a locked companion joins the roster. Starters are free at first pick;
+   the rest unlock through meaningful progression. (Display + pick gating —
+   the celebrations are what make these feel earned.) */
+export type UnlockRule =
+  | { kind: "starter" }
+  | { kind: "world"; world: ThemeId; label: string }
+  | { kind: "heroLevel"; level: number }
+  | { kind: "quests"; count: number }
+  | { kind: "coins"; total: number };
+
+export const COMPANION_UNLOCKS: Record<string, UnlockRule> = {
+  dragon: { kind: "starter" },
+  fox: { kind: "starter" },
+  turtle: { kind: "starter" },
+  owl: { kind: "heroLevel", level: 10 },
+  forest: { kind: "quests", count: 25 },
+  wolf: { kind: "quests", count: 50 },
+  tiger: { kind: "heroLevel", level: 25 },
+  pirate: { kind: "coins", total: 1000 },
+  phoenix: { kind: "heroLevel", level: 40 },
+  ninja: { kind: "world", world: "ninja", label: "Complete Shadow Ninja Village" },
+  samurai: { kind: "world", world: "samurai", label: "Complete Legend of the Samurai" },
+  robot: { kind: "world", world: "speed", label: "Complete Speed Realm" },
+};
+
+export function unlockHint(rule: UnlockRule): string {
+  switch (rule.kind) {
+    case "starter": return "Ready to join you";
+    case "world": return rule.label;
+    case "heroLevel": return `Reach hero level ${rule.level}`;
+    case "quests": return `Complete ${rule.count} quests`;
+    case "coins": return `Earn ${rule.total} coins in total`;
+  }
+}
+
+/* worldsCompleted = how many chapter maps the hero has fully cleared. */
+export function speciesUnlocked(
+  species: string,
+  profile: Pick<Profile, "xp" | "tasks_completed" | "total_coins_earned">,
+  worldsCompleted: number
+): boolean {
+  const rule = COMPANION_UNLOCKS[species];
+  if (!rule) return false;
+  const heroLevel = levelFromXp(profile.xp).level;
+  switch (rule.kind) {
+    case "starter": return true;
+    case "world": {
+      const order: ThemeId[] = ["ninja", "samurai", "speed"];
+      return worldsCompleted > order.indexOf(rule.world);
+    }
+    case "heroLevel": return heroLevel >= rule.level;
+    case "quests": return profile.tasks_completed >= rule.count;
+    case "coins": return profile.total_coins_earned >= rule.total;
+  }
+}
+
+/* The four canonical evolution forms, gated by the COMPANION's level. */
 export const PET_FORMS = [
   { index: 0, name: "Baby", level: 1 },
   { index: 1, name: "Explorer", level: 20 },
@@ -305,10 +411,10 @@ export const PET_FORMS = [
   { index: 3, name: "Legend", level: 100 },
 ] as const;
 
-/* Current evolution form for a given hero level. */
-export function petForm(heroLevel: number): { index: number; name: string; level: number } {
+/* Current evolution form for a given companion level. */
+export function petForm(level: number): { index: number; name: string; level: number } {
   let form = PET_FORMS[0] as { index: number; name: string; level: number };
-  for (const f of PET_FORMS) if (heroLevel >= f.level) form = f;
+  for (const f of PET_FORMS) if (level >= f.level) form = f;
   return form;
 }
 

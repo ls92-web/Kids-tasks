@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
-import { ParticleField } from "@/components/ParticleField";
 import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
 
@@ -64,7 +63,6 @@ function LoginInner() {
   return (
     <div className="relative min-h-screen">
       <WorldBackground />
-      <ParticleField />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
@@ -179,7 +177,14 @@ function LoginInner() {
             </motion.form>
           </AnimatePresence>
 
-          {mode === "parent" && (
+          {mode === "hero" ? (
+            <p className="mt-5 text-center text-sm text-[var(--text-dim)]">
+              New hero?{" "}
+              <Link href="/join" className="font-bold text-[var(--accent-2)] hover:underline">
+                Join with your Family Code
+              </Link>
+            </p>
+          ) : (
             <p className="mt-5 text-center text-sm text-[var(--text-dim)]">
               First time here?{" "}
               <Link href="/signup" className="font-bold text-[var(--accent-2)] hover:underline">

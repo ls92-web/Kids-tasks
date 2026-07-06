@@ -9,11 +9,20 @@ import { Companion } from "@/components/Companion";
 import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
 import { sfx, soundsEnabled, setSoundsEnabled } from "@/lib/sound";
-import { PETS, THEMES, ThemeId, Profile, levelFromXp } from "@/lib/game";
+import {
+  PETS,
+  THEMES,
+  ThemeId,
+  Profile,
+  companionLevel,
+  petForm,
+  petElement,
+} from "@/lib/game";
+import { worldUnlocked, WORLD_MAPS } from "@/lib/worlds";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { profile, setProfile } = useWorld();
+  const { profile, setProfile, companion } = useWorld();
   const [nickname, setNickname] = useState(profile?.nickname ?? "");
   const [saved, setSaved] = useState(false);
   const [sounds, setSounds] = useState(true);
@@ -23,7 +32,8 @@ export default function SettingsPage() {
   }, []);
 
   if (!profile) return null;
-  const { level } = levelFromXp(profile.xp);
+  const cLevel = companion ? companionLevel(companion.xp) : 1;
+  const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
 
   async function update(fields: Partial<Profile>) {
     if (!profile) return;
@@ -54,13 +64,17 @@ export default function SettingsPage() {
       </button>
       <h1 className="text-display text-glow -mt-2 text-3xl font-black">Your Realm</h1>
 
-      {/* theme picker */}
+      {/* chapters — worlds unlock in order as the adventure progresses */}
       <section className="panel p-5">
-        <h2 className="text-display mb-3 text-lg font-black">Choose your world</h2>
+        <h2 className="text-display mb-1 text-lg font-black">Your chapters</h2>
+        <p className="mb-3 text-xs text-[var(--text-dim)]">
+          Complete a world&apos;s map to open the next chapter of your adventure
+        </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {(Object.keys(THEMES) as ThemeId[]).map((tid) => {
+          {(Object.keys(THEMES) as ThemeId[]).map((tid, i) => {
             const t = THEMES[tid];
             const active = profile.theme === tid;
+            const unlocked = worldUnlocked(tid, profile.tasks_completed);
             const previews: Record<ThemeId, string> = {
               ninja: "linear-gradient(160deg, #0c1430, #101c3f 60%, #1c2c5c)",
               samurai: "linear-gradient(160deg, #2c160c, #3d2012 60%, #5c3018)",
@@ -69,22 +83,36 @@ export default function SettingsPage() {
             return (
               <motion.button
                 key={tid}
-                whileHover={{ y: -4 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => update({ theme: tid })}
-                className={`relative cursor-pointer overflow-hidden rounded-2xl p-4 text-left transition-shadow ${
+                whileHover={unlocked ? { y: -4 } : {}}
+                whileTap={unlocked ? { scale: 0.96 } : {}}
+                onClick={() => unlocked && update({ theme: tid })}
+                disabled={!unlocked}
+                className={`relative overflow-hidden rounded-2xl p-4 text-left transition-shadow ${
                   active ? "ring-2 ring-[var(--accent)]" : ""
-                }`}
+                } ${unlocked ? "cursor-pointer" : "cursor-not-allowed"}`}
                 style={{
                   background: previews[tid],
                   boxShadow: active ? "0 0 26px -4px var(--glow)" : "0 8px 20px -10px rgba(0,0,0,0.7)",
+                  filter: unlocked ? "none" : "grayscale(0.7) brightness(0.6)",
                 }}
               >
+                <p className="text-display text-[10px] font-black uppercase tracking-wider text-white/60">
+                  Chapter {i + 1}
+                </p>
                 <p className="text-display text-base font-black text-white">{t.name}</p>
-                <p className="mt-0.5 text-xs text-white/70">{t.tagline}</p>
+                <p className="mt-0.5 text-xs text-white/70">
+                  {unlocked
+                    ? t.tagline
+                    : `Complete ${WORLD_MAPS[(Object.keys(THEMES) as ThemeId[])[i - 1]]?.name ?? "the previous world"} to unlock`}
+                </p>
                 {active && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-white/20">
                     <Icon name="check" size={14} className="text-white" />
+                  </span>
+                )}
+                {!unlocked && (
+                  <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-black/50">
+                    <Icon name="lock" size={13} className="text-white/70" />
                   </span>
                 )}
               </motion.button>
@@ -116,42 +144,24 @@ export default function SettingsPage() {
         </label>
       </section>
 
-      {/* pet companion */}
+      {/* companion bond — a lifelong partner, not a picker */}
       <section className="panel p-5">
         <h2 className="text-display mb-1 text-lg font-black">Your companion</h2>
-        <p className="mb-3 text-xs text-[var(--text-dim)]">
-          Choose the creature who travels with you. It grows as you complete quests.
-        </p>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {PETS.map((pet) => {
-            const chosen = profile.pet === pet.id;
-            return (
-              <motion.button
-                key={pet.id}
-                whileHover={{ y: -3, scale: 1.04 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => {
-                  sfx.complete();
-                  update({ pet: pet.id });
-                }}
-                className={`flex cursor-pointer flex-col items-center rounded-xl p-1.5 ${
-                  chosen ? "bg-white/10 ring-2 ring-[var(--accent)]" : ""
-                }`}
-                title={pet.species}
-              >
-                <Companion
-                  species={pet.id}
-                  level={chosen ? level : 1}
-                  size={56}
-                  element={pet.element}
-                  float={false}
-                />
-                <span className="text-display mt-0.5 text-[9px] font-bold text-[var(--text-dim)]">
-                  {pet.name}
-                </span>
-              </motion.button>
-            );
-          })}
+        <div className="flex items-center gap-4">
+          <Companion species={profile.pet} level={cLevel} size={72} element={petMeta.element} />
+          <div className="min-w-0 flex-1">
+            <p className="text-display font-black">
+              {petMeta.name}{" "}
+              <span className="text-xs font-bold" style={{ color: petElement(profile.pet).color }}>
+                LV {cLevel} — {petForm(cLevel).name} Form
+              </span>
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">
+              {petMeta.name} is your adventure partner. You&apos;ll journey together until they
+              become a <b className="text-[var(--gold)]">Legend</b> at level 100 — then a new
+              companion can join you. Visit the Hero Hall to see your whole collection.
+            </p>
+          </div>
         </div>
       </section>
 

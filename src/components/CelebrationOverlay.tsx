@@ -6,7 +6,7 @@ import { useWorld } from "./ThemeProvider";
 import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { sfx } from "@/lib/sound";
-import { rankName, levelFromXp } from "@/lib/game";
+import { rankName, levelFromXp, companionLevel } from "@/lib/game";
 
 export interface CelebrationData {
   coins: number;
@@ -39,7 +39,7 @@ export function CelebrationOverlay({
   data: CelebrationData | null;
   onClose: () => void;
 }) {
-  const { theme, profile } = useWorld();
+  const { theme, profile, companion } = useWorld();
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function CelebrationOverlay({
               >
                 <Companion
                   species={profile.pet}
-                  level={levelFromXp(profile.xp).level}
+                  level={companion ? companionLevel(companion.xp) : 1}
                   size={110}
                   float={false}
                 />

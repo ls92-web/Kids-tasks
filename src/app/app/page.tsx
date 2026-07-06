@@ -15,7 +15,7 @@ import { MagicLoader } from "@/components/MagicLoader";
 import { CelebrationOverlay, CelebrationData } from "@/components/CelebrationOverlay";
 import { MysteryChest } from "@/components/MysteryChest";
 import { companionMessages } from "@/lib/companion";
-import { Task, Reward, Profile, levelFromXp, todaysEvent } from "@/lib/game";
+import { Task, Reward, Profile, levelFromXp, companionLevel, todaysEvent } from "@/lib/game";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -28,7 +28,7 @@ function untilMidnight(): string {
 const STREAK_MILESTONES = [3, 7, 14, 30, 100];
 
 export default function DailyQuests() {
-  const { theme, profile, setProfile } = useWorld();
+  const { theme, profile, setProfile, companion } = useWorld();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [nextReward, setNextReward] = useState<Reward | null>(null);
   const [loading, setLoading] = useState(true);
@@ -257,7 +257,7 @@ export default function DailyQuests() {
             />
             {profile && (
               <div className="relative mx-auto w-fit">
-                <Companion species={profile.pet} level={levelFromXp(profile.xp).level} size={96} />
+                <Companion species={profile.pet} level={companion ? companionLevel(companion.xp) : 1} size={96} />
               </div>
             )}
             <h2 className="text-display text-glow relative mt-2 text-2xl font-black">
