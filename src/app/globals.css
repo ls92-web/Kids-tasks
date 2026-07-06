@@ -1,26 +1,236 @@
 @import "tailwindcss";
 
+/* ============================================================
+   THEME ENGINE — three complete worlds driven by CSS variables.
+   data-theme on <html> switches every color, glow, font & effect.
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-body: var(--font-nunito), system-ui, sans-serif;
+}
+
+/* ---------- Theme 1: Shadow Ninja Village ---------- */
+[data-theme="ninja"] {
+  --font-display: var(--font-ninja), sans-serif;
+  --bg-0: #060a18;
+  --bg-1: #0c1430;
+  --bg-2: #101c3f;
+  --surface: rgba(16, 26, 58, 0.72);
+  --surface-solid: #101a3a;
+  --surface-border: rgba(96, 140, 255, 0.22);
+  --text: #e8eeff;
+  --text-dim: #8fa0cc;
+  --accent: #4f8dff;
+  --accent-2: #8fd0ff;
+  --accent-deep: #2954c8;
+  --glow: rgba(79, 141, 255, 0.55);
+  --glow-soft: rgba(79, 141, 255, 0.18);
+  --gold: #ffd76a;
+  --danger: #ff6b8a;
+  --success: #59e3b3;
+  --petal: #ffb7d0;
+  --hud-blur: 18px;
+}
+
+/* ---------- Theme 2: Legend of the Samurai ---------- */
+[data-theme="samurai"] {
+  --font-display: var(--font-samurai), serif;
+  --bg-0: #1a0e08;
+  --bg-1: #2c160c;
+  --bg-2: #3d2012;
+  --surface: rgba(52, 28, 16, 0.74);
+  --surface-solid: #34200f;
+  --surface-border: rgba(255, 184, 92, 0.26);
+  --text: #ffefdb;
+  --text-dim: #c9a887;
+  --accent: #f0a132;
+  --accent-2: #ffd98a;
+  --accent-deep: #b56a12;
+  --glow: rgba(240, 161, 50, 0.55);
+  --glow-soft: rgba(240, 161, 50, 0.16);
+  --gold: #ffd76a;
+  --danger: #ff7a66;
+  --success: #9fdd7a;
+  --petal: #ffc46b;
+  --hud-blur: 14px;
+}
+
+/* ---------- Theme 3: Speed Realm ---------- */
+[data-theme="speed"] {
+  --font-display: var(--font-speed), sans-serif;
+  --bg-0: #051530;
+  --bg-1: #0a2a5e;
+  --bg-2: #0e3d7e;
+  --surface: rgba(10, 39, 92, 0.66);
+  --surface-solid: #0b2c66;
+  --surface-border: rgba(69, 227, 255, 0.30);
+  --text: #eafbff;
+  --text-dim: #8fc4e8;
+  --accent: #23d5ff;
+  --accent-2: #9ff3ff;
+  --accent-deep: #0d8fd0;
+  --glow: rgba(35, 213, 255, 0.6);
+  --glow-soft: rgba(35, 213, 255, 0.18);
+  --gold: #ffe066;
+  --danger: #ff7a9c;
+  --success: #6cf7a8;
+  --petal: #7df3ff;
+  --hud-blur: 20px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-surface-solid: var(--surface-solid);
+  --color-ink: var(--text);
+  --color-ink-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-deep: var(--accent-deep);
+  --color-gold: var(--gold);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-0);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Reduced animation intensity — set on <html> from settings */
+[data-anim="reduced"] .fx-heavy {
+  display: none !important;
+}
+[data-anim="minimal"] .fx-heavy,
+[data-anim="minimal"] .fx-light {
+  display: none !important;
+}
+[data-anim="minimal"] * {
+  /* Stop looping/decorative animations entirely — never speed them up, or
+     they cycle ~1000x/sec and read as violent shaking. */
+  animation: none !important;
+  transition-duration: 0.08s !important;
+}
+
+/* ---------- Shared surfaces ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(var(--hud-blur));
+  -webkit-backdrop-filter: blur(var(--hud-blur));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 18px 40px -18px rgba(0, 0, 0, 0.65);
+}
+
+.panel-glow {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px var(--glow-soft),
+    0 0 34px -6px var(--glow),
+    0 18px 40px -18px rgba(0, 0, 0, 0.65);
+}
+
+.text-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+}
+
+.text-glow {
+  text-shadow: 0 0 18px var(--glow), 0 0 42px var(--glow-soft);
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes drift-x {
+  0% { transform: translateX(-6%); }
+  100% { transform: translateX(6%); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes scanline {
+  0% { top: -8%; }
+  100% { top: 104%; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.6; }
+}
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pop-seal {
+  0% { transform: scale(0) rotate(-30deg); }
+  70% { transform: scale(1.25) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes chest-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-6deg); }
+  40% { transform: rotate(5deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(2deg); }
+}
+
+.animate-floaty { animation: floaty 5s ease-in-out infinite; }
+.animate-rise { animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-pulse-glow { animation: pulse-glow 2.6s ease-in-out infinite; }
+
+.companion-blink {
+  transform-origin: 48px 47px;
+  animation: blink 4.6s ease-in-out infinite;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--text) 40%,
+    var(--accent-2) 50%,
+    var(--text) 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Slim scrollbars that match the world */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 999px;
 }
