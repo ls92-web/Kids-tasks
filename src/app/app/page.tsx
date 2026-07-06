@@ -17,6 +17,7 @@ import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
 import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
+import { sfx } from "@/lib/sound";
 import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
 import { campaignStep, campaignWorldIndex, WORLDS_PER_CAMPAIGN } from "@/lib/worlds";
 
@@ -242,6 +243,13 @@ export default function DailyQuests() {
                 World {campaignWorldIndex(campaignStep(companion)) + 1} of {WORLDS_PER_CAMPAIGN}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+              <Link
+                href="/app/campaign"
+                onClick={() => sfx.click()}
+                className="text-display flex items-center gap-1 text-[11px] font-bold text-[var(--accent-2)] hover:underline"
+              >
+                Campaign <Icon name="arrowRight" size={11} />
+              </Link>
             </div>
             <WorldMap
               theme={profile.theme}

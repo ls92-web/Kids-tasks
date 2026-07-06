@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
@@ -300,6 +301,12 @@ export default function HeroHub() {
             World {worldNo} of {WORLDS_PER_CAMPAIGN}
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+          <Link
+            href="/app/campaign"
+            className="text-display flex items-center gap-1 text-xs font-bold text-[var(--accent-2)] hover:underline"
+          >
+            View campaign <Icon name="arrowRight" size={12} />
+          </Link>
         </div>
         <p className="mb-3 text-sm text-[var(--text-dim)]">
           {inFinaleWorld(step) && finaleWorld ? (
