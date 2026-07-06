@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { petForm, petElement, ELEMENTS, ElementId } from "@/lib/game";
+import { companionArt, companionFormArt } from "@/lib/assets";
 
 /* The one reusable companion renderer for the whole app.
    It shows the official premium art for a creature and AUTOMATICALLY picks the
-   correct evolution image from the hero's level:
+   correct evolution image from the companion's level:
      Baby (Lv 1) → Explorer (Lv 20) → Hero (Lv 50) → Legend (Lv 100)
-   Art lives in /public/companions/<species>-<form>.png. A soft elemental aura
-   glows behind it and intensifies with each form. No vector/CSS creatures. */
+   All paths come from the asset pipeline (src/lib/assets.ts) — never built
+   here. A soft elemental aura glows behind it and intensifies with each form. */
 
 const AURA_OPACITY = [0.14, 0.22, 0.32, 0.46];
 const hex2 = (o: number) => Math.round(o * 255).toString(16).padStart(2, "0");
@@ -30,8 +31,9 @@ export function Companion({
 }) {
   const form = Math.max(0, Math.min(3, petForm(level).index));
   const elColor = element ? ELEMENTS[element].color : petElement(species).color;
-  const [failed, setFailed] = useState(false);
-  const src = `/companions/${species}-${form}.png`;
+  const [fails, setFails] = useState(0);
+  // failed high-form art falls back to the baby form before hiding entirely
+  const src = fails === 0 ? companionArt(species, level) : companionFormArt(species, 1);
 
   return (
     <div
@@ -67,14 +69,14 @@ export function Companion({
           </div>
         ))}
 
-      {!failed && (
+      {fails < 2 && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt=""
           width={size}
           height={size}
-          onError={() => setFailed(true)}
+          onError={() => setFails((f) => f + 1)}
           className="absolute inset-0 h-full w-full object-contain"
           style={{ filter: `drop-shadow(0 0 10px ${elColor}66)` }}
         />

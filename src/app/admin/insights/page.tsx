@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { SectionCard, EmptyNote } from "@/components/admin/ui";
 import { MagicLoader } from "@/components/MagicLoader";
@@ -138,7 +138,7 @@ export default function InsightsPage() {
               <SectionCard title="" subtitle="">
                 {/* header */}
                 <div className="-mt-2 mb-4 flex items-center gap-3">
-                  <CompanionPortrait species={ins.profile.pet} size={48} />
+                  <Portrait species={ins.profile.pet} size={48} />
                   <div className="flex-1">
                     <p className="text-display text-lg font-black">{ins.profile.nickname}</p>
                     <p className="text-xs text-[var(--text-dim)]">Level {level}</p>

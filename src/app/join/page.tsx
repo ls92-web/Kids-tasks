@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
 import { Companion } from "@/components/Companion";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { PETS, ELEMENTS, COMPANION_UNLOCKS } from "@/lib/game";
@@ -273,7 +273,7 @@ function JoinInner() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <CompanionPortrait species={p.id} size={44} />
+                        <Portrait species={p.id} size={44} />
                         <div className="text-left">
                           <p className="text-display text-xl font-black leading-tight">{p.name}</p>
                           <p className="text-xs text-[var(--text-dim)]">

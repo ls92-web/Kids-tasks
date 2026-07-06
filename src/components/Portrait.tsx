@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { petElement } from "@/lib/game";
+import { companionPortraitArt, companionFormArt } from "@/lib/assets";
 
 /* A child's avatar = their companion's premium portrait, framed in a circular
-   medallion ringed in the creature's elemental color. Replaces the old SVG
-   animal crest. Art: /public/companions/<species>-portrait.png. */
-export function CompanionPortrait({
+   medallion ringed in the creature's elemental color. All art paths come from
+   the asset pipeline (src/lib/assets.ts). */
+export function Portrait({
   species,
   size = 52,
   className = "",
@@ -19,7 +20,7 @@ export function CompanionPortrait({
 }) {
   const el = petElement(species);
   const [failed, setFailed] = useState(false);
-  const src = failed ? `/companions/${species}-0.png` : `/companions/${species}-portrait.png`;
+  const src = failed ? companionFormArt(species, 1) : companionPortraitArt(species);
 
   return (
     <div className={`relative inline-block shrink-0 ${className}`} style={{ width: size, height: size }}>
@@ -44,3 +45,6 @@ export function CompanionPortrait({
     </div>
   );
 }
+
+/** @deprecated legacy alias — use <Portrait /> */
+export const CompanionPortrait = Portrait;

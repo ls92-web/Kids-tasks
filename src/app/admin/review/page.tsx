@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { GameButton } from "@/components/GameButton";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { SectionCard, EmptyNote } from "@/components/admin/ui";
 
@@ -145,7 +145,7 @@ export default function ReviewPage() {
                   <div className="p-4">
                     {/* child + task */}
                     <div className="flex items-center gap-2.5">
-                      <CompanionPortrait species={s.profiles.pet} size={38} />
+                      <Portrait species={s.profiles.pet} size={38} />
                       <div className="min-w-0 flex-1">
                         <p className="text-display truncate font-bold">{s.tasks.title}</p>
                         <p className="text-xs text-[var(--text-dim)]">

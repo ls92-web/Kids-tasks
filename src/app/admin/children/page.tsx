@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { GameButton } from "@/components/GameButton";
 import { Input, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
@@ -164,7 +164,7 @@ export default function ChildrenPage() {
                 pet === p.id ? "ring-2 ring-[var(--accent)]" : ""
               }`}
             >
-              <CompanionPortrait species={p.id} size={44} ring={pet === p.id} />
+              <Portrait species={p.id} size={44} ring={pet === p.id} />
             </button>
           ))}
         </div>
@@ -194,7 +194,7 @@ export default function ChildrenPage() {
               return (
                 <div key={c.id} className="rounded-xl bg-black/20 p-4">
                   <div className="flex items-center gap-3">
-                    <CompanionPortrait species={c.pet} size={44} />
+                    <Portrait species={c.pet} size={44} />
                     <div className="min-w-0 flex-1">
                       <p className="text-display font-bold">{c.nickname}</p>
                       <p className="text-xs text-[var(--text-dim)]">

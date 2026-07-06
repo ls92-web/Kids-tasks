@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { XPBar } from "@/components/XPBar";
 import { Icon } from "@/components/Icon";
 import { EmptyNote } from "@/components/admin/ui";
@@ -92,7 +92,7 @@ export default function AdminOverview() {
                 className="panel p-4"
               >
                 <div className="flex items-center gap-3">
-                  <CompanionPortrait species={c.pet} size={52} />
+                  <Portrait species={c.pet} size={52} />
                   <div className="min-w-0 flex-1">
                     <p className="text-display truncate font-bold">{c.nickname}</p>
                     <p className="text-xs font-semibold text-[var(--accent-2)]">

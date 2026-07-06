@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useWorld } from "@/components/ThemeProvider";
 import { Companion } from "@/components/Companion";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
+import { WorldThumbnail } from "@/components/WorldThumbnail";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { PETS, ELEMENTS, companionLevel, petElement } from "@/lib/game";
@@ -180,46 +180,15 @@ function ChapterCard({
       }
     >
       <div className="flex items-stretch">
-        {/* world thumbnail */}
-        <div className="relative w-32 shrink-0 overflow-hidden sm:w-44">
-          {chapter.map ? (
-            <Image
-              src={chapter.map}
-              alt={chapter.name}
-              fill
-              sizes="176px"
-              className="object-cover"
-              style={locked ? { filter: "grayscale(0.85) brightness(0.5)" } : undefined}
-            />
-          ) : (
-            // the finale world has no map yet — it wears its companion's colors
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(150deg, ${chapter.accent}55, ${chapter.accent}11 55%, rgba(0,0,0,0.5)), radial-gradient(80% 80% at 30% 20%, ${chapter.accent}33, transparent)`,
-                filter: locked ? "grayscale(0.6) brightness(0.6)" : undefined,
-              }}
-            >
-              <div className="grid h-full w-full place-items-center">
-                <span style={{ color: locked ? "rgba(255,255,255,0.35)" : chapter.accent }}>
-                  <Icon name={chapter.trial.icon} size={40} filled />
-                </span>
-              </div>
-            </div>
-          )}
-          {/* world number badge */}
-          <span
-            className="text-display absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full text-[11px] font-black text-white"
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
-          >
-            {chapter.index + 1}
-          </span>
-          {locked && (
-            <span className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full bg-black/55">
-              <Icon name="lock" size={12} className="text-white/80" />
-            </span>
-          )}
-        </div>
+        <WorldThumbnail
+          map={chapter.map}
+          name={chapter.name}
+          accent={chapter.accent}
+          icon={chapter.trial.icon}
+          locked={locked}
+          index={chapter.index + 1}
+          className="w-32 shrink-0 sm:w-44"
+        />
 
         {/* world story */}
         <div className="min-w-0 flex-1 p-4">
@@ -251,7 +220,7 @@ function ChapterCard({
               className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold"
               style={{ color: locked ? "var(--text-dim)" : gold }}
             >
-              <CompanionPortrait species={species} size={16} />
+              <Portrait species={species} size={16} />
               <span>{petName}&apos;s own world — only they can take you here</span>
             </div>
           )}

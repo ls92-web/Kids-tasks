@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { CompanionPortrait } from "@/components/CompanionPortrait";
+import { Portrait } from "@/components/Portrait";
 import { Companion } from "@/components/Companion";
 import { XPBar } from "@/components/XPBar";
 import { WorldMap } from "@/components/WorldMap";
@@ -142,7 +142,7 @@ export default function HeroHub() {
           style={{ background: "radial-gradient(60% 100% at 50% 0%, var(--glow-soft), transparent)" }}
         />
         <div className="relative mx-auto w-fit animate-floaty">
-          <CompanionPortrait species={profile.pet} size={120} />
+          <Portrait species={profile.pet} size={120} />
         </div>
         <h1 className="text-display text-glow mt-3 text-3xl font-black">{profile.nickname}</h1>
         <p className="text-display mt-0.5 text-sm font-bold text-[var(--accent-2)]">
@@ -438,7 +438,7 @@ export default function HeroHub() {
                     key={h.id}
                     className={`panel flex shrink-0 flex-col items-center gap-1 px-4 py-3 ${isMe ? "panel-glow" : ""}`}
                   >
-                    <CompanionPortrait species={h.pet} size={44} />
+                    <Portrait species={h.pet} size={44} />
                     <span className="text-display max-w-[80px] truncate text-xs font-bold">
                       {isMe ? "You" : h.nickname}
                     </span>

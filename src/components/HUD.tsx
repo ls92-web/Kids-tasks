@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useWorld } from "./ThemeProvider";
-import { CompanionPortrait } from "./CompanionPortrait";
+import { Portrait } from "./Portrait";
 import { XPBar } from "./XPBar";
 import { Icon } from "./Icon";
 import { sfx } from "@/lib/sound";
@@ -24,7 +24,7 @@ export function HUD() {
         onClick={() => sfx.click()}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
-        <CompanionPortrait species={profile.pet} size={52} />
+        <Portrait species={profile.pet} size={52} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-display truncate text-base font-bold">{profile.nickname}</span>
