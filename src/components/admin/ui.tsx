@@ -124,7 +124,8 @@ export function AdminButton({
     md: "min-h-[42px] gap-2 px-4 text-sm",
   };
   const variants: Record<string, string> = {
-    primary: "bg-[var(--accent)] text-white hover:brightness-110",
+    primary:
+      "text-white [background:linear-gradient(160deg,var(--accent),var(--accent-deep))] hover:brightness-110",
     subtle: "bg-black/25 text-[var(--text)] hover:bg-black/35",
     ghost:
       "border border-[var(--surface-border)] text-[var(--text-dim)] hover:bg-black/25 hover:text-[var(--text)]",
@@ -137,7 +138,7 @@ export function AdminButton({
       title={title}
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
-      className={`text-display inline-flex select-none items-center justify-center rounded-xl font-bold transition-[background,filter,color] disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`text-display inline-flex select-none items-center justify-center rounded-xl font-bold transition-[background,filter,color,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
         disabled ? "" : "cursor-pointer"
       } ${sizes[size]} ${variants[variant]} ${className}`}
     >

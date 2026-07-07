@@ -24,6 +24,7 @@ export function Callout({
   const t = TONES[tone];
   return (
     <div
+      role={tone === "error" ? "alert" : "status"}
       className={`flex items-center gap-2.5 rounded-xl bg-black/25 px-4 py-3 text-sm font-bold ${className}`}
       style={{ color: t.color, boxShadow: `inset 0 0 0 1px ${t.color}33` }}
     >

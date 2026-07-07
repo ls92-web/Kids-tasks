@@ -31,6 +31,9 @@ export function VerifyOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={theme.verifyTitle}
           className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-md"
         >
           <div className="flex flex-col items-center px-6">

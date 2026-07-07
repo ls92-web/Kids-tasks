@@ -75,7 +75,12 @@ export function ChapterComplete() {
   }
 
   return (
-    <div className="fixed inset-0 z-[85] grid place-items-center overflow-hidden bg-black/85 p-4 backdrop-blur-sm">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`World ${worldNo} complete`}
+      className="fixed inset-0 z-[85] grid place-items-center overflow-hidden bg-black/85 p-4 backdrop-blur-sm"
+    >
       {/* golden confetti — a completed world deserves it */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {Array.from({ length: 26 }).map((_, i) => (

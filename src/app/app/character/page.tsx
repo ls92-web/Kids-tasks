@@ -44,6 +44,7 @@ import {
 } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
 import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
+import { useEscape } from "@/lib/a11y";
 
 interface Ach {
   key: string;
@@ -270,7 +271,7 @@ export default function HeroHub() {
                     <p className="text-display mt-1.5 text-xs font-black text-[var(--gold)]">
                       {p.name}
                     </p>
-                    <p className="text-[9px] font-bold text-[var(--text-dim)]">
+                    <p className="text-[10px] font-bold text-[var(--text-dim)]">
                       {fw?.name ?? "Campaign"} —{" "}
                       {b.legend_at ? new Date(b.legend_at).toLocaleDateString() : "complete"}
                     </p>
@@ -307,12 +308,12 @@ export default function HeroHub() {
                 }
               >
                 {isLegend && (
-                  <span className="text-display absolute right-1.5 top-1.5 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-[var(--gold)]">
+                  <span className="text-display absolute right-1.5 top-1.5 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--gold)]">
                     Legend
                   </span>
                 )}
                 {isActive && (
-                  <span className="text-display absolute right-1.5 top-1.5 rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider" style={{ color: el.color }}>
+                  <span className="text-display absolute right-1.5 top-1.5 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider" style={{ color: el.color }}>
                     Partner
                   </span>
                 )}
@@ -328,7 +329,7 @@ export default function HeroHub() {
                 <p className={`text-display mt-1 text-xs font-black ${bond ? "" : "text-[var(--text-dim)]"}`}>
                   {bond || awake ? p.name : "???"}
                 </p>
-                <p className="text-[9px] font-bold leading-tight text-[var(--text-dim)]">
+                <p className="text-[10px] font-bold leading-tight text-[var(--text-dim)]">
                   {isLegend
                     ? "Completed"
                     : isActive
@@ -430,6 +431,7 @@ export default function HeroHub() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.35, ease: EASE_OUT, delay: stagger(i) }}
+                whileHover={unlockedAt ? { y: -3 } : undefined}
                 className="panel relative flex flex-col items-center p-3.5 text-center"
                 style={
                   unlockedAt
@@ -438,7 +440,7 @@ export default function HeroHub() {
                 }
               >
                 <span
-                  className="text-display absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider"
+                  className="text-display absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
                   style={{ color: rarity.color, background: "rgba(0,0,0,0.4)" }}
                 >
                   {rarity.label}
@@ -474,7 +476,7 @@ export default function HeroHub() {
                         style={{ width: `${pct}%`, background: rarity.color, opacity: 0.8 }}
                       />
                     </div>
-                    <p className="mt-0.5 text-[9px] font-bold text-[var(--text-dim)]">
+                    <p className="mt-0.5 text-[10px] font-bold text-[var(--text-dim)]">
                       {progress}/{badge.target}
                     </p>
                   </div>
@@ -563,6 +565,7 @@ function HallDetail({
   onClose: () => void;
 }) {
   const meta = PETS.find((p) => p.id === species) ?? PETS[0];
+  useEscape(true, onClose);
   const el = ELEMENTS[meta.element];
   const bond = bonds.find((b) => b.species === species);
   const activeBond = bonds.find((b) => b.status === "active");
@@ -611,6 +614,9 @@ function HallDetail({
   return (
     <motion.div
       {...overlayFade}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${meta.name} — companion details`}
       className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -799,7 +805,7 @@ function HallDetail({
 function PlaqueStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-black/25 px-2.5 py-1.5">
-      <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-dim)]">{label}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">{label}</p>
       <p className="text-display text-sm font-black text-[var(--gold)]">{value}</p>
     </div>
   );

@@ -41,10 +41,12 @@ export function HUD() {
         <Link
           href="/app/settings"
           onClick={() => sfx.click()}
-          className="grid h-9 w-9 place-items-center rounded-xl bg-black/25 text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+          className="group grid h-10 w-10 place-items-center rounded-xl bg-black/25 text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
           aria-label="Settings"
         >
-          <Icon name="gear" size={18} />
+          <span className="transition-transform duration-300 group-hover:rotate-90">
+            <Icon name="gear" size={18} />
+          </span>
         </Link>
       </div>
     </div>

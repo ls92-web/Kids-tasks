@@ -230,12 +230,12 @@ function JoinInner() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-display text-lg font-black">{p.name}</span>
                           <span
-                            className="text-display rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
+                            className="text-display rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
                             style={{ color: el.color, background: "rgba(0,0,0,0.35)" }}
                           >
                             {el.label}
                           </span>
-                          <span className="text-display rounded-md bg-black/35 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[var(--accent-2)]">
+                          <span className="text-display rounded-md bg-black/35 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--accent-2)]">
                             {p.personality}
                           </span>
                         </div>

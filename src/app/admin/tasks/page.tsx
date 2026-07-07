@@ -163,6 +163,7 @@ export default function TasksAdmin() {
               {(Object.keys(DIFFICULTY) as Difficulty[]).map((d) => (
                 <button
                   key={d}
+                  aria-pressed={form.difficulty === d}
                   onClick={() => setDifficulty(d)}
                   className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold capitalize transition-colors ${
                     form.difficulty === d
@@ -243,8 +244,9 @@ export default function TasksAdmin() {
                 </span>
                 <button
                   onClick={() => removeTask(t.id)}
-                  className="shrink-0 cursor-pointer text-[var(--text-dim)] transition-colors hover:text-[var(--danger)]"
+                  className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--danger)]"
                   title="Delete quest"
+                  aria-label={`Delete quest: ${t.title}`}
                 >
                   <Icon name="x" size={16} />
                 </button>

@@ -182,6 +182,7 @@ export default function SettingsPage() {
           {(["full", "reduced", "minimal"] as const).map((v) => (
             <button
               key={v}
+              aria-pressed={profile.animation_intensity === v}
               onClick={() => update({ animation_intensity: v })}
               className={`text-display flex-1 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-bold capitalize transition-all ${
                 profile.animation_intensity === v
@@ -216,6 +217,7 @@ export default function SettingsPage() {
           ].map((o) => (
             <button
               key={String(o.v)}
+              aria-pressed={sounds === o.v}
               onClick={() => {
                 setSounds(o.v);
                 setSoundsEnabled(o.v);

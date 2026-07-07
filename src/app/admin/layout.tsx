@@ -101,19 +101,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    aria-label={count > 0 ? `${item.label} — ${count} waiting` : undefined}
                     className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
                       active
-                        ? "bg-[var(--accent)] text-white"
+                        ? "text-white"
                         : "text-[var(--text-dim)] hover:bg-black/25 hover:text-[var(--text)]"
                     }`}
+                    style={
+                      active
+                        ? { background: "linear-gradient(160deg, var(--accent), var(--accent-deep))" }
+                        : undefined
+                    }
                   >
                     <Icon name={item.icon} size={17} />
                     <span className="text-display flex-1">{item.label}</span>
                     {count > 0 && (
                       <span
-                        className={`text-display grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-black ${
-                          active ? "bg-white/25 text-white" : "bg-[var(--accent)] text-white"
+                        aria-hidden
+                        className={`text-display grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-black text-white ${
+                          active ? "bg-white/25" : ""
                         }`}
+                        style={
+                          active
+                            ? undefined
+                            : { background: "linear-gradient(160deg, var(--accent), var(--accent-deep))" }
+                        }
                       >
                         {count}
                       </span>

@@ -16,7 +16,14 @@ export function XPBar({ xp, compact = false }: { xp: number; compact?: boolean }
           </span>
         </div>
       )}
-      <div className="relative h-3 overflow-hidden rounded-full bg-black/40 [box-shadow:inset_0_2px_4px_rgba(0,0,0,0.6)]">
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={needed}
+        aria-valuenow={into}
+        aria-label={`Level ${level} — ${into} of ${needed} XP`}
+        className="relative h-3 overflow-hidden rounded-full bg-black/40 [box-shadow:inset_0_2px_4px_rgba(0,0,0,0.6)]"
+      >
         <motion.div
           className="h-full rounded-full"
           style={{

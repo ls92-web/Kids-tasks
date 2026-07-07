@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { THEMES, ThemeConfig, ThemeId, Profile, CompanionBond } from "@/lib/game";
 
 interface ThemeCtx {
@@ -61,7 +62,8 @@ export function ThemeProvider({
         setCompanion,
       }}
     >
-      {children}
+      {/* respect the OS reduced-motion preference in every Framer animation */}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </Ctx.Provider>
   );
 }

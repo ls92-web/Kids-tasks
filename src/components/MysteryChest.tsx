@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
+import { useEscape } from "@/lib/a11y";
 
 interface ChestReward {
   kind: string;
@@ -34,6 +35,7 @@ export function MysteryChest({
   const [reward, setReward] = useState<ChestReward | null>(null);
   const [error, setError] = useState("");
   const rolledRef = useRef(false);
+  useEscape(active && phase === "done", onClose);
 
   useEffect(() => {
     if (!active) return;
@@ -77,6 +79,9 @@ export function MysteryChest({
       {active && (
         <motion.div
           {...overlayFade}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mystery chest"
           className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
           onClick={() => phase === "done" && onClose()}
         >
@@ -100,7 +105,7 @@ export function MysteryChest({
                     rotate: i * 47,
                   }}
                   transition={{ duration: 1.5, delay: i * 0.03, ease: EASE_OUT }}
-                  className="absolute grid h-4 w-4 place-items-center rounded-full text-[9px] font-black text-[#4d3600]"
+                  className="absolute grid h-4 w-4 place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
                   style={{
                     background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
                     boxShadow: "0 0 12px rgba(255,215,106,0.7)",

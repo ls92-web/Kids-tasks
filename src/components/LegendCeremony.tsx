@@ -145,7 +145,12 @@ export function LegendCeremony({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/95 p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Legend Ceremony"
+      className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/95 p-4"
+    >
       {/* the darkness itself — deepens on entry, returns for the fade home */}
       <motion.div
         className="pointer-events-none absolute inset-0 bg-black"
@@ -354,7 +359,7 @@ export function LegendCeremony({
                         <Companion species={p.id} level={1} size={64} float={false} interactive />
                         <span className="text-display mt-1 text-xs font-black">{p.name}</span>
                         <span
-                          className="text-[9px] font-bold"
+                          className="text-[10px] font-bold"
                           style={{ color: ELEMENTS[p.element].color }}
                         >
                           {ELEMENTS[p.element].label}
@@ -370,7 +375,7 @@ export function LegendCeremony({
                         <div className="grayscale">
                           <Companion species={p.id} level={1} size={64} float={false} />
                         </div>
-                        <span className="text-[9px] font-bold text-[var(--text-dim)]">
+                        <span className="text-[10px] font-bold text-[var(--text-dim)]">
                           {unlockHint(COMPANION_UNLOCKS[p.id])}
                         </span>
                       </div>

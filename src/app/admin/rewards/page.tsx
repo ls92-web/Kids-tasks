@@ -221,7 +221,9 @@ export default function RewardsAdmin() {
                 </div>
                 <button
                   onClick={() => toggleReward(r)}
-                  className={`text-display shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-[10px] font-bold uppercase ${
+                  aria-pressed={r.available}
+                  aria-label={`${r.name}: ${r.available ? "visible to heroes" : "hidden"} — tap to toggle`}
+                  className={`text-display min-h-[32px] shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-[10px] font-bold uppercase ${
                     r.available ? "text-[var(--success)]" : "text-[var(--text-dim)]"
                   }`}
                   style={{ background: "rgba(0,0,0,0.3)" }}
@@ -230,7 +232,8 @@ export default function RewardsAdmin() {
                 </button>
                 <button
                   onClick={() => removeReward(r.id)}
-                  className="shrink-0 cursor-pointer text-[var(--text-dim)] transition-colors hover:text-[var(--danger)]"
+                  className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--danger)]"
+                  aria-label={`Delete reward: ${r.name}`}
                 >
                   <Icon name="x" size={16} />
                 </button>

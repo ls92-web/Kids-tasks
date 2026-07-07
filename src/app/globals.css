@@ -122,6 +122,28 @@ body {
   transition-duration: 0.08s !important;
 }
 
+/* The OS-level accessibility preference always wins: treat
+   prefers-reduced-motion exactly like the in-app "minimal" setting.
+   (Framer Motion honors it too via MotionConfig reducedMotion="user".) */
+@media (prefers-reduced-motion: reduce) {
+  .fx-heavy,
+  .fx-light {
+    display: none !important;
+  }
+  * {
+    animation: none !important;
+    transition-duration: 0.08s !important;
+  }
+}
+
+/* Keyboard focus is always visible, in the world's own color. Zero-specificity
+   :where() so inputs that draw their own focus glow can keep it. */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 /* ---------- Shared surfaces ---------- */
 .panel {
   background: var(--surface);

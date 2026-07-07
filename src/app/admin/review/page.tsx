@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
+import { EASE_OUT } from "@/lib/motion";
 
 interface PendingSubmission {
   id: string;
@@ -122,7 +123,10 @@ export default function ReviewPage() {
       <div className="flex items-center gap-2.5">
         <h1 className="text-display text-2xl font-black">Review Queue</h1>
         {subs.length > 0 && (
-          <span className="text-display grid h-6 min-w-6 place-items-center rounded-full bg-[var(--accent)] px-2 text-xs font-black text-white">
+          <span
+            className="text-display grid h-6 min-w-6 place-items-center rounded-full px-2 text-xs font-black text-white"
+            style={{ background: "linear-gradient(160deg, var(--accent), var(--accent-deep))" }}
+          >
             {subs.length}
           </span>
         )}
@@ -133,14 +137,21 @@ export default function ReviewPage() {
         subtitle="The AI recommends — you decide. Nothing is awarded until you approve."
       >
         {subs.length === 0 ? (
-          <EmptyNote>Nothing to review right now.</EmptyNote>
+          <EmptyNote>All caught up — nothing needs you right now.</EmptyNote>
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <AnimatePresence initial={false} mode="popLayout">
             {subs.map((s) => {
               const v = s.ai_verdict;
               const confidence = typeof v?.confidence === "number" ? v.confidence : null;
               return (
-                <div key={s.id} className="overflow-hidden rounded-xl bg-black/25">
+                <motion.div
+                  key={s.id}
+                  layout
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.25, ease: EASE_OUT }}
+                  className="overflow-hidden rounded-xl bg-black/25"
+                >
                   {s.signedUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.signedUrl} alt="proof" className="max-h-56 w-full object-cover" />
@@ -208,7 +219,7 @@ export default function ReviewPage() {
                     </div>
 
                     {/* actions — Approve leads, the rest recede */}
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <AdminButton
                         className="flex-1"
                         disabled={busy === s.id}
@@ -236,9 +247,10 @@ export default function ReviewPage() {
                       </AdminButton>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
+            </AnimatePresence>
           </div>
         )}
       </SectionCard>
@@ -248,11 +260,18 @@ export default function ReviewPage() {
         subtitle="Coins already spent — mark granted once delivered in real life"
       >
         {redemptions.length === 0 ? (
-          <EmptyNote>No claimed treasures waiting.</EmptyNote>
+          <EmptyNote>No claimed rewards waiting.</EmptyNote>
         ) : (
           <div className="flex flex-col gap-2">
+            <AnimatePresence initial={false} mode="popLayout">
             {redemptions.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+              <motion.div
+                key={r.id}
+                layout
+                exit={{ opacity: 0, x: 24 }}
+                transition={{ duration: 0.25, ease: EASE_OUT }}
+                className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3"
+              >
                 <Icon name="gift" size={18} className="shrink-0 text-[var(--gold)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{r.reward_name}</p>
@@ -263,8 +282,9 @@ export default function ReviewPage() {
                 <AdminButton size="sm" onClick={() => grant(r)}>
                   <Icon name="check" size={14} /> Mark granted
                 </AdminButton>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </SectionCard>

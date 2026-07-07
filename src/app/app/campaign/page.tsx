@@ -143,7 +143,7 @@ function ChapterCard({
               {name}
             </h2>
             <span
-              className="text-display rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
+              className="text-display rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
               style={{
                 color:
                   state === "completed"

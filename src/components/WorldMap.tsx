@@ -183,7 +183,10 @@ export function WorldMap({
           finaleIcon={world.finale.icon}
           selected={labelIdx === i}
           justLit={advancing && node.requires === displayed}
-          onSelect={() => setSelected(selected === i ? null : i)}
+          onSelect={() => {
+            sfx.click();
+            setSelected(selected === i ? null : i);
+          }}
         />
       ))}
 
@@ -292,7 +295,8 @@ function Node({
             : { delay: 0.1 + index * 0.02, type: "spring", stiffness: 260, damping: 16 }
         }
         whileTap={{ scale: 0.9 }}
-        className="relative grid cursor-pointer place-items-center rounded-full"
+        // the visual dot can be tiny, but the tap target never is (WCAG 24px)
+        className="relative grid cursor-pointer place-items-center rounded-full after:absolute after:-inset-2 after:content-['']"
         style={{
           width: size,
           height: size,
@@ -362,7 +366,7 @@ function Node({
             {node.name}
           </span>
           <span
-            className="text-display block text-[8px] font-bold uppercase tracking-wider"
+            className="text-display block text-[10px] font-bold uppercase tracking-wider"
             style={{
               color:
                 state === "completed"

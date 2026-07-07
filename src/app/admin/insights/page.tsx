@@ -179,10 +179,10 @@ export default function InsightsPage() {
                               transition={{ delay: 0.2 + i * 0.05, type: "spring", stiffness: 80, damping: 14 }}
                             />
                           </div>
-                          <span className="text-[9px] font-bold text-[var(--text-dim)]">
+                          <span className="text-[10px] font-bold text-[var(--text-dim)]">
                             {["S", "M", "T", "W", "T", "F", "S"][new Date(new Date().setDate(new Date().getDate() - (6 - i))).getDay()]}
                           </span>
-                          <span className="text-[9px] font-black text-[var(--accent-2)]">{n || ""}</span>
+                          <span className="text-[10px] font-black text-[var(--accent-2)]">{n || ""}</span>
                         </div>
                       ))}
                     </div>

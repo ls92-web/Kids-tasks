@@ -23,7 +23,13 @@ export function ChildNav() {
         const active =
           item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
         return (
-          <Link key={item.href} href={item.href} onClick={() => sfx.click()} className="relative">
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => sfx.click()}
+            aria-current={active ? "page" : undefined}
+            className="relative"
+          >
             <motion.div
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.92 }}

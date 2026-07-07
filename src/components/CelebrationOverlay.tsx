@@ -8,6 +8,7 @@ import { Companion } from "./Companion";
 import { sfx } from "@/lib/sound";
 import { rankName, levelFromXp, companionLevel } from "@/lib/game";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
+import { useEscape } from "@/lib/a11y";
 
 export interface CelebrationData {
   coins: number;
@@ -42,6 +43,8 @@ export function CelebrationOverlay({
 }) {
   const { theme, profile, companion } = useWorld();
   const [phase, setPhase] = useState(0);
+  // once the rewards have landed, Escape works like the Onward button
+  useEscape(!!data && phase >= 2, onClose);
 
   useEffect(() => {
     if (!data) return;
@@ -95,6 +98,9 @@ export function CelebrationOverlay({
       {data && (
         <motion.div
           {...overlayFade}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${theme.questWord} complete`}
           className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/75 backdrop-blur-sm"
         >
           {/* a soft bloom of light — the warmth of the moment, not a light show */}

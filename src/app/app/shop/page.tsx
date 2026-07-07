@@ -10,6 +10,7 @@ import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { overlayFade, popSpring } from "@/lib/motion";
+import { useEscape } from "@/lib/a11y";
 import { Reward, Profile } from "@/lib/game";
 
 const CATEGORIES = [
@@ -55,6 +56,10 @@ export default function ShopPage() {
   const [reqWhy, setReqWhy] = useState("");
   const [reqSent, setReqSent] = useState(false);
   const [error, setError] = useState("");
+
+  // Escape closes whichever overlay is up (the chest only once it's open)
+  useEscape(!!bought && chestOpen, () => setBought(null));
+  useEscape(requestOpen, () => setRequestOpen(false));
 
   useEffect(() => {
     const supabase = createClient();
@@ -143,6 +148,7 @@ export default function ShopPage() {
         {CATEGORIES.map((c) => (
           <button
             key={c.id}
+            aria-pressed={category === c.id}
             onClick={() => {
               sfx.click();
               setCategory(c.id);
@@ -188,6 +194,9 @@ export default function ShopPage() {
         {bought && (
           <motion.div
             {...overlayFade}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Treasure claimed"
             className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
             onClick={() => chestOpen && setBought(null)}
           >
@@ -272,6 +281,9 @@ export default function ShopPage() {
         {requestOpen && (
           <motion.div
             {...overlayFade}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Make a wish"
             className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
             onClick={() => setRequestOpen(false)}
           >

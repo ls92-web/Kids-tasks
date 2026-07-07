@@ -82,7 +82,7 @@ export function RewardCard({
         </motion.div>
         {/* rarity chip */}
         <span
-          className="text-display absolute left-2 top-2 rounded-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider"
+          className="text-display absolute left-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider"
           style={{ color: rarity.color, background: "rgba(0,0,0,0.45)", boxShadow: `0 0 10px ${rarity.color}44` }}
         >
           {rarity.label}
