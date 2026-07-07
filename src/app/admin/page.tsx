@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
@@ -12,7 +11,7 @@ import { EmptyNote } from "@/components/admin/ui";
 import { Profile, levelFromXp, rankName } from "@/lib/game";
 
 export default function AdminOverview() {
-  const { profile, theme } = useWorld();
+  const { profile } = useWorld();
   const [children, setChildren] = useState<Profile[]>([]);
   const [pendingReviews, setPendingReviews] = useState(0);
   const [pendingWishes, setPendingWishes] = useState(0);
@@ -46,7 +45,7 @@ export default function AdminOverview() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Family Overview</h1>
+      <h1 className="text-display text-2xl font-black">Family Overview</h1>
 
       {/* attention needed */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -66,7 +65,7 @@ export default function AdminOverview() {
           href="/admin/review"
           icon="gift"
           count={pendingRedemptions}
-          label="Treasures to grant"
+          label="Rewards to grant"
         />
       </div>
 
@@ -77,20 +76,14 @@ export default function AdminOverview() {
           <Link href="/admin/children" className="font-bold text-[var(--accent-2)] underline">
             Create your first hero
           </Link>{" "}
-          to begin the adventure.
+          to get started.
         </EmptyNote>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {children.map((c, i) => {
+          {children.map((c) => {
             const { level } = levelFromXp(c.xp);
             return (
-              <motion.div
-                key={c.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="panel p-4"
-              >
+              <div key={c.id} className="panel p-4">
                 <div className="flex items-center gap-3">
                   <Portrait species={c.pet} size={52} />
                   <div className="min-w-0 flex-1">
@@ -115,15 +108,12 @@ export default function AdminOverview() {
                     <Icon name="flame" size={13} /> {c.streak_days}-day streak
                   </span>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>
       )}
 
-      <p className="text-center text-xs text-[var(--text-dim)]">
-        World: {theme.name}
-      </p>
     </div>
   );
 }
@@ -141,9 +131,10 @@ function AttentionCard({
 }) {
   return (
     <Link href={href}>
-      <motion.div
-        whileHover={{ y: -3 }}
-        className={`panel flex items-center gap-3 p-4 ${count > 0 ? "panel-glow" : ""}`}
+      <div
+        className={`panel flex items-center gap-3 p-4 transition-colors hover:bg-black/20 ${
+          count > 0 ? "ring-1 ring-[var(--accent-2)]/40" : ""
+        }`}
       >
         <div
           className="grid h-11 w-11 shrink-0 place-items-center rounded-xl"
@@ -159,7 +150,7 @@ function AttentionCard({
           <p className="text-display text-2xl font-black">{count}</p>
           <p className="text-xs font-bold text-[var(--text-dim)]">{label}</p>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 }

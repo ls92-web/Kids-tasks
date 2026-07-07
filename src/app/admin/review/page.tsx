@@ -117,27 +117,21 @@ export default function ReviewPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Review Queue</h1>
+      <h1 className="text-display text-2xl font-black">Review Queue</h1>
 
       <SectionCard
         title="Proofs waiting for you"
         subtitle="The AI recommends — you decide. Nothing is awarded until you approve."
       >
         {subs.length === 0 ? (
-          <EmptyNote>Nothing to review. The realm is at peace.</EmptyNote>
+          <EmptyNote>Nothing to review right now.</EmptyNote>
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {subs.map((s, i) => {
+            {subs.map((s) => {
               const v = s.ai_verdict;
               const confidence = typeof v?.confidence === "number" ? v.confidence : null;
               return (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="overflow-hidden rounded-xl bg-black/20"
-                >
+                <div key={s.id} className="overflow-hidden rounded-xl bg-black/20">
                   {s.signedUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.signedUrl} alt="proof" className="max-h-56 w-full object-cover" />
@@ -180,7 +174,6 @@ export default function ReviewPage() {
                                     confidence >= 70
                                       ? "linear-gradient(90deg, var(--accent), var(--success))"
                                       : "linear-gradient(90deg, var(--danger), var(--gold))",
-                                  boxShadow: "0 0 8px var(--glow)",
                                 }}
                                 initial={{ width: 0 }}
                                 animate={{ width: `${confidence}%` }}
@@ -232,7 +225,7 @@ export default function ReviewPage() {
                       </GameButton>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -240,7 +233,7 @@ export default function ReviewPage() {
       </SectionCard>
 
       <SectionCard
-        title="Treasures to grant"
+        title="Rewards to grant"
         subtitle="Coins already spent — mark granted once delivered in real life"
       >
         {redemptions.length === 0 ? (

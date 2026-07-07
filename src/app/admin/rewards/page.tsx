@@ -119,7 +119,7 @@ export default function RewardsAdmin() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Treasure Vault</h1>
+      <h1 className="text-display text-2xl font-black">Rewards</h1>
 
       {wishes.length > 0 && (
         <SectionCard title="Wishes from your heroes" subtitle="Approve to prefill the create form below">
@@ -197,12 +197,12 @@ export default function RewardsAdmin() {
         </div>
         <div className="mt-4">
           <GameButton onClick={() => createReward()} disabled={busy || form.name.trim().length < 2}>
-            {busy ? "Stocking..." : "Add to Vault"}
+            {busy ? "Adding\u2026" : "Add reward"}
           </GameButton>
         </div>
       </SectionCard>
 
-      <SectionCard title="Vault contents">
+      <SectionCard title="Available rewards">
         {rewards.length === 0 ? (
           <EmptyNote>The vault is empty — add your first treasure above.</EmptyNote>
         ) : (

@@ -79,7 +79,7 @@ export default function ChallengesAdmin() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Challenges</h1>
+      <h1 className="text-display text-2xl font-black">Challenges</h1>
 
       <SectionCard
         title="Start a family challenge"

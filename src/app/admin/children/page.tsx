@@ -86,7 +86,7 @@ export default function ChildrenPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Heroes</h1>
+      <h1 className="text-display text-2xl font-black">Heroes</h1>
 
       {/* the family code IS the invitation */}
       {family && (
@@ -178,7 +178,7 @@ export default function ChildrenPage() {
         )}
         <div className="mt-4">
           <GameButton onClick={createChild} disabled={busy || username.length < 3 || pin.length < 4}>
-            {busy ? "Summoning..." : "Summon Hero"}
+            {busy ? "Creating\u2026" : "Create hero"}
           </GameButton>
         </div>
       </SectionCard>

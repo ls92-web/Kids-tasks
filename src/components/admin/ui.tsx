@@ -88,3 +88,13 @@ export function EmptyNote({ children }: { children: React.ReactNode }) {
     </p>
   );
 }
+
+/* Plain, quiet loading state for the parent console — no magic effects. */
+export function AdminLoader({ label = "Loading\u2026" }: { label?: string }) {
+  return (
+    <div className="flex items-center justify-center gap-3 py-16 text-sm font-semibold text-[var(--text-dim)]">
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--surface-border)] border-t-[var(--accent)]" />
+      {label}
+    </div>
+  );
+}

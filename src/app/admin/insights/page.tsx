@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
-import { SectionCard, EmptyNote } from "@/components/admin/ui";
-import { MagicLoader } from "@/components/MagicLoader";
+import { SectionCard, EmptyNote, AdminLoader } from "@/components/admin/ui";
+
 import { Profile, Task, levelFromXp, TASK_TYPES } from "@/lib/game";
 
 const TYPE_LABEL: Record<string, string> = Object.fromEntries(
@@ -114,27 +114,22 @@ export default function InsightsPage() {
   }, [children, tasks, badgeCounts]);
 
   if (loading) {
-    return <MagicLoader label="Reading the stars..." />;
+    return <AdminLoader label="Preparing insights…" />;
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Insights</h1>
+      <h1 className="text-display text-2xl font-black">Insights</h1>
 
       {insights.length === 0 ? (
         <EmptyNote>Create a hero and assign some quests to see insights.</EmptyNote>
       ) : (
-        insights.map((ins, idx) => {
+        insights.map((ins) => {
           const { level } = levelFromXp(ins.profile.xp);
           const maxBar = Math.max(1, ...ins.weekBars);
           const maxType = Math.max(1, ...Object.values(ins.byType).map((v) => v.completed));
           return (
-            <motion.div
-              key={ins.profile.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08 }}
-            >
+            <div key={ins.profile.id}>
               <SectionCard title="" subtitle="">
                 {/* header */}
                 <div className="-mt-2 mb-4 flex items-center gap-3">
@@ -244,7 +239,7 @@ export default function InsightsPage() {
                   )}
                 </div>
               </SectionCard>
-            </motion.div>
+            </div>
           );
         })
       )}

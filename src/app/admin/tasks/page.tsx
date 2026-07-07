@@ -105,7 +105,7 @@ export default function TasksAdmin() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-glow text-2xl font-black">Quests</h1>
+      <h1 className="text-display text-2xl font-black">Quests</h1>
 
       <SectionCard title="Assign a quest" subtitle="Rewards auto-fill from difficulty — tweak freely">
         {children.length === 0 ? (

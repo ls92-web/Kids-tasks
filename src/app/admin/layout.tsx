@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
-import { MagicLoader } from "@/components/MagicLoader";
+import { AdminLoader } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
 import { Profile } from "@/lib/game";
 
@@ -48,7 +47,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!profile) {
-    return <MagicLoader full label="Loading your guild..." />;
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <AdminLoader label="Loading your dashboard…" />
+      </div>
+    );
   }
 
   return (
@@ -60,8 +63,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* sidebar */}
           <aside className="panel h-fit shrink-0 p-3 lg:sticky lg:top-5 lg:w-56">
             <div className="mb-3 px-2 pt-1">
-              <p className="text-display text-glow text-lg font-black text-[var(--accent-2)]">
-                Guild Master
+              <p className="text-display text-lg font-black text-[var(--accent-2)]">
+                Parent Dashboard
               </p>
               <p className="truncate text-xs text-[var(--text-dim)]">{profile.nickname}</p>
             </div>
@@ -70,27 +73,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 const active =
                   item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
                 return (
-                  <Link key={item.href} href={item.href} className="relative shrink-0">
-                    <motion.div
-                      whileHover={{ x: 3 }}
-                      className={`relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold ${
-                        active ? "text-white" : "text-[var(--text-dim)] hover:text-[var(--text)]"
-                      }`}
-                    >
-                      {active && (
-                        <motion.div
-                          layoutId="admin-nav"
-                          className="absolute inset-0 rounded-xl"
-                          style={{
-                            background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                            boxShadow: "0 0 18px -6px var(--glow)",
-                          }}
-                          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                        />
-                      )}
-                      <Icon name={item.icon} size={17} className="relative" />
-                      <span className="text-display relative">{item.label}</span>
-                    </motion.div>
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                      active
+                        ? "bg-[var(--accent)] text-white"
+                        : "text-[var(--text-dim)] hover:bg-black/20 hover:text-[var(--text)]"
+                    }`}
+                  >
+                    <Icon name={item.icon} size={17} />
+                    <span className="text-display">{item.label}</span>
                   </Link>
                 );
               })}
