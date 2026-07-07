@@ -6,7 +6,8 @@ import { useWorld } from "@/components/ThemeProvider";
 import { WorldMap } from "@/components/WorldMap";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
-import { getCampaign } from "@/lib/campaign";
+import { getCampaign, CampaignWorldState } from "@/lib/campaign";
+import { FINALE_WORLDS, finaleWorldMap } from "@/lib/worlds";
 
 /* An opened world: the painted map shown in full, nodes/paths/states all
    rendered by code over the untouched artwork. Reached by tapping a world
@@ -19,7 +20,21 @@ export default function WorldPage() {
 
   if (!profile) return null;
   const cs = getCampaign(profile, companion);
-  const entry = cs.worlds.find((w) => w.world.id === params.worldId);
+  let entry: CampaignWorldState | undefined = cs.worlds.find(
+    (w) => w.world.id === params.worldId
+  );
+
+  // Not part of the active campaign? Any finale world can still be viewed
+  // as a locked preview (also how the path-editing tour reaches every map).
+  if (!entry) {
+    const species = Object.keys(FINALE_WORLDS).find(
+      (sp) => FINALE_WORLDS[sp].id === params.worldId
+    );
+    const world = species ? finaleWorldMap(species) : null;
+    if (world) {
+      entry = { index: 3, world, isFinale: true, state: "locked", nodesDone: 0, pct: 0 };
+    }
+  }
 
   if (!entry) {
     // unknown world id — back to the campaign overview
