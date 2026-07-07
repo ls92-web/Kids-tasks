@@ -52,7 +52,7 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
       className="flex items-end gap-3"
     >
       <div className="shrink-0 text-center">
-        <Companion species={profile.pet} level={level} size={82} />
+        <Companion species={profile.pet} level={level} size={82} reactive />
         <p className="text-display -mt-1 text-[10px] font-bold text-[var(--accent-2)]">
           {petMeta.name}
         </p>

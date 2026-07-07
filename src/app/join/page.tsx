@@ -223,7 +223,7 @@ function JoinInner() {
                       style={{ boxShadow: `0 0 22px -12px ${el.color}` }}
                     >
                       <div className="shrink-0">
-                        <Companion species={p.id} level={1} size={86} float={false} />
+                        <Companion species={p.id} level={1} size={86} float={false} interactive />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -269,7 +269,7 @@ function JoinInner() {
                           style={{ background: `radial-gradient(circle, ${el.color}44, transparent 70%)` }}
                         />
                         <div className="relative animate-floaty">
-                          <Companion species={p.id} level={1} size={150} float={false} />
+                          <Companion species={p.id} level={1} size={150} float={false} selected />
                         </div>
                       </div>
                       <div className="flex items-center gap-3">

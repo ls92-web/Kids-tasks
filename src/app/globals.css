@@ -156,6 +156,24 @@ body {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-7px); }
 }
+
+/* ---------- Companion life ----------
+   Layered on separate wrappers so the transforms compose:
+   breathe (chest rise, grounded), sway (whole-body tail/ear feel),
+   blink-squash (a quick settle that reads as a blink on flat art). */
+@keyframes companion-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018, 1.03); }
+}
+@keyframes companion-sway {
+  0%, 100% { transform: rotate(-0.7deg); }
+  50% { transform: rotate(0.7deg); }
+}
+@keyframes companion-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.962); }
+  96% { transform: scaleY(1); }
+}
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }

@@ -280,7 +280,7 @@ export function LegendCeremony({
                         onClick={() => choose(p.id)}
                         className="flex cursor-pointer flex-col items-center rounded-2xl bg-black/25 p-3 hover:ring-2 hover:ring-[var(--accent)]"
                       >
-                        <Companion species={p.id} level={1} size={64} float={false} />
+                        <Companion species={p.id} level={1} size={64} float={false} interactive />
                         <span className="text-display mt-1 text-xs font-black">{p.name}</span>
                         <span
                           className="text-[9px] font-bold"

@@ -172,6 +172,7 @@ export function CelebrationOverlay({
                 <Companion
                   species={profile.pet}
                   level={companion ? companionLevel(companion.xp) : 1}
+                  celebrate
                   size={110}
                   float={false}
                 />

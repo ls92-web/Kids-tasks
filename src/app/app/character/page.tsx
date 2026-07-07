@@ -254,6 +254,7 @@ export default function HeroHub() {
                     level={bond ? companionLevel(bond.xp) : 1}
                     size={62}
                     float={isActive}
+                    interactive
                   />
                 </div>
                 <p className={`text-display mt-1 text-xs font-black ${bond ? "" : "text-[var(--text-dim)]"}`}>

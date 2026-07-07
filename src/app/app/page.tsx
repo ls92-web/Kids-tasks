@@ -310,7 +310,7 @@ export default function DailyQuests() {
             />
             {profile && (
               <div className="relative mx-auto w-fit">
-                <Companion species={profile.pet} level={companion ? companionLevel(companion.xp) : 1} size={96} />
+                <Companion species={profile.pet} level={companion ? companionLevel(companion.xp) : 1} size={96} reactive />
               </div>
             )}
             <h2 className="text-display text-glow relative mt-2 text-2xl font-black">
