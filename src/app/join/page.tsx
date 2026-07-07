@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
+import { Callout } from "@/components/Callout";
 import { Companion } from "@/components/Companion";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
@@ -132,7 +133,7 @@ function JoinInner() {
                   autoFocus
                   className="text-display w-full rounded-2xl border border-[var(--surface-border)] bg-black/30 px-4 py-4 text-center text-2xl font-black tracking-[0.25em] text-[var(--accent-2)] outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
                 />
-                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
+                {error && <Callout tone="error">{error}</Callout>}
                 <GameButton type="submit" className="w-full text-lg" disabled={code.replace(/[^a-zA-Z0-9]/g, "").length < 4}>
                   Next <Icon name="arrowRight" size={16} className="ml-1 inline" />
                 </GameButton>
@@ -180,7 +181,7 @@ function JoinInner() {
                     className="w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
                   />
                 </label>
-                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
+                {error && <Callout tone="error">{error}</Callout>}
                 <GameButton
                   type="submit"
                   className="w-full text-lg"
@@ -245,7 +246,7 @@ function JoinInner() {
                     </motion.button>
                   );
                 })}
-                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
+                {error && <Callout tone="error">{error}</Callout>}
               </motion.div>
             )}
 
@@ -297,7 +298,7 @@ function JoinInner() {
                       </div>
 
                       {error && (
-                        <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>
+                        <Callout tone="error">{error}</Callout>
                       )}
                       <GameButton onClick={join} disabled={busy} className="w-full text-lg">
                         {busy ? "Opening the gate..." : `I choose ${p.name}!`}

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
+import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 
 type Mode = "hero" | "parent";
@@ -161,15 +162,7 @@ function LoginInner() {
                 </>
               )}
 
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center text-sm font-bold text-[var(--danger)]"
-                >
-                  {error}
-                </motion.p>
-              )}
+              {error && <Callout tone="error">{error}</Callout>}
 
               <GameButton type="submit" disabled={busy} className="mt-1 w-full text-lg">
                 {busy ? "Opening the gate..." : "Enter the World"}

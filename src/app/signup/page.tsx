@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
+import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { CRESTS } from "@/lib/game";
 
@@ -193,7 +194,7 @@ function SignupInner() {
                 </p>
                 <Field label="Email" value={email} onChange={setEmail} type="email" placeholder="you@example.com" autoFocus />
                 <Field label="Password" value={password} onChange={setPassword} type="password" placeholder="At least 6 characters" />
-                {error && <p className="text-center text-sm font-bold text-[var(--danger)]">{error}</p>}
+                {error && <Callout tone="error">{error}</Callout>}
                 <GameButton type="submit" disabled={busy} className="w-full text-lg">
                   {busy ? "Raising the banners..." : "Create Family"}
                 </GameButton>
