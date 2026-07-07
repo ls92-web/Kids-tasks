@@ -3,9 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
-import { Input, TextArea, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
+import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
 import { Reward } from "@/lib/game";
 
 interface Wish {
@@ -106,15 +105,17 @@ export default function RewardsAdmin() {
   }
 
   async function resolveWish(w: Wish, approved: boolean) {
+    // clear the wish from the list at once; approving prefills the form below
+    setWishes((list) => list.filter((x) => x.id !== w.id));
+    if (approved) {
+      setForm((f) => ({ ...f, name: w.name, description: w.description }));
+    }
     const supabase = createClient();
     await supabase
       .from("reward_requests")
       .update({ status: approved ? "approved" : "rejected" })
       .eq("id", w.id);
-    if (approved) {
-      setForm((f) => ({ ...f, name: w.name, description: w.description }));
-    }
-    load();
+    pingAdminRefresh();
   }
 
   return (
@@ -125,7 +126,7 @@ export default function RewardsAdmin() {
         <SectionCard title="Wishes from your heroes" subtitle="Approve to prefill the create form below">
           <div className="flex flex-col gap-2">
             {wishes.map((w) => (
-              <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/20 px-4 py-3">
+              <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
                 <Icon name="sparkle" size={18} className="shrink-0 text-[var(--gold)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{w.name}</p>
@@ -133,16 +134,12 @@ export default function RewardsAdmin() {
                     {w.profiles?.nickname ?? "A hero"} — {w.description || "no reason given"}
                   </p>
                 </div>
-                <GameButton className="!px-3 !py-1.5 text-xs" onClick={() => resolveWish(w, true)}>
-                  Approve
-                </GameButton>
-                <GameButton
-                  variant="ghost"
-                  className="!px-3 !py-1.5 text-xs"
-                  onClick={() => resolveWish(w, false)}
-                >
+                <AdminButton size="sm" onClick={() => resolveWish(w, true)}>
+                  <Icon name="check" size={14} /> Approve
+                </AdminButton>
+                <AdminButton variant="ghost" size="sm" onClick={() => resolveWish(w, false)}>
                   Decline
-                </GameButton>
+                </AdminButton>
               </div>
             ))}
           </div>
@@ -196,9 +193,9 @@ export default function RewardsAdmin() {
           />
         </div>
         <div className="mt-4">
-          <GameButton onClick={() => createReward()} disabled={busy || form.name.trim().length < 2}>
+          <AdminButton onClick={() => createReward()} disabled={busy || form.name.trim().length < 2}>
             {busy ? "Adding\u2026" : "Add reward"}
-          </GameButton>
+          </AdminButton>
         </div>
       </SectionCard>
 
@@ -208,7 +205,7 @@ export default function RewardsAdmin() {
         ) : (
           <div className="flex flex-col gap-2">
             {rewards.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/20 px-4 py-3">
+              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
                 <Icon name="chest" size={18} className="shrink-0 text-[var(--gold)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">

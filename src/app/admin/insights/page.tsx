@@ -141,7 +141,7 @@ export default function InsightsPage() {
                 </div>
 
                 {/* AI weekly summary */}
-                <div className="mb-4 rounded-xl bg-black/20 p-3.5">
+                <div className="mb-4 rounded-xl bg-black/25 p-3.5">
                   <p className="text-display mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--accent-2)]">
                     <Icon name="sparkle" size={13} /> This week&apos;s summary
                   </p>
@@ -159,7 +159,7 @@ export default function InsightsPage() {
                 {/* charts */}
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {/* 7-day activity */}
-                  <div className="rounded-xl bg-black/20 p-4">
+                  <div className="rounded-xl bg-black/25 p-4">
                     <p className="text-display mb-3 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
                       Last 7 days
                     </p>
@@ -189,7 +189,7 @@ export default function InsightsPage() {
                   </div>
 
                   {/* by type */}
-                  <div className="rounded-xl bg-black/20 p-4">
+                  <div className="rounded-xl bg-black/25 p-4">
                     <p className="text-display mb-3 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
                       Quests by kind
                     </p>

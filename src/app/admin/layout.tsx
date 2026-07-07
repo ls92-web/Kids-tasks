@@ -1,29 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
-import { AdminLoader } from "@/components/admin/ui";
+import { AdminLoader, ADMIN_REFRESH } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
 import { Profile } from "@/lib/game";
 
 const NAV = [
-  { href: "/admin", icon: "home", label: "Overview" },
-  { href: "/admin/insights", icon: "sparkle", label: "Insights" },
-  { href: "/admin/children", icon: "users", label: "Heroes" },
-  { href: "/admin/tasks", icon: "sword", label: "Quests" },
-  { href: "/admin/rewards", icon: "gift", label: "Rewards" },
-  { href: "/admin/review", icon: "eye", label: "Review" },
-  { href: "/admin/challenges", icon: "lightning", label: "Challenges" },
+  { href: "/admin", icon: "home", label: "Overview", badge: "" },
+  { href: "/admin/review", icon: "eye", label: "Review", badge: "review" },
+  { href: "/admin/tasks", icon: "sword", label: "Quests", badge: "" },
+  { href: "/admin/rewards", icon: "gift", label: "Rewards", badge: "wishes" },
+  { href: "/admin/children", icon: "users", label: "Heroes", badge: "" },
+  { href: "/admin/insights", icon: "sparkle", label: "Insights", badge: "" },
+  { href: "/admin/challenges", icon: "lightning", label: "Challenges", badge: "" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [counts, setCounts] = useState<{ review: number; wishes: number }>({ review: 0, wishes: 0 });
 
   useEffect(() => {
     const supabase = createClient();
@@ -39,6 +40,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setProfile(p as Profile);
     });
   }, [router]);
+
+  // live "what needs me" badges — proofs + claimed rewards, and reward wishes
+  const refreshCounts = useCallback(async () => {
+    if (!profile) return;
+    const supabase = createClient();
+    const [reviews, redemptions, wishes] = await Promise.all([
+      supabase.from("submissions").select("id", { count: "exact", head: true }).eq("status", "needs_review"),
+      supabase.from("redemptions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("reward_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    ]);
+    setCounts({
+      review: (reviews.count ?? 0) + (redemptions.count ?? 0),
+      wishes: wishes.count ?? 0,
+    });
+  }, [profile]);
+
+  // recount on navigation and whenever a page resolves an item (ADMIN_REFRESH)
+  useEffect(() => {
+    refreshCounts();
+    const onRefresh = () => refreshCounts();
+    window.addEventListener(ADMIN_REFRESH, onRefresh);
+    return () => window.removeEventListener(ADMIN_REFRESH, onRefresh);
+  }, [refreshCounts, pathname]);
 
   async function logout() {
     const supabase = createClient();
@@ -72,6 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {NAV.map((item) => {
                 const active =
                   item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                const count = item.badge === "review" ? counts.review : item.badge === "wishes" ? counts.wishes : 0;
                 return (
                   <Link
                     key={item.href}
@@ -79,11 +104,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
                       active
                         ? "bg-[var(--accent)] text-white"
-                        : "text-[var(--text-dim)] hover:bg-black/20 hover:text-[var(--text)]"
+                        : "text-[var(--text-dim)] hover:bg-black/25 hover:text-[var(--text)]"
                     }`}
                   >
                     <Icon name={item.icon} size={17} />
-                    <span className="text-display">{item.label}</span>
+                    <span className="text-display flex-1">{item.label}</span>
+                    {count > 0 && (
+                      <span
+                        className={`text-display grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-black ${
+                          active ? "bg-white/25 text-white" : "bg-[var(--accent)] text-white"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

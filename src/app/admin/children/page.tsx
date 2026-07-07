@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
-import { GameButton } from "@/components/GameButton";
-import { Input, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
+import { Input, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { PETS, CHARACTER_CLASSES, Profile, Family, levelFromXp } from "@/lib/game";
 
@@ -169,17 +169,14 @@ export default function ChildrenPage() {
           ))}
         </div>
         {msg && (
-          <p
-            className="mt-3 text-sm font-bold"
-            style={{ color: msg.ok ? "var(--success)" : "var(--danger)" }}
-          >
+          <Callout tone={msg.ok ? "success" : "error"} className="mt-3">
             {msg.text}
-          </p>
+          </Callout>
         )}
         <div className="mt-4">
-          <GameButton onClick={createChild} disabled={busy || username.length < 3 || pin.length < 4}>
+          <AdminButton onClick={createChild} disabled={busy || username.length < 3 || pin.length < 4}>
             {busy ? "Creating\u2026" : "Create hero"}
-          </GameButton>
+          </AdminButton>
         </div>
       </SectionCard>
 
@@ -192,7 +189,7 @@ export default function ChildrenPage() {
               const { level } = levelFromXp(c.xp);
               const a = adjust[c.id] ?? { coins: "", xp: "" };
               return (
-                <div key={c.id} className="rounded-xl bg-black/20 p-4">
+                <div key={c.id} className="rounded-xl bg-black/25 p-4">
                   <div className="flex items-center gap-3">
                     <Portrait species={c.pet} size={44} />
                     <div className="min-w-0 flex-1">
@@ -223,9 +220,9 @@ export default function ChildrenPage() {
                         placeholder="50"
                       />
                     </div>
-                    <GameButton variant="ghost" className="!py-2.5 text-sm" onClick={() => applyAdjust(c.id)}>
+                    <AdminButton variant="ghost" onClick={() => applyAdjust(c.id)}>
                       Apply
-                    </GameButton>
+                    </AdminButton>
                   </div>
                 </div>
               );

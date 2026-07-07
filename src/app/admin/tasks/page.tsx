@@ -3,16 +3,16 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
-import { Input, TextArea, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
+import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { Callout } from "@/components/Callout";
 import { Profile, Task, TASK_TYPES, DIFFICULTY, Difficulty } from "@/lib/game";
 
-const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number }> = {
-  easy: { coins: 10, xp: 20 },
-  medium: { coins: 20, xp: 45 },
-  hard: { coins: 40, xp: 90 },
-  epic: { coins: 80, xp: 180 },
+const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: number }> = {
+  easy: { coins: 10, xp: 20, minutes: 10 },
+  medium: { coins: 20, xp: 45, minutes: 20 },
+  hard: { coins: 40, xp: 90, minutes: 40 },
+  epic: { coins: 80, xp: 180, minutes: 60 },
 };
 
 export default function TasksAdmin() {
@@ -31,7 +31,7 @@ export default function TasksAdmin() {
     deadline: "",
   });
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -64,13 +64,14 @@ export default function TasksAdmin() {
       difficulty: d,
       coin_reward: String(DIFF_DEFAULTS[d].coins),
       xp_reward: String(DIFF_DEFAULTS[d].xp),
+      est_minutes: String(DIFF_DEFAULTS[d].minutes),
     }));
   }
 
   async function createTask() {
     if (!profile || !form.child_id || form.title.trim().length < 2) return;
     setBusy(true);
-    setMsg("");
+    setMsg(null);
     const supabase = createClient();
     const { error } = await supabase.from("tasks").insert({
       family_id: profile.family_id,
@@ -87,11 +88,11 @@ export default function TasksAdmin() {
     });
     setBusy(false);
     if (error) {
-      setMsg(error.message);
+      setMsg({ ok: false, text: error.message });
       return;
     }
     setForm((f) => ({ ...f, title: "", description: "", deadline: "" }));
-    setMsg("Quest assigned.");
+    setMsg({ ok: true, text: "Quest assigned." });
     load();
   }
 
@@ -140,6 +141,7 @@ export default function TasksAdmin() {
                   label="Title"
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && createTask()}
                   placeholder="Make your bed"
                 />
               </div>
@@ -162,17 +164,11 @@ export default function TasksAdmin() {
                 <button
                   key={d}
                   onClick={() => setDifficulty(d)}
-                  className={`text-display cursor-pointer rounded-xl px-4 py-2 text-sm font-bold capitalize transition-all ${
-                    form.difficulty === d ? "text-white" : "bg-black/25 text-[var(--text-dim)]"
-                  }`}
-                  style={
+                  className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold capitalize transition-colors ${
                     form.difficulty === d
-                      ? {
-                          background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                          boxShadow: "0 0 16px -4px var(--glow)",
-                        }
-                      : {}
-                  }
+                      ? "bg-[var(--accent)] text-white"
+                      : "bg-black/25 text-[var(--text-dim)] hover:bg-black/35"
+                  }`}
                 >
                   {DIFFICULTY[d].label}
                 </button>
@@ -203,11 +199,15 @@ export default function TasksAdmin() {
               />
             </div>
 
-            {msg && <p className="mt-3 text-sm font-bold text-[var(--accent-2)]">{msg}</p>}
+            {msg && (
+              <Callout tone={msg.ok ? "success" : "error"} className="mt-3">
+                {msg.text}
+              </Callout>
+            )}
             <div className="mt-4">
-              <GameButton onClick={createTask} disabled={busy || !form.title.trim()}>
-                {busy ? "Assigning..." : "Assign Quest"}
-              </GameButton>
+              <AdminButton onClick={createTask} disabled={busy || !form.title.trim()}>
+                {busy ? "Assigning…" : "Assign quest"}
+              </AdminButton>
             </div>
           </>
         )}
@@ -219,7 +219,7 @@ export default function TasksAdmin() {
         ) : (
           <div className="flex flex-col gap-2">
             {tasks.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/20 px-4 py-3">
+              <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{t.title}</p>
                   <p className="text-xs text-[var(--text-dim)]">

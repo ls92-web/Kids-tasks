@@ -2,6 +2,14 @@
 
 /* Small shared building blocks for the parent console. */
 
+/* When a page resolves a pending item (approves a proof, grants a reward,
+   answers a wish), it fires this so the sidebar's "what needs me" badges
+   recount immediately — the counts stay honest without a page reload. */
+export const ADMIN_REFRESH = "qf-admin-refresh";
+export function pingAdminRefresh() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(ADMIN_REFRESH));
+}
+
 export function Input({
   label,
   ...props
@@ -83,9 +91,58 @@ export function SectionCard({
 
 export function EmptyNote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl bg-black/20 p-5 text-center text-sm font-semibold text-[var(--text-dim)]">
+    <p className="rounded-xl bg-black/25 p-5 text-center text-sm font-semibold text-[var(--text-dim)]">
       {children}
     </p>
+  );
+}
+
+/* The parent console's button — calm and elegant. No sparkles, no squash;
+   just a clear, confident target with a quiet hover. This is deliberately
+   NOT the child's GameButton. */
+export function AdminButton({
+  children,
+  onClick,
+  variant = "primary",
+  size = "md",
+  disabled = false,
+  className = "",
+  type = "button",
+  title,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "subtle" | "ghost" | "danger";
+  size?: "sm" | "md";
+  disabled?: boolean;
+  className?: string;
+  type?: "button" | "submit";
+  title?: string;
+}) {
+  const sizes: Record<string, string> = {
+    sm: "min-h-[36px] gap-1.5 px-3 text-xs",
+    md: "min-h-[42px] gap-2 px-4 text-sm",
+  };
+  const variants: Record<string, string> = {
+    primary: "bg-[var(--accent)] text-white hover:brightness-110",
+    subtle: "bg-black/25 text-[var(--text)] hover:bg-black/35",
+    ghost:
+      "border border-[var(--surface-border)] text-[var(--text-dim)] hover:bg-black/25 hover:text-[var(--text)]",
+    danger:
+      "border border-[var(--danger)]/35 text-[var(--danger)] hover:bg-[var(--danger)]/12",
+  };
+  return (
+    <button
+      type={type}
+      title={title}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      className={`text-display inline-flex select-none items-center justify-center rounded-xl font-bold transition-[background,filter,color] disabled:cursor-not-allowed disabled:opacity-40 ${
+        disabled ? "" : "cursor-pointer"
+      } ${sizes[size]} ${variants[variant]} ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 

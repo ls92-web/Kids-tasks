@@ -4,10 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { GameButton } from "@/components/GameButton";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
-import { SectionCard, EmptyNote } from "@/components/admin/ui";
+import { SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
 
 interface PendingSubmission {
   id: string;
@@ -90,6 +89,8 @@ export default function ReviewPage() {
      not_complete → submission rejected AND task closed (no redo) */
   async function decide(sub: PendingSubmission, action: "approve" | "redo" | "not_complete") {
     setBusy(sub.id);
+    // clear the card immediately — the queue shrinks the instant you decide
+    setSubs((list) => list.filter((x) => x.id !== sub.id));
     const supabase = createClient();
     if (action === "approve") {
       await supabase.rpc("award_submission", { p_submission_id: sub.id });
@@ -106,18 +107,26 @@ export default function ReviewPage() {
       await supabase.from("tasks").update({ status: "rejected" }).eq("id", sub.task_id);
     }
     setBusy(null);
-    load();
+    pingAdminRefresh();
   }
 
   async function grant(r: PendingRedemption) {
+    setRedemptions((list) => list.filter((x) => x.id !== r.id));
     const supabase = createClient();
     await supabase.from("redemptions").update({ status: "granted" }).eq("id", r.id);
-    load();
+    pingAdminRefresh();
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-2xl font-black">Review Queue</h1>
+      <div className="flex items-center gap-2.5">
+        <h1 className="text-display text-2xl font-black">Review Queue</h1>
+        {subs.length > 0 && (
+          <span className="text-display grid h-6 min-w-6 place-items-center rounded-full bg-[var(--accent)] px-2 text-xs font-black text-white">
+            {subs.length}
+          </span>
+        )}
+      </div>
 
       <SectionCard
         title="Proofs waiting for you"
@@ -131,7 +140,7 @@ export default function ReviewPage() {
               const v = s.ai_verdict;
               const confidence = typeof v?.confidence === "number" ? v.confidence : null;
               return (
-                <div key={s.id} className="overflow-hidden rounded-xl bg-black/20">
+                <div key={s.id} className="overflow-hidden rounded-xl bg-black/25">
                   {s.signedUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.signedUrl} alt="proof" className="max-h-56 w-full object-cover" />
@@ -198,31 +207,33 @@ export default function ReviewPage() {
                       )}
                     </div>
 
-                    {/* actions */}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <GameButton
-                        className="!px-4 !py-2 text-sm"
+                    {/* actions — Approve leads, the rest recede */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <AdminButton
+                        className="flex-1"
                         disabled={busy === s.id}
                         onClick={() => decide(s, "approve")}
                       >
-                        <Icon name="check" size={14} className="mr-1 inline" /> Approve
-                      </GameButton>
-                      <GameButton
-                        variant="gold"
-                        className="!px-4 !py-2 text-sm"
+                        <Icon name="check" size={16} /> Approve
+                      </AdminButton>
+                      <AdminButton
+                        variant="subtle"
+                        size="sm"
                         disabled={busy === s.id}
                         onClick={() => decide(s, "redo")}
+                        title="Reopen so the child can try again"
                       >
-                        <Icon name="refresh" size={14} className="mr-1 inline" /> Ask to redo
-                      </GameButton>
-                      <GameButton
+                        <Icon name="refresh" size={14} /> Redo
+                      </AdminButton>
+                      <AdminButton
                         variant="danger"
-                        className="!px-4 !py-2 text-sm"
+                        size="sm"
                         disabled={busy === s.id}
                         onClick={() => decide(s, "not_complete")}
+                        title="Close this quest without a reward"
                       >
-                        <Icon name="x" size={14} className="mr-1 inline" /> Not complete
-                      </GameButton>
+                        <Icon name="x" size={14} /> Not complete
+                      </AdminButton>
                     </div>
                   </div>
                 </div>
@@ -241,7 +252,7 @@ export default function ReviewPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {redemptions.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/20 px-4 py-3">
+              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
                 <Icon name="gift" size={18} className="shrink-0 text-[var(--gold)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{r.reward_name}</p>
@@ -249,9 +260,9 @@ export default function ReviewPage() {
                     {r.profiles.nickname} — {r.coins_spent} coins — {new Date(r.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <GameButton className="!px-3 !py-1.5 text-xs" onClick={() => grant(r)}>
-                  Granted
-                </GameButton>
+                <AdminButton size="sm" onClick={() => grant(r)}>
+                  <Icon name="check" size={14} /> Mark granted
+                </AdminButton>
               </div>
             ))}
           </div>

@@ -3,9 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
-import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
-import { Input, TextArea, Select, SectionCard, EmptyNote } from "@/components/admin/ui";
+import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
 
 interface Challenge {
   id: string;
@@ -125,12 +124,12 @@ export default function ChallengesAdmin() {
           />
         </div>
         <div className="mt-4">
-          <GameButton
+          <AdminButton
             onClick={createChallenge}
             disabled={busy || !form.title.trim() || !form.ends_at}
           >
-            {busy ? "Raising the banner..." : "Launch Challenge"}
-          </GameButton>
+            {busy ? "Starting…" : "Start challenge"}
+          </AdminButton>
         </div>
       </SectionCard>
 
@@ -140,7 +139,7 @@ export default function ChallengesAdmin() {
         ) : (
           <div className="flex flex-col gap-2">
             {challenges.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 rounded-xl bg-black/20 px-4 py-3">
+              <div key={c.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
                 <Icon name="lightning" size={18} className="shrink-0 text-[var(--accent-2)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{c.title}</p>

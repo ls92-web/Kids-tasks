@@ -132,7 +132,7 @@ function AttentionCard({
   return (
     <Link href={href}>
       <div
-        className={`panel flex items-center gap-3 p-4 transition-colors hover:bg-black/20 ${
+        className={`panel flex items-center gap-3 p-4 transition-colors hover:bg-black/25 ${
           count > 0 ? "ring-1 ring-[var(--accent-2)]/40" : ""
         }`}
       >
