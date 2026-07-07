@@ -100,7 +100,7 @@ export function ChallengesPanel() {
                     const hero = heroes.find((h) => h.id === p.child_id);
                     if (!hero) return null;
                     return (
-                      <div key={p.child_id} className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5">
+                      <div key={p.child_id} className="flex items-center gap-2 rounded-lg bg-black/25 px-3 py-1.5">
                         <span className="text-display w-5 text-xs font-black text-[var(--gold)]">{pi + 1}</span>
                         <span className="text-display flex-1 truncate text-sm font-bold">{hero.nickname}</span>
                         <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/40">

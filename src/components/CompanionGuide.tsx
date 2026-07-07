@@ -69,16 +69,20 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
       >
         <p className="text-sm font-semibold leading-snug">{eventLine ?? messages[shown]}</p>
         {!eventLine && messages.length > 1 && (
-          <div className="mt-2 flex gap-1">
+          <div className="-mb-1 mt-1 flex">
             {messages.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setShown(i)}
-                className={`h-1.5 cursor-pointer rounded-full transition-all ${
-                  i === shown ? "w-4 bg-[var(--accent)]" : "w-1.5 bg-white/20"
-                }`}
+                className="group grid cursor-pointer place-items-center px-1.5 py-2"
                 aria-label={`message ${i + 1}`}
-              />
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === shown ? "w-4 bg-[var(--accent)]" : "w-1.5 bg-white/20 group-hover:bg-white/40"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

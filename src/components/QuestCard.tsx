@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Icon } from "./Icon";
 import { DIFFICULTY, Task } from "@/lib/game";
+import { enter, stagger } from "@/lib/motion";
 import { useWorld } from "./ThemeProvider";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -34,12 +35,13 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
   return (
     <Link href={`/app/quest/${task.id}`} className="block">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.06, type: "spring", stiffness: 120, damping: 16 }}
-        whileHover={{ y: -5, scale: 1.015 }}
-        whileTap={{ scale: 0.975 }}
-        className={`panel relative overflow-hidden p-3.5 transition-shadow hover:panel-glow ${
+        initial={enter.initial}
+        animate={enter.animate}
+        transition={{ ...enter.transition, delay: stagger(index) }}
+        whileHover={{ y: -3 }}
+        whileTap={{ scale: 0.98 }}
+        style={{ transition: "box-shadow 0.25s" }}
+        className={`panel relative overflow-hidden p-3.5 hover:panel-glow ${
           done ? "saturate-[0.85]" : ""
         }`}
       >

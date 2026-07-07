@@ -18,7 +18,7 @@ export function HUD() {
   const { level } = levelFromXp(profile.xp);
 
   return (
-    <div className="panel panel-glow relative z-20 mx-auto mt-4 flex w-[min(96%,900px)] items-center gap-3 px-4 py-3">
+    <div className="panel relative z-20 mx-auto mt-4 flex w-[min(96%,900px)] items-center gap-3 px-4 py-3">
       <Link
         href="/app/character"
         onClick={() => sfx.click()}
@@ -28,7 +28,7 @@ export function HUD() {
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-display truncate text-base font-bold">{profile.nickname}</span>
-            <span className="text-glow text-display shrink-0 text-xs font-semibold text-[var(--accent-2)]">
+            <span className="text-display shrink-0 text-xs font-semibold text-[var(--accent-2)]">
               {rankName(theme.id, level)}
             </span>
           </div>

@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon";
 import { GameButton } from "@/components/GameButton";
 import { VerifyOverlay } from "@/components/VerifyOverlay";
 import { MagicLoader } from "@/components/MagicLoader";
+import { Callout } from "@/components/Callout";
 import { DIFFICULTY, Task } from "@/lib/game";
 
 export default function QuestDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -143,7 +144,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
             ))}
           </span>
         </div>
-        <h1 className="text-display text-glow mt-2 text-3xl font-black">{task.title}</h1>
+        <h1 className="text-display mt-2 text-3xl font-black">{task.title}</h1>
         {task.description && (
           <p className="mt-2 text-[15px] text-[var(--text-dim)]">{task.description}</p>
         )}
@@ -168,14 +169,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       </motion.div>
 
       {message && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="panel p-4 text-center text-sm font-bold"
-          style={{ color: message.tone === "bad" ? "var(--danger)" : "var(--accent-2)" }}
-        >
-          {message.text}
-        </motion.div>
+        <Callout tone={message.tone === "bad" ? "error" : "info"}>{message.text}</Callout>
       )}
 
       {waiting && !message && (
@@ -190,7 +184,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       )}
 
       {task.status === "completed" && (
-        <div className="panel panel-glow p-6 text-center">
+        <div className="panel p-6 text-center">
           <Icon name="trophy" size={36} className="mx-auto text-[var(--gold)]" />
           <p className="text-display mt-2 text-xl font-black text-[var(--success)]">
             {theme.questWord} conquered
@@ -242,7 +236,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => fileRef.current?.click()}
-              className="grid w-full cursor-pointer place-items-center gap-2 rounded-2xl border-2 border-dashed border-[var(--surface-border)] bg-black/20 py-10 transition-colors hover:border-[var(--accent)]"
+              className="grid w-full cursor-pointer place-items-center gap-2 rounded-2xl border-2 border-dashed border-[var(--surface-border)] bg-black/25 py-10 transition-colors hover:border-[var(--accent)]"
             >
               <Icon name="upload" size={34} className="text-[var(--accent-2)]" />
               <span className="text-display font-bold text-[var(--text-dim)]">

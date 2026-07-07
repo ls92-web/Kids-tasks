@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Icon } from "./Icon";
 import { Reward, rewardRarity } from "@/lib/game";
+import { enter, stagger } from "@/lib/motion";
 import { useWorld } from "./ThemeProvider";
 
 export const REWARD_ICONS: Record<string, string> = {
@@ -50,10 +51,10 @@ export function RewardCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, rotate: -1 }}
-      animate={{ opacity: 1, y: 0, rotate: 0 }}
-      transition={{ delay: index * 0.07, type: "spring", stiffness: 120, damping: 15 }}
-      whileHover={{ y: -8, rotate: 0.6, scale: 1.02 }}
+      initial={enter.initial}
+      animate={enter.animate}
+      transition={{ ...enter.transition, delay: stagger(index) }}
+      whileHover={{ y: -4 }}
       className="panel relative flex flex-col overflow-hidden p-0"
       style={{
         boxShadow: buyable
@@ -79,15 +80,6 @@ export function RewardCard({
             filled={false}
           />
         </motion.div>
-        <div
-          className="fx-light absolute inset-0 opacity-40"
-          style={{
-            background:
-              "linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 5s linear infinite",
-          }}
-        />
         {/* rarity chip */}
         <span
           className="text-display absolute left-2 top-2 rounded-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider"
@@ -118,12 +110,12 @@ export function RewardCard({
             {reward.coin_cost}
           </span>
           <motion.button
-            whileHover={buyable ? { scale: 1.06 } : {}}
-            whileTap={buyable ? { scale: 0.92 } : {}}
+            whileHover={buyable ? { scale: 1.04 } : {}}
+            whileTap={buyable ? { scale: 0.94 } : {}}
             disabled={!buyable}
             onClick={() => onBuy(reward)}
-            className={`text-display cursor-pointer rounded-xl px-4 py-1.5 text-sm font-black ${
-              buyable ? "text-[#3d2a00]" : "cursor-not-allowed bg-white/5 text-[var(--text-dim)]"
+            className={`text-display inline-flex min-h-[40px] items-center rounded-xl px-5 py-2 text-sm font-black ${
+              buyable ? "cursor-pointer text-[#3d2a00]" : "cursor-not-allowed bg-white/5 text-[var(--text-dim)]"
             }`}
             style={
               buyable

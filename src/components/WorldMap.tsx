@@ -10,6 +10,7 @@ import { sfx } from "@/lib/sound";
 import { companionLevel } from "@/lib/game";
 import { companionLine } from "@/lib/companion";
 import { WorldMapDef, nodeStates, MapNode, NodeState } from "@/lib/worlds";
+import { glide, EASE_OUT } from "@/lib/motion";
 
 /* The campaign map — the emotional center of the child's world.
 
@@ -193,7 +194,7 @@ export function WorldMap({
           className="pointer-events-none absolute z-40"
           initial={false}
           animate={{ left: `${currentNode.x}%`, top: `${currentNode.y}%` }}
-          transition={{ type: "spring", stiffness: 160, damping: 17 }}
+          transition={glide}
         >
           {/* static wrapper owns centering — motion owns position + hop */}
           <div className="-translate-x-1/2 -translate-y-[88%]">
@@ -214,7 +215,7 @@ export function WorldMap({
               key={currentIdx} // small hop each time the hero arrives somewhere new
               initial={{ y: 0, scale: 1 }}
               animate={{ y: [0, -12, 0], scale: [1, 1.1, 1] }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.5, ease: EASE_OUT }}
               style={{ filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.55))" }}
             >
               <Companion
@@ -241,7 +242,7 @@ export function WorldMap({
 
   return (
     <div
-      className={`panel panel-glow relative w-full overflow-hidden ${className}`}
+      className={`panel relative w-full overflow-hidden ${className}`}
       style={{ aspectRatio: "1280 / 960" }}
     >
       {surface}

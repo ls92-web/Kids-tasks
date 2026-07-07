@@ -12,6 +12,7 @@ import { sayFromCompanion } from "@/lib/companion";
 import { PETS, THEMES, ThemeId } from "@/lib/game";
 import { WORLD_MAPS, SHARED_WORLDS, nextChapter } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
+import { popSpring } from "@/lib/motion";
 
 /* Closing a campaign world is a milestone, not a number ticking over. When a
    shared world's final trial is cleared, this cinematic plays once per world
@@ -85,16 +86,16 @@ export function ChapterComplete() {
               left: `${(i * 41) % 100}%`,
               top: "-3%",
               background: [world.accent, "#ffd76a", "#fff"][i % 3],
-              animation: `confetti-fall ${2.8 + (i % 5) * 0.5}s linear ${(i % 6) * 0.35}s infinite`,
+              animation: `confetti-fall ${2.8 + (i % 5) * 0.5}s linear ${(i % 6) * 0.35}s both`,
             }}
           />
         ))}
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.85, y: 24 }}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 150, damping: 15 }}
+        transition={popSpring}
         className="panel panel-glow relative w-full max-w-md p-7 text-center"
       >
         <p className="text-display text-xs font-black uppercase tracking-[0.3em] text-[var(--gold)]">

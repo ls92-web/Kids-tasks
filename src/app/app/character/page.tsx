@@ -43,6 +43,7 @@ import {
   campaignCompleted,
 } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
+import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 
 interface Ach {
   key: string;
@@ -139,20 +140,12 @@ export default function HeroHub() {
         />
       )}
 
-      {/* hero card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="panel panel-glow relative overflow-hidden p-6 text-center"
-      >
-        <div
-          className="fx-light absolute inset-x-0 top-0 h-40 animate-pulse-glow"
-          style={{ background: "radial-gradient(60% 100% at 50% 0%, var(--glow-soft), transparent)" }}
-        />
+      {/* hero card — the focal point of this page */}
+      <motion.div {...enter} className="panel panel-glow relative overflow-hidden p-6 text-center">
         <div className="relative mx-auto w-fit animate-floaty">
           <Portrait species={profile.pet} size={120} />
         </div>
-        <h1 className="text-display text-glow mt-3 text-3xl font-black">{profile.nickname}</h1>
+        <h1 className="text-display mt-3 text-3xl font-black">{profile.nickname}</h1>
         <p className="text-display mt-0.5 text-sm font-bold text-[var(--accent-2)]">
           {cls?.name ?? "Adventurer"} — {cls?.blurb ?? ""}
         </p>
@@ -168,8 +161,8 @@ export default function HeroHub() {
 
       {/* pet card */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...enter}
+        transition={{ ...enter.transition, delay: 0.05 }}
         className="panel flex items-center gap-4 p-5"
       >
         <div className="shrink-0">
@@ -237,9 +230,9 @@ export default function HeroHub() {
                     key={b.id}
                     type="button"
                     onClick={() => setHallPick(b.species)}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
+                    initial={enter.initial}
+                    animate={enter.animate}
+                    transition={{ ...enter.transition, delay: stagger(i) }}
                     whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.97 }}
                     className="panel relative flex w-40 cursor-pointer flex-col items-center overflow-hidden px-4 pb-3 pt-5"
@@ -301,7 +294,7 @@ export default function HeroHub() {
                 onClick={() => setHallPick(p.id)}
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.03 }}
+                transition={{ duration: 0.35, ease: EASE_OUT, delay: stagger(i) }}
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.96 }}
                 className="panel relative flex cursor-pointer flex-col items-center p-3 text-center"
@@ -436,7 +429,7 @@ export default function HeroHub() {
                 key={badge.key}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04 }}
+                transition={{ duration: 0.35, ease: EASE_OUT, delay: stagger(i) }}
                 className="panel relative flex flex-col items-center p-3.5 text-center"
                 style={
                   unlockedAt
@@ -509,7 +502,7 @@ export default function HeroHub() {
                 return (
                   <div
                     key={h.id}
-                    className={`panel flex shrink-0 flex-col items-center gap-1 px-4 py-3 ${isMe ? "panel-glow" : ""}`}
+                    className={`panel flex shrink-0 flex-col items-center gap-1 px-4 py-3 ${isMe ? "ring-1 ring-[var(--accent)]/50" : ""}`}
                   >
                     <Portrait species={h.pet} size={44} />
                     <span className="text-display max-w-[80px] truncate text-xs font-bold">
@@ -617,17 +610,15 @@ function HallDetail({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      {...overlayFade}
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94 }}
-        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        transition={popSpring}
         className="panel panel-glow relative w-full max-w-sm p-6 text-center"
         onClick={(e) => e.stopPropagation()}
         style={

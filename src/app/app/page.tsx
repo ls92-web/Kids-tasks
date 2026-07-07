@@ -17,6 +17,7 @@ import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
 import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
+import { enter, pop, barFill } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
 import { getCampaign } from "@/lib/campaign";
@@ -188,18 +189,9 @@ export default function DailyQuests() {
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
       {/* ============ main column ============ */}
       <div className="flex min-w-0 flex-1 flex-col gap-5">
-        {/* daily surprise event */}
-        {/* Today's Adventure banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -14 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="panel panel-glow relative overflow-hidden px-6 py-5 text-center"
-        >
-          <div
-            className="fx-light absolute inset-x-0 top-0 h-full animate-pulse-glow"
-            style={{ background: "radial-gradient(70% 120% at 50% 0%, var(--glow-soft), transparent)" }}
-          />
-          <h1 className="text-display text-glow shimmer-text relative text-3xl font-black sm:text-4xl">
+        {/* Today's Adventure banner — calm and clear; the day at a glance */}
+        <motion.div {...enter} className="panel relative overflow-hidden px-6 py-5 text-center">
+          <h1 className="text-display relative text-3xl font-black sm:text-4xl">
             Today&apos;s Adventure
           </h1>
           <div className="relative mt-2 flex flex-wrap items-center justify-center gap-2">
@@ -223,7 +215,7 @@ export default function DailyQuests() {
                   }}
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPct}%` }}
-                  transition={{ type: "spring", stiffness: 50, damping: 15, delay: 0.4 }}
+                  transition={{ ...barFill, delay: 0.3 }}
                 />
               </div>
               <div className={`relative ${progressPct >= 100 ? "animate-[chest-shake_1.2s_ease-in-out_infinite]" : ""}`}>
@@ -274,20 +266,11 @@ export default function DailyQuests() {
         <CompanionGuide messages={messages} />
 
         {nextQuest ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15 }}
-            className="panel panel-glow relative overflow-hidden p-6"
-          >
-            <div
-              className="fx-light absolute -right-10 -top-10 h-48 w-48 animate-pulse-glow rounded-full"
-              style={{ background: "radial-gradient(circle, var(--glow-soft), transparent 70%)" }}
-            />
+          <motion.div {...pop} className="panel panel-glow relative overflow-hidden p-6">
             <p className="text-display text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent-2)]">
               Next {theme.questWord}
             </p>
-            <h2 className="text-display text-glow mt-1 text-3xl font-black">{nextQuest.title}</h2>
+            <h2 className="text-display mt-1 text-3xl font-black">{nextQuest.title}</h2>
             {nextQuest.description && (
               <p className="mt-1 max-w-lg text-sm text-[var(--text-dim)]">{nextQuest.description}</p>
             )}
@@ -306,21 +289,13 @@ export default function DailyQuests() {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="panel panel-glow relative overflow-hidden p-8 text-center"
-          >
-            <div
-              className="fx-light absolute inset-0 animate-pulse-glow"
-              style={{ background: "radial-gradient(70% 90% at 50% 0%, var(--glow-soft), transparent)" }}
-            />
+          <motion.div {...pop} className="panel relative overflow-hidden p-8 text-center">
             {profile && (
               <div className="relative mx-auto w-fit">
                 <Companion species={profile.pet} level={companion ? companionLevel(companion.xp) : 1} size={96} reactive />
               </div>
             )}
-            <h2 className="text-display text-glow relative mt-2 text-2xl font-black">
+            <h2 className="text-display relative mt-2 text-2xl font-black">
               All quests done!
             </h2>
             <p className="relative mt-1 text-sm font-semibold text-[var(--text-dim)]">
@@ -369,11 +344,7 @@ export default function DailyQuests() {
       <div className="flex shrink-0 flex-col gap-4 lg:sticky lg:top-24 lg:w-60">
         {/* mystery chest */}
         {chestAvailable && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="panel panel-glow p-5 text-center"
-          >
+          <motion.div {...enter} className="panel p-5 text-center">
             <p className="text-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">
               Mystery Chest
             </p>
@@ -389,10 +360,9 @@ export default function DailyQuests() {
 
         {/* streak */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.25 }}
-          className="panel panel-glow p-5 text-center"
+          {...enter}
+          transition={{ ...enter.transition, delay: 0.06 }}
+          className="panel p-5 text-center"
         >
           <p className="text-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--text-dim)]">
             Your Streak
@@ -411,7 +381,7 @@ export default function DailyQuests() {
               />
             )}
           </div>
-          <p className="text-display text-glow mt-1 text-3xl font-black">{profile?.streak_days ?? 0}</p>
+          <p className="text-display mt-1 text-3xl font-black">{profile?.streak_days ?? 0}</p>
           <p className="text-xs font-bold text-[var(--text-dim)]">
             day{(profile?.streak_days ?? 0) === 1 ? "" : "s"} in a row
           </p>
@@ -426,11 +396,10 @@ export default function DailyQuests() {
         {nextReward && profile && (
           <Link href="/app/shop">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.35 }}
-              whileHover={{ y: -3 }}
-              className="panel p-5 text-center"
+              {...enter}
+              transition={{ ...enter.transition, delay: 0.12 }}
+              whileHover={{ y: -2 }}
+              className="panel p-5 text-center transition-shadow hover:panel-glow"
             >
               <p className="text-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--text-dim)]">
                 Next Treasure

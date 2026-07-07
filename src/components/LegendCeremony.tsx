@@ -18,6 +18,7 @@ import {
   petElement,
 } from "@/lib/game";
 import { worldsCompleted } from "@/lib/worlds";
+import { popSpring } from "@/lib/motion";
 
 /* The Legend Ceremony — the emotional climax of a whole adventure.
 
@@ -217,7 +218,7 @@ export function LegendCeremony({
                 left: `${(i * 37) % 100}%`,
                 top: "-3%",
                 background: [el.color, "#ffd76a", "#fff", "var(--accent)"][i % 4],
-                animation: `confetti-fall ${2.6 + (i % 5) * 0.5}s linear ${(i % 7) * 0.3}s infinite`,
+                animation: `confetti-fall ${2.6 + (i % 5) * 0.5}s linear ${(i % 7) * 0.3}s both`,
               }}
             />
           ))}
@@ -261,7 +262,7 @@ export function LegendCeremony({
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ type: "spring", stiffness: 160, damping: 14 }}
+              transition={popSpring}
               className="flex flex-col items-center gap-4"
             >
               <div className="animate-floaty">
@@ -299,7 +300,7 @@ export function LegendCeremony({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.2 }}
+                transition={{ ...popSpring, delay: 0.2 }}
                 className="text-display flex items-center gap-2 rounded-2xl bg-black/35 px-6 py-3 text-2xl font-black text-[var(--gold)]"
               >
                 <Icon name="coin" size={26} filled /> +{rewardCoins ?? 250}

@@ -64,7 +64,7 @@ export default function SettingsPage() {
       >
         <Icon name="arrowLeft" size={16} /> Back to Adventure
       </button>
-      <h1 className="text-display text-glow -mt-2 text-3xl font-black">Your Realm</h1>
+      <h1 className="text-display -mt-2 text-3xl font-black">Your Realm</h1>
 
       {/* chapters — worlds unlock in order as the adventure progresses */}
       <section className="panel p-5">

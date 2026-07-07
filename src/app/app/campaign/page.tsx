@@ -9,8 +9,9 @@ import { Portrait } from "@/components/Portrait";
 import { WorldThumbnail } from "@/components/WorldThumbnail";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
-import { PETS, petElement } from "@/lib/game";
+import { PETS } from "@/lib/game";
 import { getCampaign, CampaignWorldState } from "@/lib/campaign";
+import { enter } from "@/lib/motion";
 
 /* The Companion Campaign screen — the story of this partnership at a glance.
    The active companion up top, then the four worlds of their campaign:
@@ -23,7 +24,6 @@ export default function CampaignPage() {
 
   if (!profile) return null;
   const cs = getCampaign(profile, companion);
-  const el = petElement(cs.species);
 
   // card copy per world: shared worlds award a companion, the finale a Legend
   const cards = cs.worlds.map((w) => {
@@ -52,21 +52,11 @@ export default function CampaignPage() {
       </button>
 
       {/* the partnership, front and center */}
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="panel panel-glow relative overflow-hidden p-6 text-center"
-      >
-        <div
-          className="fx-light absolute inset-x-0 top-0 h-44 animate-pulse-glow"
-          style={{
-            background: `radial-gradient(60% 100% at 50% 0%, ${el.color}22, transparent)`,
-          }}
-        />
+      <motion.div {...enter} className="panel panel-glow relative overflow-hidden p-6 text-center">
         <div className="relative mx-auto w-fit">
           <Companion species={cs.species} level={cs.level} size={150} />
         </div>
-        <h1 className="text-display text-glow mt-2 text-3xl font-black">
+        <h1 className="text-display mt-2 text-3xl font-black">
           {cs.companion.name}&apos;s Adventure
         </h1>
         <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
@@ -111,9 +101,9 @@ function ChapterCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+      initial={enter.initial}
+      animate={enter.animate}
+      transition={{ ...enter.transition, delay }}
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.99 }}
       className="panel relative overflow-hidden"

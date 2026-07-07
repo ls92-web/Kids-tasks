@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { RewardCard } from "@/components/RewardCard";
 import { GameButton } from "@/components/GameButton";
+import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
+import { overlayFade, popSpring } from "@/lib/motion";
 import { Reward, Profile } from "@/lib/game";
 
 const CATEGORIES = [
@@ -119,7 +121,7 @@ export default function ShopPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-display text-glow text-3xl font-black">Treasure Vault</h1>
+          <h1 className="text-display text-3xl font-black">Treasure Vault</h1>
           <p className="mt-1 text-sm text-[var(--text-dim)]">
             Spend your {theme.coinName.toLowerCase()} on real rewards
           </p>
@@ -162,9 +164,7 @@ export default function ShopPage() {
         ))}
       </div>
 
-      {error && (
-        <div className="panel p-3 text-center text-sm font-bold text-[var(--danger)]">{error}</div>
-      )}
+      {error && <Callout tone="error">{error}</Callout>}
 
       {visible.length === 0 ? (
         <div className="panel p-10 text-center">
@@ -187,9 +187,7 @@ export default function ShopPage() {
       <AnimatePresence>
         {bought && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            {...overlayFade}
             className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
             onClick={() => chestOpen && setBought(null)}
           >
@@ -228,9 +226,9 @@ export default function ShopPage() {
               ))}
 
             <motion.div
-              initial={{ scale: 0.5, y: 40 }}
+              initial={{ scale: 0.7, y: 24 }}
               animate={{ scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 220, damping: 15 }}
+              transition={popSpring}
               className="panel panel-glow relative mx-4 flex max-w-sm flex-col items-center p-8 text-center"
               onClick={(e) => e.stopPropagation()}
             >
@@ -273,23 +271,22 @@ export default function ShopPage() {
       <AnimatePresence>
         {requestOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+            {...overlayFade}
+            className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
             onClick={() => setRequestOpen(false)}
           >
             <motion.div
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={popSpring}
               className="panel panel-glow w-full max-w-md p-6"
               onClick={(e) => e.stopPropagation()}
             >
               {reqSent ? (
                 <div className="py-6 text-center">
                   <Icon name="check" size={40} className="mx-auto text-[var(--success)]" />
-                  <p className="text-display mt-3 text-lg font-black">Wish sent to the Guild Master</p>
+                  <p className="text-display mt-3 text-lg font-black">Wish sent to your parent</p>
                 </div>
               ) : (
                 <>

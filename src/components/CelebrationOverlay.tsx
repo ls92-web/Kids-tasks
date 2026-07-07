@@ -7,6 +7,7 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { sfx } from "@/lib/sound";
 import { rankName, levelFromXp, companionLevel } from "@/lib/game";
+import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 
 export interface CelebrationData {
   coins: number;
@@ -93,18 +94,16 @@ export function CelebrationOverlay({
     <AnimatePresence>
       {data && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          {...overlayFade}
           className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/75 backdrop-blur-sm"
         >
-          {/* spinning god-rays */}
-          <div
-            className="fx-light pointer-events-none absolute left-1/2 top-1/2 h-[160vmax] w-[160vmax] -translate-x-1/2 -translate-y-1/2 opacity-25"
-            style={{
-              background: `conic-gradient(from 0deg, transparent 0deg, var(--glow) 12deg, transparent 26deg, transparent 60deg, var(--glow) 72deg, transparent 86deg, transparent 120deg, var(--glow) 132deg, transparent 146deg, transparent 180deg, var(--glow) 192deg, transparent 206deg, transparent 240deg, var(--glow) 252deg, transparent 266deg, transparent 300deg, var(--glow) 312deg, transparent 326deg)`,
-              animation: "rays-spin 24s linear infinite",
-            }}
+          {/* a soft bloom of light — the warmth of the moment, not a light show */}
+          <motion.div
+            className="fx-light pointer-events-none absolute left-1/2 top-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2"
+            style={{ background: "radial-gradient(circle, var(--glow-soft), transparent 55%)" }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 0.55, scale: 1 }}
+            transition={{ duration: 0.8, ease: EASE_OUT }}
           />
 
           {/* confetti storm */}
@@ -167,7 +166,7 @@ export function CelebrationOverlay({
               <motion.div
                 initial={{ scale: 0, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 220, damping: 12 }}
+                transition={popSpring}
               >
                 <Companion
                   species={profile.pet}
@@ -179,9 +178,9 @@ export function CelebrationOverlay({
               </motion.div>
             )}
             <motion.h2
-              initial={{ scale: 0.3, opacity: 0 }}
+              initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 14 }}
+              transition={popSpring}
               className="text-display text-glow text-4xl font-black text-[var(--accent-2)] sm:text-5xl"
             >
               {theme.questWord} Complete
@@ -214,9 +213,9 @@ export function CelebrationOverlay({
 
             {phase >= 2 && data.leveledUp && data.newLevel != null && (
               <motion.div
-                initial={{ scale: 0, rotate: -8 }}
+                initial={{ scale: 0.6, rotate: -4 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 12 }}
+                transition={popSpring}
                 className="panel panel-glow relative mt-6 overflow-hidden px-10 py-5"
               >
                 <div

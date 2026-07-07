@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
+import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 
 interface ChestReward {
   kind: string;
@@ -75,9 +76,7 @@ export function MysteryChest({
     <AnimatePresence>
       {active && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          {...overlayFade}
           className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
           onClick={() => phase === "done" && onClose()}
         >
@@ -86,7 +85,7 @@ export function MysteryChest({
               <motion.div
                 initial={{ scale: 0, opacity: 0.9 }}
                 animate={{ scale: 7, opacity: 0 }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
+                transition={{ duration: 1.2, ease: EASE_OUT }}
                 className="absolute h-32 w-32 rounded-full"
                 style={{ border: "3px solid var(--gold)", boxShadow: "0 0 50px rgba(255,215,106,0.8)" }}
               />
@@ -100,7 +99,7 @@ export function MysteryChest({
                     opacity: [0, 1, 0],
                     rotate: i * 47,
                   }}
-                  transition={{ duration: 1.5, delay: i * 0.03, ease: "easeOut" }}
+                  transition={{ duration: 1.5, delay: i * 0.03, ease: EASE_OUT }}
                   className="absolute grid h-4 w-4 place-items-center rounded-full text-[9px] font-black text-[#4d3600]"
                   style={{
                     background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
@@ -114,9 +113,9 @@ export function MysteryChest({
           )}
 
           <motion.div
-            initial={{ scale: 0.5, y: 40 }}
+            initial={{ scale: 0.7, y: 24 }}
             animate={{ scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 220, damping: 15 }}
+            transition={popSpring}
             className="panel panel-glow relative mx-4 flex max-w-sm flex-col items-center p-8 text-center"
             onClick={(e) => e.stopPropagation()}
           >
