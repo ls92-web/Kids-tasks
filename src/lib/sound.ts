@@ -110,6 +110,14 @@ export const sfx = {
     if (!ac) return;
     tone(ac, 300, 0, 0.25, { type: "sine", gain: 0.06, glideTo: 900 });
   },
+  /* a tiny happy squeak — the companion answering a poke */
+  chirp() {
+    if (!soundsEnabled()) return;
+    const ac = audio();
+    if (!ac) return;
+    tone(ac, 740, 0, 0.07, { type: "triangle", gain: 0.05 });
+    tone(ac, 988, 0.06, 0.1, { type: "triangle", gain: 0.045 });
+  },
   /* The Legend Ceremony's music: a gentle rising theme, ~7s — soft pad
      chords underneath, a harp-like arpeggio climbing above, and a shimmer
      as it resolves. Pure Web Audio, no assets. */

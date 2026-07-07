@@ -6,6 +6,13 @@ import { useWorld } from "./ThemeProvider";
 import { Companion } from "./Companion";
 import { PETS, companionLevel } from "@/lib/game";
 import { COMPANION_SAY_EVENT, CompanionEvent, companionLine } from "@/lib/companion";
+import { voiceLine } from "@/lib/voices";
+
+/* what a poked companion says depends on the time of day */
+function pokeContext(): "morning" | "daytime" | "evening" {
+  const h = new Date().getHours();
+  return h < 12 ? "morning" : h < 18 ? "daytime" : "evening";
+}
 
 /* The quest-board guide: the child's bonded companion (real art, its own
    level) floating beside a speech bubble with personalized encouragement.
@@ -53,12 +60,22 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
       transition={{ delay: 0.35, type: "spring", stiffness: 120, damping: 16 }}
       className="flex items-end gap-3"
     >
-      <div className="shrink-0 text-center">
-        <Companion species={profile.pet} level={level} size={82} reactive />
+      <button
+        type="button"
+        className="shrink-0 cursor-pointer text-center"
+        aria-label={`Say hi to ${petMeta.name}`}
+        onClick={() => {
+          // poked! answer in this companion's own voice
+          setEventLine(voiceLine(profile.pet, pokeContext(), profile.nickname));
+          if (eventTimer.current) clearTimeout(eventTimer.current);
+          eventTimer.current = setTimeout(() => setEventLine(null), 5000);
+        }}
+      >
+        <Companion species={profile.pet} level={level} size={82} reactive interactive />
         <p className="text-display -mt-1 text-[10px] font-bold text-[var(--accent-2)]">
           {petMeta.name}
         </p>
-      </div>
+      </button>
       <motion.div
         key={eventLine ?? shown}
         initial={{ opacity: 0, scale: 0.92, x: -8 }}

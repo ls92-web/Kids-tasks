@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Icon } from "./Icon";
 import { DIFFICULTY, Task } from "@/lib/game";
 import { enter, stagger } from "@/lib/motion";
+import { sfx } from "@/lib/sound";
 import { useWorld } from "./ThemeProvider";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -33,7 +34,7 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
   const overdue = deadline && deadline < new Date() && !done;
 
   return (
-    <Link href={`/app/quest/${task.id}`} className="block">
+    <Link href={`/app/quest/${task.id}`} onClick={() => sfx.click()} className="block">
       <motion.div
         initial={enter.initial}
         animate={enter.animate}
@@ -111,12 +112,12 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
             <span
               className="text-display flex items-center gap-1 rounded-lg bg-black/25 px-2 py-0.5 text-[13px] font-black text-[var(--accent-2)]"
             >
-              +{task.xp_reward} <span className="text-[9px] opacity-80">XP</span>
+              +{task.xp_reward} <span className="text-[10px] opacity-80">XP</span>
             </span>
             <span className="text-display flex items-center gap-1 rounded-lg bg-black/25 px-2 py-0.5 text-[13px] font-black text-[var(--gold)]">
               +{task.coin_reward}
               <span
-                className="grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] font-black text-[#4d3600]"
+                className="grid h-3.5 w-3.5 place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
                 style={{ background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)" }}
               >
                 C

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { petForm, petElement, ELEMENTS, ElementId } from "@/lib/game";
 import { companionArt, companionFormArt } from "@/lib/assets";
 import { COMPANION_SAY_EVENT, CompanionEvent } from "@/lib/companion";
+import { sfx } from "@/lib/sound";
 
 /* The one reusable companion renderer for the whole app — now alive.
 
@@ -13,7 +14,8 @@ import { COMPANION_SAY_EVENT, CompanionEvent } from "@/lib/companion";
    wrappers so the transforms compose; all respect the child's animation
    intensity setting ([data-anim="minimal"] stops CSS loops).
 
-   INTERACTIVE (opt-in): hover scale + brighter glow + deeper shadow.
+   INTERACTIVE (opt-in): hover scale + brighter glow + deeper shadow, and a
+   poke — tapping the creature makes it do its happy hop with a tiny chirp.
    SELECTED (opt-in): soft steady glow + one small bounce when chosen.
    REACTIVE (opt-in): listens to the companion event bus —
      quest completed → a happy jump with sparkles
@@ -117,8 +119,19 @@ export function Companion({
 
   return (
     <div
-      className={`group relative inline-block ${float ? "animate-floaty" : ""} ${className}`}
+      className={`group relative inline-block ${float ? "animate-floaty" : ""} ${
+        interactive ? "cursor-pointer" : ""
+      } ${className}`}
       style={{ width: size, height: size, animationDuration: "4s" }}
+      onClick={
+        interactive
+          ? () => {
+              // a poke! the creature answers with its happy hop
+              play("cheer");
+              sfx.chirp();
+            }
+          : undefined
+      }
     >
       {/* elemental aura — brighter with each form, gold-warmed for Legends,
           stronger while hovered or selected */}
