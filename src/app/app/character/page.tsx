@@ -36,15 +36,12 @@ import {
 import {
   WORLD_MAPS,
   FINALE_WORLDS,
-  WORLDS_PER_CAMPAIGN,
   worldProgress,
-  campaignStep,
-  campaignWorld,
-  campaignWorldIndex,
-  campaignCompleted,
-  inFinaleWorld,
   lifetimeWorldsCleared,
+  campaignStep,
+  campaignCompleted,
 } from "@/lib/worlds";
+import { getCampaign } from "@/lib/campaign";
 
 interface Ach {
   key: string;
@@ -97,17 +94,17 @@ export default function HeroHub() {
   const pProg = petFormProgress(cLevel);
   const pElement = petElement(profile.pet);
   const pMood = petMood(profile, tasks);
-  const step = campaignStep(companion);
-  const world = campaignWorld(profile.pet, profile.theme, step);
+  // the campaign engine: one snapshot drives the journey section + ceremony
+  const cs = getCampaign(profile, companion);
+  const step = cs.step;
+  const world = cs.mapWorld;
   const wProg = worldProgress(world, step);
-  const worldNo = campaignWorldIndex(step) + 1;
-  const finaleWorld = FINALE_WORLDS[profile.pet];
+  const worldNo = cs.currentWorldIndex + 1;
+  const finaleWorld = cs.finaleWorld;
   // species unlocks stay keyed to LIFETIME progress (a world cleared in any
   // campaign stays cleared for unlock purposes — mirrors bond_companion SQL)
   const lifetimeCleared = lifetimeWorldsCleared(profile.tasks_completed);
-  // Legendary = the active campaign's finale world is complete
-  const legendReady =
-    !!companion && companion.status === "active" && campaignCompleted(step);
+  const legendReady = cs.legendReady;
   // refresh-safe resume: Legend sealed but no successor chosen yet
   const hasPickable = PETS.some(
     (p) => !bonds.some((b) => b.species === p.id) && speciesUnlocked(p.id, profile, lifetimeCleared)
@@ -299,7 +296,7 @@ export default function HeroHub() {
             {petMeta.name}&apos;s Campaign
           </h2>
           <span className="text-display text-xs font-bold text-[var(--text-dim)]">
-            World {worldNo} of {WORLDS_PER_CAMPAIGN}
+            World {worldNo} of {cs.worlds.length}
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
           <Link
@@ -310,7 +307,7 @@ export default function HeroHub() {
           </Link>
         </div>
         <p className="mb-3 text-sm text-[var(--text-dim)]">
-          {inFinaleWorld(step) && finaleWorld && world.id !== finaleWorld.id ? (
+          {cs.currentWorld.isFinale && !cs.campaignCompleted && finaleWorld && world.id !== finaleWorld.id ? (
             <>
               You have reached{" "}
               <span className="font-bold" style={{ color: finaleWorld.accent }}>

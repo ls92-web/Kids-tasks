@@ -19,7 +19,7 @@ import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { sfx } from "@/lib/sound";
 import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
-import { campaignStep, campaignWorld, campaignWorldIndex, WORLDS_PER_CAMPAIGN } from "@/lib/worlds";
+import { getCampaign } from "@/lib/campaign";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -234,13 +234,15 @@ export default function DailyQuests() {
         </motion.div>
 
         {/* the active campaign — every approved quest moves it one step */}
-        {profile && (
+        {profile && (() => {
+          const cs = getCampaign(profile, companion);
+          return (
           <section>
             <div className="mb-2 flex items-center gap-2">
               <Icon name="map" size={16} className="text-[var(--accent-2)]" />
               <h2 className="text-display text-sm font-black">Your Journey</h2>
               <span className="text-display text-[11px] font-bold text-[var(--text-dim)]">
-                World {campaignWorldIndex(campaignStep(companion)) + 1} of {WORLDS_PER_CAMPAIGN}
+                World {cs.currentWorldIndex + 1} of {cs.worlds.length}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
               <Link
@@ -252,13 +254,14 @@ export default function DailyQuests() {
               </Link>
             </div>
             <WorldMap
-              world={campaignWorld(profile.pet, profile.theme, campaignStep(companion))}
-              campaignStep={campaignStep(companion)}
-              species={profile.pet}
+              world={cs.mapWorld}
+              campaignStep={cs.step}
+              species={cs.species}
               holdAnimation={!!celebration}
             />
           </section>
-        )}
+          );
+        })()}
 
         {/* pet companion */}
         <CompanionGuide messages={messages} />

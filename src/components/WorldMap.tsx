@@ -107,6 +107,7 @@ export function WorldMap({
   const currentNode =
     currentIdx >= 0 ? world.levels[currentIdx] : world.levels[world.levels.length - 1];
 
+
   // Which node's label to float — follows the hero unless the child taps around.
   const [selected, setSelected] = useState<number | null>(null);
   const labelIdx = selected ?? (currentIdx >= 0 ? currentIdx : world.levels.length - 1);
@@ -117,11 +118,8 @@ export function WorldMap({
   const doneNodes = world.levels.slice(0, Math.max(1, completed));
   const donePath = doneNodes.map((n, i) => `${i === 0 ? "M" : "L"} ${n.x} ${n.y}`).join(" ");
 
-  return (
-    <div
-      className={`panel panel-glow relative w-full select-none overflow-hidden ${className}`}
-      style={{ aspectRatio: "1280 / 960" }}
-    >
+  const surface = (
+    <div className="relative h-full w-full select-none">
       <Image
         src={world.map}
         alt={`${world.name} map`}
@@ -237,6 +235,15 @@ export function WorldMap({
             : `${completed} / ${world.levels.length} steps — finale: ${world.finale.name}`}
         </span>
       </div>
+    </div>
+  );
+
+  return (
+    <div
+      className={`panel panel-glow relative w-full overflow-hidden ${className}`}
+      style={{ aspectRatio: "1280 / 960" }}
+    >
+      {surface}
     </div>
   );
 }

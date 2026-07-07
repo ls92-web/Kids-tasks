@@ -9,14 +9,8 @@ import { GameButton } from "./GameButton";
 import { Icon } from "./Icon";
 import { sfx } from "@/lib/sound";
 import { PETS, THEMES, ThemeId } from "@/lib/game";
-import {
-  WORLD_MAPS,
-  FINALE_WORLDS,
-  SHARED_WORLDS,
-  worldCompleted,
-  nextChapter,
-  campaignStep,
-} from "@/lib/worlds";
+import { WORLD_MAPS, SHARED_WORLDS, nextChapter } from "@/lib/worlds";
+import { getCampaign } from "@/lib/campaign";
 
 /* Closing a campaign world is a milestone, not a number ticking over. When a
    shared world's final trial is cleared, this cinematic plays once per world
@@ -35,26 +29,27 @@ export function ChapterComplete() {
   const [celebrating, setCelebrating] = useState<ThemeId | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const step = campaignStep(companion);
+  const cs = profile ? getCampaign(profile, companion) : null;
 
   useEffect(() => {
-    if (!profile || !companion) return;
+    if (!profile || !companion || !cs) return;
     // the newest completed shared world this campaign hasn't celebrated yet
-    for (const t of SHARED_WORLDS) {
-      if (worldCompleted(t, step) && !localStorage.getItem(seenKey(companion.id, t))) {
+    for (let i = 0; i < SHARED_WORLDS.length; i++) {
+      const t = SHARED_WORLDS[i];
+      if (cs.worlds[i]?.state === "completed" && !localStorage.getItem(seenKey(companion.id, t))) {
         setCelebrating(t);
         sfx.levelUp();
         break;
       }
     }
-  }, [profile, companion, step]);
+  }, [profile, companion, cs]);
 
   if (!profile || !companion || !celebrating) return null;
 
   const world = WORLD_MAPS[celebrating];
   const worldNo = SHARED_WORLDS.indexOf(celebrating) + 1;
   const next = nextChapter(celebrating);
-  const finaleWorld = FINALE_WORLDS[companion.species];
+  const finaleWorld = cs?.finaleWorld ?? null;
   const activeMeta = PETS.find((p) => p.id === companion.species);
   const rewardPet = PETS.find((p) => p.id === world.reward.companion);
 

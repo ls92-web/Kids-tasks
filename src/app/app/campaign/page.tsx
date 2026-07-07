@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useWorld } from "@/components/ThemeProvider";
@@ -8,70 +9,35 @@ import { Portrait } from "@/components/Portrait";
 import { WorldThumbnail } from "@/components/WorldThumbnail";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
-import { PETS, ELEMENTS, companionLevel, petElement } from "@/lib/game";
-import {
-  WORLD_MAPS,
-  FINALE_WORLDS,
-  SHARED_WORLDS,
-  CHAPTER_SPAN,
-  campaignStep,
-  campaignWorldIndex,
-  campaignCompleted,
-} from "@/lib/worlds";
+import { PETS, petElement } from "@/lib/game";
+import { getCampaign, CampaignWorldState } from "@/lib/campaign";
 
 /* The Companion Campaign screen — the story of this partnership at a glance.
    The active companion up top, then the four worlds of their campaign:
    three shared worlds and, at the end, the world that belongs to THEM.
-   Calm and roomy: one card per world, nothing blinking for attention. */
-
-type CardState = "locked" | "active" | "completed";
+   All state comes from the campaign engine (src/lib/campaign.ts). */
 
 export default function CampaignPage() {
   const router = useRouter();
   const { profile, companion } = useWorld();
 
   if (!profile) return null;
-  const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
-  const el = petElement(profile.pet);
-  const step = campaignStep(companion);
-  const currentIdx = campaignWorldIndex(step);
-  const cLevel = companion ? companionLevel(companion.xp) : 1;
-  const finaleWorld = FINALE_WORLDS[profile.pet];
+  const cs = getCampaign(profile, companion);
+  const el = petElement(cs.species);
 
-  // one entry per campaign world, shared first, the finale last
-  const chapters = [
-    ...SHARED_WORLDS.map((t, i) => {
-      const w = WORLD_MAPS[t];
-      const rewardPet = PETS.find((p) => p.id === w.reward.companion);
-      return {
-        key: w.id,
-        index: i,
-        name: w.name,
-        accent: w.accent,
-        map: w.map as string | null,
-        trial: w.finale,
-        reward: rewardPet ? `${rewardPet.name} awakens` : w.reward.blurb,
-        rewardSpecies: rewardPet?.id ?? null,
-        isFinale: false,
-      };
-    }),
-    ...(finaleWorld
-      ? [
-          {
-            key: finaleWorld.id,
-            index: 3,
-            name: finaleWorld.name,
-            accent: finaleWorld.accent,
-            // painted finale art when delivered; the accent gradient otherwise
-            map: (finaleWorld.map ?? null) as string | null,
-            trial: finaleWorld.finale,
-            reward: `${petMeta.name} becomes Legendary`,
-            rewardSpecies: null as string | null,
-            isFinale: true,
-          },
-        ]
-      : []),
-  ];
+  // card copy per world: shared worlds award a companion, the finale a Legend
+  const cards = cs.worlds.map((w) => {
+    const rewardPet = w.isFinale ? null : PETS.find((p) => p.id === w.world.reward.companion);
+    return {
+      ...w,
+      reward: w.isFinale
+        ? `${cs.companion.name} becomes Legendary`
+        : rewardPet
+          ? `${rewardPet.name} awakens`
+          : w.world.reward.blurb,
+      rewardSpecies: rewardPet?.id ?? null,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,71 +64,49 @@ export default function CampaignPage() {
           }}
         />
         <div className="relative mx-auto w-fit">
-          <Companion species={profile.pet} level={cLevel} size={150} />
+          <Companion species={cs.species} level={cs.level} size={150} />
         </div>
         <h1 className="text-display text-glow mt-2 text-3xl font-black">
-          {petMeta.name}&apos;s Adventure
+          {cs.companion.name}&apos;s Adventure
         </h1>
         <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
-          {campaignCompleted(step)
+          {cs.campaignCompleted
             ? "Campaign complete — a true Legend!"
-            : `Four worlds together — ${step} of ${CHAPTER_SPAN * chapters.length} steps walked so far`}
+            : `Four worlds together — ${cs.step} of ${cs.totalSteps} steps walked so far`}
         </p>
       </motion.div>
 
       {/* the four worlds of this campaign */}
       <div className="flex flex-col gap-4">
-        {chapters.map((ch, i) => {
-          const start = ch.index * CHAPTER_SPAN;
-          const done = Math.max(0, Math.min(step - start, CHAPTER_SPAN));
-          const pct = Math.round((done / CHAPTER_SPAN) * 100);
-          const state: CardState =
-            done >= CHAPTER_SPAN ? "completed" : ch.index === currentIdx ? "active" : "locked";
-          return (
-            <ChapterCard
-              key={ch.key}
-              chapter={ch}
-              state={state}
-              done={done}
-              pct={pct}
-              species={profile.pet}
-              petName={petMeta.name}
-              delay={0.08 * i}
-            />
-          );
-        })}
+        {cards.map((card, i) => (
+          <ChapterCard
+            key={card.world.id}
+            card={card}
+            species={cs.species}
+            petName={cs.companion.name}
+            delay={0.08 * i}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 function ChapterCard({
-  chapter,
-  state,
-  done,
-  pct,
+  card,
   species,
   petName,
   delay,
 }: {
-  chapter: {
-    index: number;
-    name: string;
-    accent: string;
-    map: string | null;
-    trial: { name: string; icon: string };
-    reward: string;
-    rewardSpecies: string | null;
-    isFinale: boolean;
-  };
-  state: CardState;
-  done: number;
-  pct: number;
+  card: CampaignWorldState & { reward: string; rewardSpecies: string | null };
   species: string;
   petName: string;
   delay: number;
 }) {
   const gold = "#ffd76a";
+  const { state, nodesDone: done, pct, isFinale } = card;
+  const { name, accent, map, finale: trial } = card.world;
+  const total = card.world.levels.length;
   const locked = state === "locked";
 
   return (
@@ -170,23 +114,32 @@ function ChapterCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
       className="panel relative overflow-hidden"
       style={
         state === "active"
-          ? { boxShadow: `0 0 0 1.5px ${chapter.accent}66, 0 0 26px -10px ${chapter.accent}` }
-          : chapter.isFinale && !locked
+          ? { boxShadow: `0 0 0 1.5px ${accent}66, 0 0 26px -10px ${accent}` }
+          : isFinale && !locked
             ? { boxShadow: `0 0 0 1.5px ${gold}66, 0 0 26px -10px ${gold}` }
             : {}
       }
     >
+      {/* tap anywhere on the card to open the world */}
+      <Link
+        href={`/app/world/${card.world.id}`}
+        onClick={() => sfx.click()}
+        className="absolute inset-0 z-10"
+        aria-label={`Open ${name}`}
+      />
       <div className="flex items-stretch">
         <WorldThumbnail
-          map={chapter.map}
-          name={chapter.name}
-          accent={chapter.accent}
-          icon={chapter.trial.icon}
+          map={map}
+          name={name}
+          accent={accent}
+          icon={trial.icon}
           locked={locked}
-          index={chapter.index + 1}
+          index={card.index + 1}
           className="w-32 shrink-0 sm:w-44"
         />
 
@@ -195,9 +148,9 @@ function ChapterCard({
           <div className="flex flex-wrap items-center gap-2">
             <h2
               className={`text-display text-base font-black ${locked ? "text-[var(--text-dim)]" : ""}`}
-              style={!locked ? { color: chapter.isFinale ? chapter.accent : undefined } : undefined}
+              style={!locked ? { color: isFinale ? accent : undefined } : undefined}
             >
-              {chapter.name}
+              {name}
             </h2>
             <span
               className="text-display rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
@@ -206,7 +159,7 @@ function ChapterCard({
                   state === "completed"
                     ? "var(--success)"
                     : state === "active"
-                      ? chapter.accent
+                      ? accent
                       : "var(--text-dim)",
                 background: "rgba(0,0,0,0.35)",
               }}
@@ -215,7 +168,7 @@ function ChapterCard({
             </span>
           </div>
 
-          {chapter.isFinale && (
+          {isFinale && (
             <div
               className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold"
               style={{ color: locked ? "var(--text-dim)" : gold }}
@@ -234,30 +187,30 @@ function ChapterCard({
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.8, delay: delay + 0.2 }}
                 style={{
-                  background: `linear-gradient(90deg, ${chapter.accent}88, ${chapter.accent})`,
-                  boxShadow: pct > 0 ? `0 0 8px ${chapter.accent}88` : "none",
+                  background: `linear-gradient(90deg, ${accent}88, ${accent})`,
+                  boxShadow: pct > 0 ? `0 0 8px ${accent}88` : "none",
                 }}
               />
             </div>
             <span className="text-display shrink-0 text-[11px] font-black text-[var(--text-dim)]">
-              {pct}% — {done}/{CHAPTER_SPAN}
+              {pct}% — {done}/{total}
             </span>
           </div>
 
           {/* reward preview */}
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
-            {chapter.isFinale ? (
+            {isFinale ? (
               <>
                 <Icon name="trophy" size={13} filled className="shrink-0 text-[var(--gold)]" />
-                <span style={{ color: locked ? undefined : gold }}>{chapter.reward}</span>
+                <span style={{ color: locked ? undefined : gold }}>{card.reward}</span>
               </>
             ) : (
               <>
                 <Icon name="gift" size={13} className="shrink-0 text-[var(--accent-2)]" />
-                <span>{chapter.reward}</span>
-                {chapter.rewardSpecies && (
+                <span>{card.reward}</span>
+                {card.rewardSpecies && (
                   <span className={locked ? "opacity-40 grayscale" : ""}>
-                    <Companion species={chapter.rewardSpecies} level={1} size={24} float={false} />
+                    <Companion species={card.rewardSpecies} level={1} size={24} float={false} />
                   </span>
                 )}
               </>

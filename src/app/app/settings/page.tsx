@@ -18,7 +18,8 @@ import {
   petForm,
   petElement,
 } from "@/lib/game";
-import { worldUnlocked, WORLD_MAPS, FINALE_WORLDS, campaignStep } from "@/lib/worlds";
+import { WORLD_MAPS, FINALE_WORLDS } from "@/lib/worlds";
+import { getCampaign } from "@/lib/campaign";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function SettingsPage() {
   }, []);
 
   if (!profile) return null;
+  const cs = getCampaign(profile, companion);
   const cLevel = companion ? companionLevel(companion.xp) : 1;
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
 
@@ -74,7 +76,7 @@ export default function SettingsPage() {
           {(Object.keys(THEMES) as ThemeId[]).map((tid, i) => {
             const t = THEMES[tid];
             const active = profile.theme === tid;
-            const unlocked = worldUnlocked(tid, campaignStep(companion));
+            const unlocked = cs.worlds[i]?.state !== "locked";
             const previews: Record<ThemeId, string> = {
               ninja: "linear-gradient(160deg, #0c1430, #101c3f 60%, #1c2c5c)",
               samurai: "linear-gradient(160deg, #2c160c, #3d2012 60%, #5c3018)",
