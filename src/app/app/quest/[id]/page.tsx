@@ -10,6 +10,7 @@ import { GameButton } from "@/components/GameButton";
 import { VerifyOverlay } from "@/components/VerifyOverlay";
 import { MagicLoader } from "@/components/MagicLoader";
 import { Callout } from "@/components/Callout";
+import { enter } from "@/lib/motion";
 import { DIFFICULTY, Task } from "@/lib/game";
 
 export default function QuestDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -106,7 +107,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
   }
 
   if (!task) {
-    return <MagicLoader label="Unrolling your quest..." />;
+    return <MagicLoader label="Unrolling your quest…" />;
   }
 
   const diff = DIFFICULTY[task.difficulty] ?? DIFFICULTY.easy;
@@ -114,7 +115,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
   const waiting = task.status === "submitted" || task.status === "needs_review";
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <button
         onClick={() => router.push("/app")}
         className="text-display flex w-fit cursor-pointer items-center gap-1.5 text-sm font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
@@ -122,11 +123,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         <Icon name="arrowLeft" size={16} /> {theme.questWord} Board
       </button>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="panel panel-glow relative overflow-hidden p-6"
-      >
+      <motion.div {...enter} className="panel panel-glow relative overflow-hidden p-6">
         <div
           className="absolute inset-x-0 top-0 h-1"
           style={{ background: diff.color, boxShadow: `0 0 16px ${diff.color}` }}
@@ -177,7 +174,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           <Icon name="eye" size={28} className="mx-auto text-[var(--gold)]" />
           <p className="text-display mt-2 font-bold">
             {task.status === "submitted"
-              ? "The scan is underway..."
+              ? "The scan is underway…"
               : "The council of grown-ups is reviewing your proof."}
           </p>
         </div>
@@ -194,9 +191,8 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
 
       {canSubmit && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          {...enter}
+          transition={{ ...enter.transition, delay: 0.08 }}
           className="panel p-6"
         >
           <h2 className="text-display mb-3 flex items-center gap-2 text-lg font-black">

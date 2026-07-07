@@ -47,7 +47,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   }, [router]);
 
   if (!ready || !profile) {
-    return <MagicLoader full label="Entering your world..." />;
+    return <MagicLoader full label="Entering your world…" />;
   }
 
   return (

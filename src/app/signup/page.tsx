@@ -196,7 +196,7 @@ function SignupInner() {
                 <Field label="Password" value={password} onChange={setPassword} type="password" placeholder="At least 6 characters" />
                 {error && <Callout tone="error">{error}</Callout>}
                 <GameButton type="submit" disabled={busy} className="w-full text-lg">
-                  {busy ? "Raising the banners..." : "Create Family"}
+                  {busy ? "Raising the banners…" : "Create Family"}
                 </GameButton>
               </motion.form>
             )}

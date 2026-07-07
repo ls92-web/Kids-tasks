@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useWorld } from "./ThemeProvider";
 import { Icon } from "./Icon";
 import { Companion } from "./Companion";
+import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
 import { rankName, levelFromXp, companionLevel } from "@/lib/game";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
@@ -261,22 +262,16 @@ export function CelebrationOverlay({
               ))}
 
             {phase >= 2 && (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                onClick={() => {
-                  sfx.click();
-                  onClose();
-                }}
-                className="text-display mt-8 cursor-pointer rounded-2xl px-8 py-3 text-lg font-black text-white"
-                style={{
-                  background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                  boxShadow: "0 0 30px -4px var(--glow)",
-                }}
+                className="mt-8"
               >
-                Onward
-              </motion.button>
+                <GameButton onClick={onClose} className="px-8 text-lg">
+                  Onward
+                </GameButton>
+              </motion.div>
             )}
           </div>
         </motion.div>

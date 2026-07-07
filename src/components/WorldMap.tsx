@@ -232,8 +232,8 @@ export function WorldMap({
         </motion.div>
       )}
 
-      {/* progress chip — always pointing at the finale */}
-      <div className="absolute bottom-2 left-2 z-20 rounded-lg bg-black/55 px-2.5 py-1 backdrop-blur-sm">
+      {/* progress chip — top corner, clear of every world's path and labels */}
+      <div className="absolute left-2 top-2 z-20 rounded-lg bg-black/55 px-2.5 py-1 backdrop-blur-sm">
         <span className="text-display text-[10px] font-black text-white">
           {completed >= world.levels.length
             ? "Chapter complete!"
@@ -354,7 +354,8 @@ function Node({
         )}
       </motion.button>
 
-      {/* floating label for the highlighted node */}
+      {/* floating label for the highlighted node — always below, so it never
+          covers the companion standing on the current node */}
       {selected && (
         <motion.div
           initial={{ opacity: 0, y: 4 }}

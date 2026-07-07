@@ -788,7 +788,7 @@ function HallDetail({
         )}
         {status === "Locked" && (
           <p className="mt-2 rounded-xl bg-black/25 px-3 py-2 text-[11px] font-bold text-[var(--text-dim)]">
-            A mysterious companion still sleeps... {unlockHint(COMPANION_UNLOCKS[species])}.
+            A mysterious companion still sleeps… {unlockHint(COMPANION_UNLOCKS[species])}.
           </p>
         )}
         {status === "Legendary" && (

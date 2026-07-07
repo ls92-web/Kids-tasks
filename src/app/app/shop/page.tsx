@@ -267,7 +267,7 @@ export default function ShopPage() {
                     exit={{ opacity: 0 }}
                     className="text-display mt-4 text-lg font-bold text-[var(--text-dim)]"
                   >
-                    Opening the chest...
+                    Opening the chest…
                   </motion.p>
                 )}
               </AnimatePresence>

@@ -24,5 +24,5 @@ export default function Home() {
     });
   }, [router]);
 
-  return <MagicLoader full label="Opening the portal..." />;
+  return <MagicLoader full label="Opening the portal…" />;
 }

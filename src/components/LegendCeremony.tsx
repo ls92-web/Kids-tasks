@@ -256,7 +256,7 @@ export function LegendCeremony({
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 1.6, repeat: Infinity }}
               >
-                Something is happening to {petMeta.name}...
+                Something is happening to {petMeta.name}…
               </motion.p>
             </motion.div>
           )}
@@ -284,7 +284,7 @@ export function LegendCeremony({
                 every world, every quest, together.
               </p>
               <GameButton onClick={sealLegend} disabled={busy} className="mt-2 text-lg">
-                {busy ? "Sealing the legend..." : "Continue"}
+                {busy ? "Sealing the legend…" : "Continue"}
               </GameButton>
             </motion.div>
           )}

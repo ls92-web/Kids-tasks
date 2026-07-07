@@ -9,6 +9,7 @@ import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
+import { enter } from "@/lib/motion";
 
 type Mode = "hero" | "parent";
 
@@ -65,12 +66,7 @@ function LoginInner() {
     <div className="relative min-h-screen">
       <WorldBackground />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: "spring", stiffness: 120, damping: 16 }}
-          className="panel panel-glow w-full max-w-md p-8"
-        >
+        <motion.div {...enter} className="panel panel-glow w-full max-w-md p-8">
           <div className="mb-2 text-center">
             <h1 className="text-display text-glow shimmer-text text-4xl font-black">
               QUESTFORGE
@@ -165,7 +161,7 @@ function LoginInner() {
               {error && <Callout tone="error">{error}</Callout>}
 
               <GameButton type="submit" disabled={busy} className="mt-1 w-full text-lg">
-                {busy ? "Opening the gate..." : "Enter the World"}
+                {busy ? "Opening the gate…" : "Enter the World"}
               </GameButton>
             </motion.form>
           </AnimatePresence>

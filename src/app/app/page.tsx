@@ -182,13 +182,13 @@ export default function DailyQuests() {
   }
 
   if (loading) {
-    return <MagicLoader label="Gathering today's quests..." />;
+    return <MagicLoader label="Gathering today's quests…" />;
   }
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
       {/* ============ main column ============ */}
-      <div className="flex min-w-0 flex-1 flex-col gap-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-6">
         {/* Today's Adventure banner — calm and clear; the day at a glance */}
         <motion.div {...enter} className="panel relative overflow-hidden px-6 py-5 text-center">
           <h1 className="text-display relative text-3xl font-black sm:text-4xl">
@@ -225,10 +225,12 @@ export default function DailyQuests() {
                   className={progressPct >= 100 ? "text-[var(--gold)]" : "text-[var(--text-dim)]"}
                 />
               </div>
-              <span className="text-display absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-bold text-[var(--text-dim)]">
-                {doneToday.length}/{todayTotal} today
-              </span>
             </div>
+          )}
+          {todayTotal > 0 && (
+            <p className="text-display relative mt-2 text-[11px] font-bold text-[var(--text-dim)]">
+              {doneToday.length}/{todayTotal} today
+            </p>
           )}
         </motion.div>
 
@@ -237,10 +239,10 @@ export default function DailyQuests() {
           const cs = getCampaign(profile, companion);
           return (
           <section>
-            <div className="mb-2 flex items-center gap-2">
-              <Icon name="map" size={16} className="text-[var(--accent-2)]" />
-              <h2 className="text-display text-sm font-black">Your Journey</h2>
-              <span className="text-display text-[11px] font-bold text-[var(--text-dim)]">
+            <div className="mb-3 flex items-center gap-2">
+              <Icon name="map" size={18} className="text-[var(--accent-2)]" />
+              <h2 className="text-display text-lg font-black">Your Journey</h2>
+              <span className="text-display text-xs font-bold text-[var(--text-dim)]">
                 World {cs.currentWorldIndex + 1} of {cs.worlds.length}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />

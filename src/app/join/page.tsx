@@ -301,7 +301,7 @@ function JoinInner() {
                         <Callout tone="error">{error}</Callout>
                       )}
                       <GameButton onClick={join} disabled={busy} className="w-full text-lg">
-                        {busy ? "Opening the gate..." : `I choose ${p.name}!`}
+                        {busy ? "Opening the gate…" : `I choose ${p.name}!`}
                       </GameButton>
                       <button
                         onClick={() => {

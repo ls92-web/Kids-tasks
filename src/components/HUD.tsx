@@ -28,7 +28,7 @@ export function HUD() {
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-display truncate text-base font-bold">{profile.nickname}</span>
-            <span className="text-display shrink-0 text-xs font-semibold text-[var(--accent-2)]">
+            <span className="text-display hidden shrink-0 text-xs font-semibold text-[var(--accent-2)] min-[440px]:inline">
               {rankName(theme.id, level)}
             </span>
           </div>
@@ -110,7 +110,7 @@ export function CoinStat({ coins }: { coins: number }) {
           initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 12, opacity: 0 }}
-          className="text-display text-sm font-bold text-[var(--gold)]"
+          className="text-display text-sm font-bold tabular-nums text-[var(--gold)]"
         >
           {coins}
         </motion.span>

@@ -127,7 +127,7 @@ export function MysteryChest({
             <ChestArt open={phase !== "closed"} />
             {phase === "closed" && (
               <p className="text-display mt-4 text-lg font-bold text-[var(--text-dim)]">
-                A mystery chest appears...
+                A mystery chest appears…
               </p>
             )}
             {phase !== "closed" && reward && (

@@ -23,9 +23,9 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     questWord: "Mission",
     verifyTitle: "Magic Scan",
     verifySteps: [
-      "Unrolling the secret scroll...",
-      "Moonlight reads your proof...",
-      "The village elders decide...",
+      "Unrolling the secret scroll…",
+      "Moonlight reads your proof…",
+      "The village elders decide…",
     ],
     ranks: [
       "Shadow Novice",
@@ -55,9 +55,9 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     questWord: "Trial",
     verifyTitle: "Scroll Decoding",
     verifySteps: [
-      "The ancient scroll unfurls...",
-      "Golden ink studies your deed...",
-      "The council of masters judges...",
+      "The ancient scroll unfurls…",
+      "Golden ink studies your deed…",
+      "The council of masters judges…",
     ],
     ranks: [
       "Wanderer",
@@ -87,9 +87,9 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     questWord: "Run",
     verifyTitle: "Crystal Analysis",
     verifySteps: [
-      "Charging the energy crystal...",
-      "Beam sweep in progress...",
-      "Core verdict incoming...",
+      "Charging the energy crystal…",
+      "Beam sweep in progress…",
+      "Core verdict incoming…",
     ],
     ranks: [
       "Spark Runner",
