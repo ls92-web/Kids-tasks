@@ -8,6 +8,7 @@ import { Companion } from "./Companion";
 import { GameButton } from "./GameButton";
 import { Icon } from "./Icon";
 import { sfx } from "@/lib/sound";
+import { sayFromCompanion } from "@/lib/companion";
 import { PETS, THEMES, ThemeId } from "@/lib/game";
 import { WORLD_MAPS, SHARED_WORLDS, nextChapter } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
@@ -68,6 +69,8 @@ export function ChapterComplete() {
     sfx.whoosh();
     setCelebrating(null);
     setBusy(false);
+    // the companion greets the new world once the overlay clears
+    setTimeout(() => sayFromCompanion("worldUnlocked"), 900);
   }
 
   return (

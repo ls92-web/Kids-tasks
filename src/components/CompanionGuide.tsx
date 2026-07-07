@@ -25,11 +25,13 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
   }, [messages]);
 
   // moment reactions: sayFromCompanion(event) anywhere → the bubble responds
+  // in THIS companion's own voice
   useEffect(() => {
+    if (!profile) return;
     function onSay(e: Event) {
       const ev = (e as CustomEvent<{ event: CompanionEvent }>).detail?.event;
-      if (!ev) return;
-      setEventLine(companionLine(ev));
+      if (!ev || !profile) return;
+      setEventLine(companionLine(ev, profile.pet, profile.nickname));
       if (eventTimer.current) clearTimeout(eventTimer.current);
       eventTimer.current = setTimeout(() => setEventLine(null), 6000);
     }
@@ -38,7 +40,7 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
       window.removeEventListener(COMPANION_SAY_EVENT, onSay);
       if (eventTimer.current) clearTimeout(eventTimer.current);
     };
-  }, []);
+  }, [profile]);
 
   if (!profile || messages.length === 0) return null;
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];

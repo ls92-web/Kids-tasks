@@ -3,6 +3,7 @@
    something different every day without ever calling a network. It never
    shames — only celebrates, encourages, and points at the next adventure. */
 
+import { voiceLine, VoiceContext } from "./voices";
 import {
   Profile,
   Task,
@@ -53,56 +54,28 @@ export type CompanionEvent =
   | "allDone"
   | "nodeUnlocked"
   | "evolved"
-  | "legendary";
+  | "legendary"
+  | "campaignComplete"
+  | "worldUnlocked";
 
-export const COMPANION_LINES: Record<CompanionEvent, string[]> = {
-  open: [
-    "You're here! Today feels lucky.",
-    "Hi hero! Ready when you are.",
-    "I saved your spot. Let's go!",
-  ],
-  questDone: [
-    "You did it! I knew you would.",
-    "Another quest done — amazing!",
-    "That was so brave. High five!",
-    "We make the best team!",
-  ],
-  coins: [
-    "Ooh, shiny! Treasure looks good on you.",
-    "Cha-ching! Your pouch feels heavier.",
-    "Treasure! Let's save it for something special.",
-  ],
-  levelUp: [
-    "LEVEL UP! You're getting so strong!",
-    "A whole new level — I'm so proud of you!",
-    "Look at you grow, hero!",
-  ],
-  allDone: [
-    "All done! Time to play and rest.",
-    "Every quest finished — you're my hero!",
-    "The board is clear. You were wonderful today.",
-  ],
-  nodeUnlocked: [
-    "A new place on our map!",
-    "The path grows — onward!",
-    "Look how far we've come!",
-    "One step closer to the finale!",
-  ],
-  evolved: [
-    "Whoa... I evolved! Do I look bigger?",
-    "I feel stronger — thanks to you!",
-    "My new form! We did this together!",
-  ],
-  legendary: [
-    "A Legend rests in your Hall forever.",
-    "I'll make you proud, just like they did!",
-    "A brand new journey — together!",
-  ],
+/* Every companion answers these moments in its own voice — see
+   src/lib/voices.ts for the personalities. */
+const EVENT_CONTEXT: Record<CompanionEvent, VoiceContext> = {
+  open: "daytime",
+  questDone: "questDone",
+  coins: "coins",
+  levelUp: "levelUp",
+  allDone: "allDone",
+  nodeUnlocked: "nodeUnlocked",
+  evolved: "evolved",
+  legendary: "legendary",
+  campaignComplete: "campaignComplete",
+  worldUnlocked: "worldUnlocked",
 };
 
-export function companionLine(event: CompanionEvent): string {
-  const pool = COMPANION_LINES[event];
-  return pool[Math.floor(Math.random() * pool.length)];
+/** A reaction line for this moment, in this companion's voice. */
+export function companionLine(event: CompanionEvent, species: string, name?: string): string {
+  return voiceLine(species, EVENT_CONTEXT[event], name);
 }
 
 export const COMPANION_SAY_EVENT = "qf-companion-say";
@@ -132,26 +105,9 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
   ).length;
   const hour = new Date().getHours();
 
-  // 1) Opening line — varies by time of day
-  const openings =
-    hour < 12
-      ? [
-          `Good morning, ${profile.nickname}! A brand new adventure is waiting.`,
-          `Rise and shine, ${profile.nickname}! The realm woke up before you did.`,
-          `Morning, hero! I kept your ${quest}s warm for you.`,
-        ]
-      : hour < 18
-        ? [
-            `Welcome back, ${profile.nickname}! I was hoping you'd return.`,
-            `There you are, ${profile.nickname}! The realm feels braver already.`,
-            `Ah, ${profile.nickname} returns! Ready for today's ${quest}s?`,
-          ]
-        : [
-            `Evening, ${profile.nickname}! Still time for one more ${quest}.`,
-            `The stars are out, ${profile.nickname} — heroes shine brightest now.`,
-            `Welcome back, night adventurer. The realm never sleeps.`,
-          ];
-  messages.push(seededPick(openings, seed));
+  // 1) Opening line — time of day, spoken in THIS companion's voice
+  const timeContext: VoiceContext = hour < 12 ? "morning" : hour < 18 ? "daytime" : "evening";
+  messages.push(voiceLine(profile.pet, timeContext, profile.nickname));
 
   // 2) Memory: the badge the hero is closest to unlocking, if within reach
   const counts = computeCounts(tasks);
@@ -205,15 +161,7 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
 
   // 3) A gentle nudge toward what's next — never pressure
   if (doneToday > 0 && active === 0 && waiting === 0) {
-    messages.push(
-      seededPick(
-        [
-          `Every ${quest} done today. Rest well, champion — you earned it.`,
-          `The board is clear! Even I need a nap after watching that.`,
-        ],
-        seed + 2
-      )
-    );
+    messages.push(voiceLine(profile.pet, "allDone", profile.nickname));
   } else if (waiting > 0 && active === 0) {
     messages.push(
       seededPick(

@@ -143,6 +143,13 @@ export default function DailyQuests() {
   // companion reactions to the big moments: evolution + a finished Legend
   useEffect(() => {
     if (!profile || !companion) return;
+    // the campaign's final step: one proud line, once per bond
+    const campKey = `qf_said_campaign_${companion.id}`;
+    if (companion.quests_done >= 144 && !localStorage.getItem(campKey)) {
+      localStorage.setItem(campKey, "1");
+      const t = setTimeout(() => sayFromCompanion("campaignComplete"), 1200);
+      return () => clearTimeout(t);
+    }
     if (localStorage.getItem("qf_say_legendary")) {
       localStorage.removeItem("qf_say_legendary");
       const t = setTimeout(() => sayFromCompanion("legendary"), 1500);

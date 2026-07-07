@@ -61,10 +61,11 @@ export function WorldMap({
     const justFinished = wasAdvancing.current && !advancing;
     wasAdvancing.current = advancing;
     if (justFinished) {
-      setBubble(companionLine("nodeUnlocked"));
+      setBubble(companionLine("nodeUnlocked", species ?? bond?.species ?? "dragon"));
       const t = setTimeout(() => setBubble(null), 4500);
       return () => clearTimeout(t);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [advancing]);
 
   // Play the advance: one step at a time, a heartbeat apart.
