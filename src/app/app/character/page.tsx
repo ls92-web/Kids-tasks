@@ -80,6 +80,16 @@ export default function HeroHub() {
 
   const counts = useMemo(() => computeCounts(tasks), [tasks]);
 
+  // the ceremony fades home INTO the Hall — land there after the reload
+  useEffect(() => {
+    if (!profile || !localStorage.getItem("qf_scroll_hall")) return;
+    localStorage.removeItem("qf_scroll_hall");
+    const t = setTimeout(() => {
+      document.getElementById("hero-hall")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 700);
+    return () => clearTimeout(t);
+  }, [profile]);
+
   if (!profile) return null;
   const { level } = levelFromXp(profile.xp);
   const cls = CHARACTER_CLASSES.find((c) => c.id === profile.character_class);
@@ -200,7 +210,7 @@ export default function HeroHub() {
       </motion.div>
 
       {/* hero hall — a museum of completed adventures */}
-      <section>
+      <section id="hero-hall" className="scroll-mt-4">
         <div className="mb-3 flex items-center gap-2">
           <Icon name="sparkle" size={18} className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">Hero Hall</h2>

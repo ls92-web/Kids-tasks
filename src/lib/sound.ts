@@ -110,6 +110,31 @@ export const sfx = {
     if (!ac) return;
     tone(ac, 300, 0, 0.25, { type: "sine", gain: 0.06, glideTo: 900 });
   },
+  /* The Legend Ceremony's music: a gentle rising theme, ~7s — soft pad
+     chords underneath, a harp-like arpeggio climbing above, and a shimmer
+     as it resolves. Pure Web Audio, no assets. */
+  ceremony() {
+    if (!soundsEnabled()) return;
+    const ac = audio();
+    if (!ac) return;
+    // pad: C — Am — F — G — C, warm triangles two octaves down
+    const pads: [number[], number][] = [
+      [[130.81, 196.0, 261.63], 0], // C3 G3 C4
+      [[110.0, 164.81, 261.63], 1.4], // A2 E3 C4
+      [[87.31, 174.61, 261.63], 2.8], // F2 F3 C4
+      [[98.0, 196.0, 293.66], 4.2], // G2 G3 D4
+      [[130.81, 196.0, 329.63], 5.6], // C3 G3 E4
+    ];
+    for (const [chord, at] of pads)
+      for (const f of chord) tone(ac, f, at, 1.7, { type: "triangle", gain: 0.035 });
+    // harp arpeggio climbing over it
+    const arp = [523.25, 659.25, 783.99, 1046.5, 987.77, 1046.5, 1318.5, 1567.98];
+    arp.forEach((f, i) => tone(ac, f, 0.5 + i * 0.55, 0.5, { type: "sine", gain: 0.055 }));
+    // resolution: one bright sustained star + shimmer
+    tone(ac, 2093, 5.4, 1.4, { type: "sine", gain: 0.05 });
+    sparkleNoise(ac, 5.5, 0.9, 0.05);
+    sparkleNoise(ac, 1.2, 0.5, 0.03);
+  },
   sad() {
     if (!soundsEnabled()) return;
     const ac = audio();

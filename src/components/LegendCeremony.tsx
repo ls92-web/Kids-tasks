@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { Companion } from "./Companion";
 import { GameButton } from "./GameButton";
+import { Icon } from "./Icon";
 import { sfx } from "@/lib/sound";
 import {
   PETS,
@@ -18,19 +19,20 @@ import {
 } from "@/lib/game";
 import { worldsCompleted } from "@/lib/worlds";
 
-/* The Legend Ceremony — the biggest emotional moment in the app.
+/* The Legend Ceremony — the emotional climax of a whole adventure.
 
-   glow → burst of light → the Legend revealed → confetti → and only then
-   may a new companion join the hero. Stages auto-advance; the child only
-   taps to continue after the reveal.
+   darkness falls → the music begins → the companion rises, large, wrapped in
+   gathering magic → a burst of light → the LEGEND revealed under confetti →
+   the reward → a pedestal unlocked in the Hero Hall → a new companion chosen
+   → and a slow fade home into the Hall, where they now stand forever.
 
-   REFRESH-SAFE: the Legend is sealed in the database the moment the child
-   taps Continue (not when they pick a successor). Refreshing mid-cinematic
-   simply replays it (the companion is still active at level 100); refreshing
-   after Continue resumes straight at the choose step via initialStage. It can
-   never fire for a companion that is already a Legend. */
+   The child should feel one thing: "I finished an adventure."
 
-type Stage = "glow" | "burst" | "legend" | "choose";
+   REFRESH-SAFE: the Legend (and its coin reward) is sealed server-side the
+   moment the child taps Continue after the reveal. Refreshing mid-cinematic
+   replays it; refreshing after the seal resumes at the choose step. */
+
+type Stage = "dark" | "glow" | "burst" | "legend" | "reward" | "choose" | "fade";
 
 export function LegendCeremony({
   profile,
@@ -40,15 +42,16 @@ export function LegendCeremony({
   onComplete,
 }: {
   profile: Profile;
-  /** The active companion at level 100 — null when resuming at "choose". */
+  /** The active companion at campaign's end — null when resuming at "choose". */
   companion: CompanionBond | null;
   bonds: CompanionBond[];
   initialStage?: "glow" | "choose";
   onComplete: (newBond: CompanionBond | null) => void;
 }) {
-  const [stage, setStage] = useState<Stage>(initialStage);
+  const [stage, setStage] = useState<Stage>(initialStage === "glow" ? "dark" : "choose");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [rewardCoins, setRewardCoins] = useState<number | null>(null);
   const petMeta = PETS.find((p) => p.id === companion?.species) ?? PETS[0];
   const el = petElement(companion?.species ?? profile.pet);
 
@@ -61,18 +64,23 @@ export function LegendCeremony({
     };
   }, []);
 
-  // the cinematic beats
+  // the cinematic beats: darkness → music → magic → burst → the Legend
   useEffect(() => {
     if (initialStage !== "glow") return;
+    const t0 = setTimeout(() => {
+      setStage("glow");
+      sfx.ceremony(); // the music begins as the magic gathers
+    }, 1100);
     const t1 = setTimeout(() => {
       setStage("burst");
       sfx.whoosh();
-    }, 2600);
+    }, 4300);
     const t2 = setTimeout(() => {
       setStage("legend");
       sfx.levelUp();
-    }, 4000);
+    }, 5700);
     return () => {
+      clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
     };
@@ -87,22 +95,31 @@ export function LegendCeremony({
     (p) => !bondedSpecies.has(p.id) && !speciesUnlocked(p.id, profile, done)
   );
 
-  // Step 8 — seal the Legend NOW, before any choosing. Idempotent: if it was
-  // already sealed (double-tap, strict mode, refresh race) the RPC simply
-  // finds no active companion and we move on.
+  // Seal the Legend NOW — server-side, idempotent, and it grants the reward.
   async function sealLegend() {
     if (busy) return;
     setBusy(true);
-    try {
-      await createClient().rpc("complete_legend");
-    } catch {
-      /* already sealed — carry on */
-    }
+    const { data } = await createClient().rpc("complete_legend");
     setBusy(false);
-    setStage("choose");
+    const reward = (data as { reward?: number } | null)?.reward;
+    if (reward) {
+      setRewardCoins(reward);
+      sfx.chest();
+      setStage("reward");
+    } else {
+      // already sealed (refresh race) — no double reward, straight to choosing
+      setStage("choose");
+    }
   }
 
-  // Step 9 — bond the successor.
+  // The slow fade home: the Hall opens where the new Legend now stands.
+  function fadeHome(newBond: CompanionBond | null) {
+    localStorage.setItem("qf_scroll_hall", "1");
+    setStage("fade");
+    setTimeout(() => onComplete(newBond), 900);
+  }
+
+  // Choose the successor — a new companion, a new campaign.
   async function choose(species: string) {
     if (busy) return;
     setBusy(true);
@@ -123,39 +140,50 @@ export function LegendCeremony({
       .eq("child_id", profile.id)
       .eq("status", "active")
       .maybeSingle();
-    onComplete((bond as CompanionBond) ?? null);
+    fadeHome((bond as CompanionBond) ?? null);
   }
 
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/90 p-4 backdrop-blur-sm">
-      {/* swelling aura behind everything */}
+    <div className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/95 p-4">
+      {/* the darkness itself — deepens on entry, returns for the fade home */}
       <motion.div
-        className="pointer-events-none absolute h-[75vmin] w-[75vmin] rounded-full"
-        style={{ background: `radial-gradient(circle, ${el.color}66, transparent 65%)` }}
-        animate={{
-          scale: stage === "glow" ? [1, 1.25, 1.12, 1.45] : stage === "burst" ? 2.8 : 1.6,
-          opacity: stage === "choose" ? 0.25 : stage === "legend" ? 0.5 : 0.9,
-        }}
-        transition={{ duration: stage === "glow" ? 2.6 : 0.9, ease: "easeInOut" }}
+        className="pointer-events-none absolute inset-0 bg-black"
+        initial={{ opacity: initialStage === "glow" ? 0 : 0.4 }}
+        animate={{ opacity: stage === "dark" ? 1 : stage === "fade" ? 1 : 0.35 }}
+        transition={{ duration: stage === "fade" ? 0.8 : 1.0, ease: "easeInOut" }}
+        style={{ zIndex: stage === "fade" ? 50 : 0 }}
       />
 
-      {/* gentle rising sparks while the magic gathers */}
+      {/* swelling aura behind everything */}
+      {stage !== "dark" && stage !== "fade" && (
+        <motion.div
+          className="pointer-events-none absolute h-[75vmin] w-[75vmin] rounded-full"
+          style={{ background: `radial-gradient(circle, ${el.color}66, transparent 65%)` }}
+          animate={{
+            scale: stage === "glow" ? [1, 1.25, 1.12, 1.45] : stage === "burst" ? 2.8 : 1.6,
+            opacity: stage === "choose" || stage === "reward" ? 0.25 : stage === "legend" ? 0.5 : 0.9,
+          }}
+          transition={{ duration: stage === "glow" ? 2.9 : 0.9, ease: "easeInOut" }}
+        />
+      )}
+
+      {/* gentle rising magic while it gathers */}
       {(stage === "glow" || stage === "burst") && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {Array.from({ length: 14 }).map((_, i) => (
+          {Array.from({ length: 16 }).map((_, i) => (
             <motion.span
               key={i}
               className="absolute block h-1.5 w-1.5 rounded-full"
               style={{
-                left: `${18 + ((i * 53) % 64)}%`,
+                left: `${16 + ((i * 53) % 68)}%`,
                 bottom: "-2%",
                 background: i % 3 === 0 ? "#fff" : el.color,
                 boxShadow: `0 0 8px ${el.color}`,
               }}
-              animate={{ y: [0, -520], opacity: [0, 1, 0] }}
+              animate={{ y: [0, -560], opacity: [0, 1, 0] }}
               transition={{
                 duration: 2.6 + (i % 4) * 0.5,
-                delay: (i % 7) * 0.25,
+                delay: (i % 7) * 0.3,
                 repeat: Infinity,
                 ease: "easeOut",
               }}
@@ -164,7 +192,7 @@ export function LegendCeremony({
         </div>
       )}
 
-      {/* burst flash */}
+      {/* burst of light */}
       <AnimatePresence>
         {stage === "burst" && (
           <motion.div
@@ -178,8 +206,8 @@ export function LegendCeremony({
         )}
       </AnimatePresence>
 
-      {/* confetti once the Legend is revealed */}
-      {(stage === "legend" || stage === "choose") && (
+      {/* confetti from the reveal onward */}
+      {(stage === "legend" || stage === "reward" || stage === "choose") && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {Array.from({ length: 28 }).map((_, i) => (
             <span
@@ -201,7 +229,10 @@ export function LegendCeremony({
           {(stage === "glow" || stage === "burst") && companion && (
             <motion.div
               key="rising"
+              initial={{ opacity: 0, scale: 0.7, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.15 }}
+              transition={{ duration: 1.1, ease: "easeOut" }}
               className="flex flex-col items-center gap-5"
             >
               <motion.div
@@ -212,7 +243,7 @@ export function LegendCeremony({
                     : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
                 }
               >
-                <Companion species={companion.species} level={99} size={210} float={false} />
+                <Companion species={companion.species} level={99} size={230} float={false} />
               </motion.div>
               <motion.p
                 className="text-display text-xl font-black text-white"
@@ -234,7 +265,7 @@ export function LegendCeremony({
               className="flex flex-col items-center gap-4"
             >
               <div className="animate-floaty">
-                <Companion species={companion.species} level={100} size={250} float={false} />
+                <Companion species={companion.species} level={100} size={260} float={false} />
               </div>
               <h2
                 className="text-display text-3xl font-black text-white"
@@ -244,10 +275,49 @@ export function LegendCeremony({
               </h2>
               <p className="text-sm font-semibold text-white/70">
                 {petMeta.name} the {petMeta.species} completed the whole journey with you —
-                they will live in your Hero Hall forever.
+                every world, every quest, together.
               </p>
               <GameButton onClick={sealLegend} disabled={busy} className="mt-2 text-lg">
                 {busy ? "Sealing the legend..." : "Continue"}
+              </GameButton>
+            </motion.div>
+          )}
+
+          {stage === "reward" && (
+            <motion.div
+              key="reward"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="panel panel-glow flex flex-col items-center gap-4 p-7"
+              style={{ boxShadow: "0 0 0 2px #ffb45e88, 0 0 40px -8px #ffb45e" }}
+            >
+              <p className="text-display text-xs font-black uppercase tracking-[0.3em] text-[var(--gold)]">
+                Adventure complete
+              </p>
+              {/* the reward */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.2 }}
+                className="text-display flex items-center gap-2 rounded-2xl bg-black/35 px-6 py-3 text-2xl font-black text-[var(--gold)]"
+              >
+                <Icon name="coin" size={26} filled /> +{rewardCoins ?? 250}
+              </motion.div>
+              <p className="text-sm font-bold text-[var(--text)]">
+                A hero&apos;s treasure — for finishing a whole adventure.
+              </p>
+              {/* the Hero Hall unlock */}
+              <div className="flex items-center gap-2.5 rounded-xl bg-black/25 px-4 py-2.5">
+                <Icon name="trophy" size={18} filled className="shrink-0 text-[var(--gold)]" />
+                <p className="text-left text-xs font-bold text-[var(--text-dim)]">
+                  A new pedestal stands in your{" "}
+                  <span className="text-[var(--gold)]">Hero Hall</span> — {petMeta.name} will be
+                  there forever.
+                </p>
+              </div>
+              <GameButton onClick={() => setStage("choose")} className="w-full text-lg">
+                Continue
               </GameButton>
             </motion.div>
           )}
@@ -266,7 +336,7 @@ export function LegendCeremony({
                     No new companions have awakened yet — keep adventuring to wake one. They&apos;ll
                     be waiting in your Hero Hall.
                   </p>
-                  <GameButton onClick={() => onComplete(null)}>To the Hero Hall</GameButton>
+                  <GameButton onClick={() => fadeHome(null)}>To the Hero Hall</GameButton>
                 </>
               ) : (
                 <>
