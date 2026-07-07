@@ -12,6 +12,7 @@ import { WorldMap } from "@/components/WorldMap";
 import { Icon } from "@/components/Icon";
 import { petMood, petMoodLabel } from "@/lib/pet";
 import { LegendCeremony } from "@/components/LegendCeremony";
+import { WorldThumbnail } from "@/components/WorldThumbnail";
 import {
   CHARACTER_CLASSES,
   BADGES,
@@ -198,7 +199,7 @@ export default function HeroHub() {
         </div>
       </motion.div>
 
-      {/* hero hall — the permanent companion collection */}
+      {/* hero hall — a museum of completed adventures */}
       <section>
         <div className="mb-3 flex items-center gap-2">
           <Icon name="sparkle" size={18} className="text-[var(--accent-2)]" />
@@ -212,8 +213,72 @@ export default function HeroHub() {
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
         </div>
+
+        {/* the gallery — every completed campaign stands on its own pedestal */}
+        {bonds.some((b) => b.status === "legend") && (
+          <div className="mb-4 flex flex-wrap justify-center gap-4">
+            {bonds
+              .filter((b) => b.status === "legend")
+              .map((b, i) => {
+                const p = PETS.find((x) => x.id === b.species) ?? PETS[0];
+                const fw = FINALE_WORLDS[b.species];
+                return (
+                  <motion.button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setHallPick(b.species)}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="panel relative flex w-40 cursor-pointer flex-col items-center overflow-hidden px-4 pb-3 pt-5"
+                    style={{ boxShadow: "0 0 0 1.5px #ffb45e66, 0 0 26px -8px #ffb45e" }}
+                  >
+                    {/* museum spotlight */}
+                    <div
+                      className="fx-light pointer-events-none absolute inset-x-4 top-0 h-32"
+                      style={{
+                        background:
+                          "radial-gradient(60% 100% at 50% 0%, rgba(255,215,120,0.22), transparent 75%)",
+                      }}
+                    />
+                    <div className="relative z-10 -mb-1">
+                      <Companion species={b.species} level={100} size={84} float={false} />
+                    </div>
+                    {/* the pedestal */}
+                    <div className="relative z-0 flex w-full flex-col items-center">
+                      <div
+                        className="h-3 w-24 rounded-[50%]"
+                        style={{
+                          background: "linear-gradient(180deg, #e8c983, #8a6a34)",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                        }}
+                      />
+                      <div
+                        className="-mt-0.5 h-7 w-20"
+                        style={{
+                          clipPath: "polygon(8% 0, 92% 0, 100% 100%, 0 100%)",
+                          background: "linear-gradient(180deg, #3c3628, #23201a)",
+                          borderBottom: "2px solid #b98d43",
+                        }}
+                      />
+                    </div>
+                    <p className="text-display mt-1.5 text-xs font-black text-[var(--gold)]">
+                      {p.name}
+                    </p>
+                    <p className="text-[9px] font-bold text-[var(--text-dim)]">
+                      {fw?.name ?? "Campaign"} —{" "}
+                      {b.legend_at ? new Date(b.legend_at).toLocaleDateString() : "complete"}
+                    </p>
+                  </motion.button>
+                );
+              })}
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {PETS.map((p, i) => {
+          {PETS.filter((p) => bonds.find((b) => b.species === p.id)?.status !== "legend").map((p, i) => {
             const bond = bonds.find((b) => b.species === p.id);
             const isActive = bond?.status === "active";
             const isLegend = bond?.status === "legend";
@@ -521,6 +586,20 @@ function HallDetail({
 
   // the campaign counter IS "quests conquered together"
   const questsTogether = bond?.quests_done ?? 0;
+  const finaleW = FINALE_WORLDS[species] ?? null;
+  // coins collected during this bond — derived from the quests approved
+  // while the campaign was running (nothing extra is stored)
+  const coinsTogether = bond
+    ? tasks
+        .filter(
+          (t) =>
+            t.status === "completed" &&
+            t.completed_at &&
+            t.completed_at >= bond.bonded_at &&
+            (bond.legend_at ? t.completed_at <= bond.legend_at : true)
+        )
+        .reduce((sum, t) => sum + (t.coin_reward ?? 0), 0)
+    : 0;
 
   const activeMeta = activeBond ? PETS.find((p) => p.id === activeBond.species) : null;
   // a new campaign can only begin once the active one is complete
@@ -593,33 +672,83 @@ function HallDetail({
           <p className="mt-2 text-xs leading-relaxed text-[var(--text-dim)]">{meta.blurb}</p>
         )}
 
-        {/* the journey together */}
-        {bond && prog && form && (
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-black/25 p-4 text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-display text-sm font-black">
-                Level {prog.level}{" "}
-                <span className="text-xs font-bold text-[var(--accent-2)]">— {form.name} Form</span>
-              </span>
-              <span className="text-display text-[10px] font-bold text-[var(--text-dim)]">
-                {prog.level >= 100 ? "Fully evolved" : `${prog.into}/${prog.needed} XP`}
-              </span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-black/40">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${prog.pct}%`,
-                  background: `linear-gradient(90deg, var(--accent-deep), ${el.color})`,
-                  boxShadow: `0 0 8px ${el.color}`,
-                }}
+        {/* Legendary: the museum plaque — a completed campaign's record */}
+        {bond && status === "Legendary" ? (
+          <div className="mt-4 overflow-hidden rounded-2xl bg-black/25 text-left">
+            {/* their world, on exhibit */}
+            {finaleW && (
+              <WorldThumbnail
+                map={finaleW.map ?? null}
+                name={finaleW.name}
+                accent={finaleW.accent}
+                icon={finaleW.finale.icon}
+                className="h-20 w-full"
+                sizes="384px"
               />
-            </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-dim)]">
-              <Icon name="trophy" size={13} className="text-[var(--gold)]" />
-              {questsTogether} quest{questsTogether === 1 ? "" : "s"} conquered together
+            )}
+            <div className="flex flex-col gap-2 p-4">
+              <div className="flex items-center gap-2">
+                {/* the legend badge */}
+                <span
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                  style={{
+                    background: "radial-gradient(circle at 35% 30%, #ffd76a, #b8860b)",
+                    boxShadow: "0 0 14px -2px #ffd76a",
+                  }}
+                >
+                  <Icon name="trophy" size={17} filled className="text-white" />
+                </span>
+                <div>
+                  <p className="text-display text-sm font-black text-[var(--gold)]">
+                    Campaign Complete
+                  </p>
+                  <p className="text-[10px] font-bold text-[var(--text-dim)]">
+                    A whole adventure, finished together
+                  </p>
+                </div>
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                <PlaqueStat label="Quests completed" value={`${bond.quests_done}`} />
+                <PlaqueStat
+                  label="Completed on"
+                  value={bond.legend_at ? new Date(bond.legend_at).toLocaleDateString() : "—"}
+                />
+                <PlaqueStat label="Favorite world" value={finaleW?.name ?? "Their own"} />
+                <PlaqueStat label="Coins collected" value={`${coinsTogether}`} />
+              </div>
             </div>
           </div>
+        ) : (
+          /* the journey so far — an active or future partner */
+          bond &&
+          prog &&
+          form && (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-black/25 p-4 text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-display text-sm font-black">
+                  Level {prog.level}{" "}
+                  <span className="text-xs font-bold text-[var(--accent-2)]">— {form.name} Form</span>
+                </span>
+                <span className="text-display text-[10px] font-bold text-[var(--text-dim)]">
+                  {prog.level >= 100 ? "Fully evolved" : `${prog.into}/${prog.needed} XP`}
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-black/40">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${prog.pct}%`,
+                    background: `linear-gradient(90deg, var(--accent-deep), ${el.color})`,
+                    boxShadow: `0 0 8px ${el.color}`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-dim)]">
+                <Icon name="trophy" size={13} className="text-[var(--gold)]" />
+                {questsTogether} quest{questsTogether === 1 ? "" : "s"} conquered together
+              </div>
+            </div>
+          )
         )}
 
         {/* origin + campaign finale + what happens next */}
@@ -655,13 +784,22 @@ function HallDetail({
             A mysterious companion still sleeps... {unlockHint(COMPANION_UNLOCKS[species])}.
           </p>
         )}
-        {status === "Legendary" && bond?.legend_at && (
+        {status === "Legendary" && (
           <p className="mt-2 text-[11px] font-bold text-[var(--gold)]">
-            Became a Legend on {new Date(bond.legend_at).toLocaleDateString()} — forever in your
-            Hall.
+            Forever in your Hall — a true Legend of Questforge.
           </p>
         )}
       </motion.div>
     </motion.div>
+  );
+}
+
+/* One engraved line on a Legend's museum plaque. */
+function PlaqueStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-black/25 px-2.5 py-1.5">
+      <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-dim)]">{label}</p>
+      <p className="text-display text-sm font-black text-[var(--gold)]">{value}</p>
+    </div>
   );
 }
