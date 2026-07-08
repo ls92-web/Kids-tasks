@@ -136,6 +136,7 @@ export function Icon({
   className = "",
   filled = false,
   art = false,
+  muted = false,
 }: {
   name: keyof typeof paths | string;
   size?: number;
@@ -143,6 +144,9 @@ export function Icon({
   filled?: boolean;
   /** render the delivered rendered-art icon instead of the flat SVG */
   art?: boolean;
+  /** the parent-console treatment: slightly desaturated, no glow, a whisper
+      of shadow — premium but never playful */
+  muted?: boolean;
 }) {
   if (art && ICON_ART[name]) {
     return (
@@ -153,6 +157,11 @@ export function Icon({
         width={size}
         height={size}
         className={`inline-block object-contain ${className}`}
+        style={
+          muted
+            ? { filter: "saturate(0.82) drop-shadow(0 1px 1.5px rgba(0,0,0,0.28))" }
+            : undefined
+        }
       />
     );
   }

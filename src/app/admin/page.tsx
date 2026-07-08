@@ -81,7 +81,7 @@ export default function AdminOverview() {
       <div data-tour="attention" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <AttentionCard
           href="/admin/review"
-          icon="eye"
+          icon="camera"
           count={pendingReviews}
           label="Proofs to review"
         />
@@ -173,8 +173,10 @@ function AttentionCard({
         >
           <Icon
             name={icon}
-            size={22}
-            className={count > 0 ? "text-[var(--accent-2)]" : "text-[var(--text-dim)]"}
+            size={26}
+            art
+            muted
+            className={count > 0 ? "" : "opacity-45"}
           />
         </div>
         <div>

@@ -272,7 +272,7 @@ export default function ReviewPage() {
                 transition={{ duration: 0.25, ease: EASE_OUT }}
                 className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3"
               >
-                <Icon name="gift" size={18} className="shrink-0 text-[var(--gold)]" />
+                <Icon name="gift" size={20} art muted className="shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{r.reward_name}</p>
                   <p className="text-xs text-[var(--text-dim)]">

@@ -127,7 +127,7 @@ export default function RewardsAdmin() {
           <div className="flex flex-col gap-2">
             {wishes.map((w) => (
               <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <Icon name="sparkle" size={18} className="shrink-0 text-[var(--gold)]" />
+                <Icon name="sparkle" size={20} art muted className="shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{w.name}</p>
                   <p className="truncate text-xs text-[var(--text-dim)]">
@@ -206,7 +206,7 @@ export default function RewardsAdmin() {
           <div className="flex flex-col gap-2">
             {rewards.map((r) => (
               <div key={r.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <Icon name="chest" size={18} className="shrink-0 text-[var(--gold)]" />
+                <Icon name="chest" size={20} art muted className="shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">
                     {r.name}{" "}
