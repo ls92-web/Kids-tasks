@@ -205,7 +205,7 @@ export default function ShopPage() {
             {...overlayFade}
             role="dialog"
             aria-modal="true"
-            aria-label="Treasure claimed"
+            aria-label="Look what we found"
             className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
             onClick={() => chestOpen && setBought(null)}
           >
@@ -260,14 +260,14 @@ export default function ShopPage() {
                     className="mt-4"
                   >
                     <h2 className="text-display text-glow text-2xl font-black text-[var(--gold)]">
-                      Treasure Claimed
+                      Look What We Found!
                     </h2>
                     <p className="text-display mt-1 text-lg font-bold">{bought.name}</p>
                     <p className="mt-2 text-sm text-[var(--text-dim)]">
-                      Your parent will make it real. Enjoy, hero!
+                      Your grown-up will make it real. Yay!
                     </p>
                     <GameButton className="mt-5" onClick={() => setBought(null)}>
-                      Excellent
+                      Hooray!
                     </GameButton>
                   </motion.div>
                 ) : (

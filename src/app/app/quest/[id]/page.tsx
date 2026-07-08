@@ -150,14 +150,14 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           <Fact icon="clock" label="Time" value={`${task.est_minutes} min`} />
           <Fact
             icon="flame"
-            label="Deadline"
+            label="Finish by"
             value={
               task.deadline
                 ? new Date(task.deadline).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                   })
-                : "None"
+                : "Anytime"
             }
           />
           <Fact icon="coin" label={theme.coinName} value={`+${task.coin_reward}`} gold />
@@ -197,7 +197,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         >
           <h2 className="text-display mb-3 flex items-center gap-2 text-lg font-black">
             <Icon name="camera" size={20} className="text-[var(--accent-2)]" />
-            Show your proof
+            Show us what you did!
           </h2>
 
           <input
@@ -220,7 +220,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
               </div>
               <div className="flex gap-3">
                 <GameButton variant="ghost" onClick={() => fileRef.current?.click()}>
-                  Retake
+                  New photo
                 </GameButton>
                 <GameButton variant="gold" onClick={submitProof}>
                   Send to the {theme.verifyTitle}

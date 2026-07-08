@@ -7,7 +7,7 @@
 
    Tones:
      Ember    enthusiastic, encouraging     Frost   curious, full of wonder
-     Kage     calm, focused                 Shade   loyal, quietly warm
+     Kage     calm, encouraging             Shade   loyal, quietly warm
      Bolt     energetic, curious            Rai     fearless, bold
      Hoot     wise, supportive              Blaze   radiant, uplifting
      Shellby  kind, patient                 Sprout  playful, giggly
@@ -46,14 +46,14 @@ export const VOICES: Record<string, CompanionVoice> = {
   },
   ninja: {
     morning: ["Morning, {name}. The path waits quietly.", "A new day. Step softly, aim true."],
-    daytime: ["You return. Good. Focus with me.", "Welcome back. The mission continues."],
+    daytime: ["You return. Good. Let\u2019s focus together.", "Welcome back. Our quest continues."],
     evening: ["Evening. Even shadows rest — after one more step.", "Night sharpens the mind. Shall we?"],
-    questDone: ["Clean work. The elders would nod.", "Done, and done well. Quiet strength."],
+    questDone: ["Clean work. I knew you had it in you.", "Done, and done well. Quiet strength."],
     coins: ["Coins earned, not found. Remember that.", "A reward for patience. Well kept."],
-    levelUp: ["Stronger. Calmer. Exactly as planned.", "A new level. Wear it lightly."],
+    levelUp: ["Stronger. Calmer. Exactly as planned.", "A new level, well earned. I\u2019m proud of you."],
     allDone: ["The board is clear. Stillness is also training.", "All complete. Rest is part of the way."],
     nodeUnlocked: ["One step further. The path remembers.", "Forward. Silently. Together."],
-    evolved: ["A new form. The training shows.", "I have changed. The mission has not."],
+    evolved: ["A new form. Your training shows.", "I have changed. My focus has not."],
     legendary: ["Their shadow guards us now. Walk on.", "A Legend rests. Our watch begins."],
     campaignComplete: ["The whole path, walked together. Honor to you, {name}.", "It is finished. Few could do this."],
     worldUnlocked: ["A new territory. Observe first, then move.", "The next world opens. Stay sharp."],
@@ -65,7 +65,7 @@ export const VOICES: Record<string, CompanionVoice> = {
     questDone: ["QUEST COMPLETE! Uploading high-five!", "Ding! Achievement verified! You're efficient!"],
     coins: ["Cha-ching! Coin storage expanding!", "Ooh, currency! What does it DO? Let's find out!"],
     levelUp: ["LEVEL UP! Upgrading admiration protocols!", "New level detected! How do you keep DOING that?"],
-    allDone: ["All tasks complete! Initiating happy dance!", "Zero quests remaining! You optimized the whole day!"],
+    allDone: ["All quests complete! Initiating happy dance!", "Zero quests remaining! You optimized the whole day!"],
     nodeUnlocked: ["New node unlocked! Map data updating!", "Beep! Progress detected! Onward!"],
     evolved: ["SYSTEM UPGRADE! Do I look faster? I feel faster!", "New chassis! Curiosity levels rising!"],
     legendary: ["A Legend archived forever! My turn to compute greatness!", "Legendary status confirmed! Amazing!"],

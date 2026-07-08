@@ -308,7 +308,7 @@ export const PETS: PetDef[] = [
   { id: "turtle", name: "Shellby", species: "Guardian Turtle", element: "nature", personality: "Kind", blurb: "A gentle guardian who always protects their friends." },
   { id: "forest", name: "Sprout", species: "Forest Spirit", element: "nature", personality: "Playful", blurb: "Turns every chore into a game of hide-and-seek." },
   { id: "robot", name: "Bolt", species: "Little Robot", element: "tech", personality: "Inventive", blurb: "Beep! Has a gadget for every problem — mostly." },
-  { id: "ninja", name: "Kage", species: "Tiny Ninja", element: "shadow", personality: "Clever", blurb: "A silent little ninja who loves secret missions." },
+  { id: "ninja", name: "Kage", species: "Tiny Ninja", element: "shadow", personality: "Clever", blurb: "A silent little ninja who loves secret quests." },
   { id: "samurai", name: "Kenji", species: "Baby Samurai", element: "honor", personality: "Honorable", blurb: "Small sword, huge heart — keeps every promise." },
   { id: "pirate", name: "Coco", species: "Treasure Pirate", element: "adventure", personality: "Adventurous", blurb: "Smells treasure from a mile away. Usually snacks." },
 ];
