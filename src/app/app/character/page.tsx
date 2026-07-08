@@ -45,8 +45,8 @@ import {
 import { getCampaign } from "@/lib/campaign";
 import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
-import { Tour, useOnboardingTour } from "@/components/Tour";
-import { TourStep } from "@/lib/tour";
+import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
+import { CoachStep } from "@/lib/tour";
 
 interface Ach {
   key: string;
@@ -126,14 +126,20 @@ export default function HeroHub() {
   );
   const resumeChoose = !companion && bonds.length > 0 && hasPickable;
 
-  // first visit to the Hall — a one-line discovery tip (never during a ceremony)
-  const hallTour = useOnboardingTour("disc_hall", profile.id, !legendReady && !resumeChoose, 900);
-  const hallStep: TourStep[] = [
-    {
-      anchor: "hero-hall",
-      title: "The Hero Hall",
-      text: "Every companion who finishes their adventure with you stands here forever. Locked ones are still waiting to meet you.",
-    },
+  // first visit to the Hall — the companion, in their own voice (never during
+  // a ceremony). Before any campaign is finished they only hint at friends to
+  // come; once one is complete they name what the Hall really is.
+  const anyLegend = bonds.some((b) => b.status === "legend");
+  const hallBeat = useCoachBeat("coach_hall", profile.id, !legendReady && !resumeChoose);
+  const hallSteps: CoachStep[] = anyLegend
+    ? [{ anchor: "hero-hall", text: "This is where great heroes are remembered." }]
+    : [{ anchor: "hero-hall", text: "One day we'll meet new friends here." }];
+
+  // reaching the companion's own final world — a hint, never a spoiler
+  const atFinale = cs.currentWorld.isFinale && !cs.campaignCompleted;
+  const finaleBeat = useCoachBeat("coach_finale", profile.id, atFinale && !legendReady && !resumeChoose);
+  const finaleSteps: CoachStep[] = [
+    { anchor: "campaign-journey", text: "I think something amazing is waiting for us here." },
   ];
 
   return (
@@ -371,7 +377,7 @@ export default function HeroHub() {
       </section>
 
       {/* the active campaign's journey */}
-      <section>
+      <section data-tour="campaign-journey">
         <div className="mb-3 flex items-center gap-2">
           <Icon name="map" size={18} className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">
@@ -530,12 +536,17 @@ export default function HeroHub() {
         </section>
       )}
 
-      <Tour
-        steps={hallStep}
-        active={hallTour.active}
-        onDone={hallTour.onDone}
-        tone="hero"
-        companionSpecies={profile.pet}
+      <CompanionCoach
+        steps={hallSteps}
+        active={hallBeat.active && !finaleBeat.active}
+        onDone={hallBeat.onDone}
+        species={profile.pet}
+      />
+      <CompanionCoach
+        steps={finaleSteps}
+        active={finaleBeat.active}
+        onDone={finaleBeat.onDone}
+        species={profile.pet}
       />
     </div>
   );

@@ -243,15 +243,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* help & tips — replay the welcome, or read any topic */}
+      {/* adventure guide — let your companion show you around again */}
       <section className="panel p-5">
-        <h2 className="text-display mb-1 text-lg font-black">Help &amp; tips</h2>
+        <h2 className="text-display mb-1 text-lg font-black">Adventure Guide</h2>
         <p className="mb-3 text-xs text-[var(--text-dim)]">
-          Replay your welcome, or tap a topic to learn more
+          Let your companion guide you through everything again
         </p>
         <HelpPanel
           topics={CHILD_HELP}
-          replayLabel="Replay my welcome"
+          replayLabel="Adventure with my companion again"
           accent="var(--accent-2)"
           onReplay={() => {
             resetTours(profile.id, CHILD_TOURS);

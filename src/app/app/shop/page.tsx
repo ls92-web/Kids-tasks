@@ -11,8 +11,8 @@ import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
-import { Tour, useOnboardingTour } from "@/components/Tour";
-import { TourStep } from "@/lib/tour";
+import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
+import { CoachStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
 
 const CATEGORIES = [
@@ -63,14 +63,11 @@ export default function ShopPage() {
   useEscape(!!bought && chestOpen, () => setBought(null));
   useEscape(requestOpen, () => setRequestOpen(false));
 
-  // first visit to the vault — a single warm discovery tip
-  const shopTour = useOnboardingTour("disc_shop", profile?.id, !bought && !requestOpen);
-  const shopStep: TourStep[] = [
-    {
-      anchor: "shop-intro",
-      title: "The Treasure Vault",
-      text: "The coins you earn on quests buy real rewards here — your parent makes them real!",
-    },
+  // first visit to the vault — the companion, delighted, not a tooltip
+  const shopBeat = useCoachBeat("coach_shop", profile?.id, !bought && !requestOpen);
+  const shopSteps: CoachStep[] = [
+    { anchor: "shop-intro", text: "Wow — look at all these treasures!" },
+    { anchor: "shop-intro", text: "Our coins can make one of these real." },
   ];
 
   useEffect(() => {
@@ -347,12 +344,11 @@ export default function ShopPage() {
       </AnimatePresence>
 
       {profile && (
-        <Tour
-          steps={shopStep}
-          active={shopTour.active}
-          onDone={shopTour.onDone}
-          tone="hero"
-          companionSpecies={profile.pet}
+        <CompanionCoach
+          steps={shopSteps}
+          active={shopBeat.active}
+          onDone={shopBeat.onDone}
+          species={profile.pet}
         />
       )}
     </div>

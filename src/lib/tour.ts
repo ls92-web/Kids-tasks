@@ -18,6 +18,15 @@ export interface TourStep {
   text: string;
 }
 
+/* A companion "beat" — one short line the child's companion says, optionally
+   drifting over to a UI element to gently glow it. No darkening, no tutorial
+   chrome: the companion is a partner discovering the world alongside them. */
+export interface CoachStep {
+  /** matches a [data-tour="…"] element the companion drifts beside + glows */
+  anchor?: string;
+  text: string;
+}
+
 const key = (id: string, profileId: string) => `qf_tour_${id}_${profileId}`;
 
 export function hasSeenTour(id: string, profileId: string): boolean {
@@ -29,8 +38,14 @@ export function markTourSeen(id: string, profileId: string) {
   localStorage.setItem(key(id, profileId), "1");
 }
 
-/** every tour + discovery tip, for a full replay reset */
-export const CHILD_TOURS = ["hero", "disc_shop", "disc_hall", "disc_evolve", "disc_finale"];
+/** every companion beat, for a full "Adventure Guide" replay reset */
+export const CHILD_TOURS = [
+  "coach_welcome",
+  "coach_map",
+  "coach_shop",
+  "coach_hall",
+  "coach_finale",
+];
 export const PARENT_TOURS = ["parent", "parent-quest"];
 
 export function resetTours(profileId: string, ids: string[]) {

@@ -19,8 +19,8 @@ import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { enter, pop, barFill } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
-import { Tour, useOnboardingTour } from "@/components/Tour";
-import { TourStep } from "@/lib/tour";
+import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
+import { CoachStep, hasSeenTour } from "@/lib/tour";
 import { Task, Reward, Profile, PETS, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
 import { getCampaign } from "@/lib/campaign";
 
@@ -143,34 +143,29 @@ export default function DailyQuests() {
     ? STREAK_MILESTONES.find((m) => m > profile.streak_days)
     : undefined;
 
-  // the child's welcome — a first adventure, not a tutorial (companion-voiced)
-  const companionName = PETS.find((p) => p.id === profile?.pet)?.name ?? "your companion";
-  const heroTour = useOnboardingTour("hero", profile?.id, !loading && !celebration);
-  const heroSteps: TourStep[] = [
-    {
-      text: `Welcome, ${profile?.nickname ?? "hero"}! You and ${companionName} are about to begin your adventure together.`,
-    },
-    {
-      anchor: "today-quest",
-      title: "Your first quest",
-      text: "This is something real to do today. Finish it to take your very first step.",
-    },
-    {
-      anchor: "companion",
-      title: companionName,
-      text: `${companionName} travels everywhere with you — and grows stronger every time you do.`,
-    },
-    {
-      anchor: "hud",
-      title: "Your treasures",
-      text: "Up here: your XP as you grow, and the coins you earn for real rewards.",
-    },
-    {
-      anchor: "journey-map",
-      title: "Your adventure",
-      text: "This map is your journey. You're right here — every quest walks you one step toward the golden challenge.",
-    },
-    { text: "That's everything, hero. Go finish your first quest!" },
+  // The Companion Guided Adventure — the companion greets the child and drifts
+  // to their first quest. No tutorial chrome; just a partner, discovering
+  // together. The map is introduced later, once they've taken a first step.
+  const welcomeSeen = useMemo(
+    () => (profile ? hasSeenTour("coach_welcome", profile.id) : true),
+    [profile]
+  );
+  const welcomeBeat = useCoachBeat("coach_welcome", profile?.id, !loading && !celebration);
+  const welcomeSteps: CoachStep[] = [
+    { text: "Hi! I'll be your adventure partner!" },
+    { text: "Let's begin our very first quest together." },
+    { anchor: "today-quest", text: "This is our first adventure — I think we can do it!" },
+  ];
+
+  const mapBeat = useCoachBeat(
+    "coach_map",
+    profile?.id,
+    welcomeSeen && !loading && !celebration && (profile?.tasks_completed ?? 0) >= 1
+  );
+  const mapSteps: CoachStep[] = [
+    { anchor: "hud", text: "Look — we earned coins, and we grew a little stronger!" },
+    { anchor: "journey-map", text: "And this is our adventure map." },
+    { anchor: "journey-map", text: "Every quest we finish takes us one step further." },
   ];
 
   // companion reactions to the big moments: evolution + a finished Legend
@@ -484,13 +479,20 @@ export default function DailyQuests() {
       />
       <ChapterComplete />
       {profile && (
-        <Tour
-          steps={heroSteps}
-          active={heroTour.active}
-          onDone={heroTour.onDone}
-          tone="hero"
-          companionSpecies={profile.pet}
-        />
+        <>
+          <CompanionCoach
+            steps={welcomeSteps}
+            active={welcomeBeat.active}
+            onDone={welcomeBeat.onDone}
+            species={profile.pet}
+          />
+          <CompanionCoach
+            steps={mapSteps}
+            active={mapBeat.active}
+            onDone={mapBeat.onDone}
+            species={profile.pet}
+          />
+        </>
       )}
     </div>
   );
