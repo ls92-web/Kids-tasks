@@ -126,7 +126,7 @@ export function RewardCard({
                 : {}
             }
           >
-            {soldOut ? "Gone" : expired ? "Expired" : affordable ? "Claim" : "Locked"}
+            {soldOut ? "All gone" : expired ? "Too late" : affordable ? "It\u2019s ours!" : "Not yet"}
           </motion.button>
         </div>
         {!affordable && !soldOut && !expired && (

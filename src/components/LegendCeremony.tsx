@@ -284,7 +284,7 @@ export function LegendCeremony({
                 every world, every quest, together.
               </p>
               <GameButton onClick={sealLegend} disabled={busy} className="mt-2 text-lg">
-                {busy ? "Sealing the legend…" : "Continue"}
+                {busy ? "Seals the legend…" : "Onward!"}
               </GameButton>
             </motion.div>
           )}
@@ -323,7 +323,7 @@ export function LegendCeremony({
                 </p>
               </div>
               <GameButton onClick={() => setStage("choose")} className="w-full text-lg">
-                Continue
+                Onward!
               </GameButton>
             </motion.div>
           )}

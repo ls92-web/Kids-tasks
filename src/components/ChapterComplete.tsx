@@ -78,7 +78,7 @@ export function ChapterComplete() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`World ${worldNo} complete`}
+      aria-label={`World ${worldNo} conquered`}
       className="fixed inset-0 z-[85] grid place-items-center overflow-hidden bg-black/85 p-4 backdrop-blur-sm"
     >
       {/* golden confetti — a completed world deserves it */}
@@ -104,7 +104,7 @@ export function ChapterComplete() {
         className="panel panel-glow relative w-full max-w-md p-7 text-center"
       >
         <p className="text-display text-xs font-black uppercase tracking-[0.3em] text-[var(--gold)]">
-          World {worldNo} complete
+          World {worldNo} conquered!
         </p>
         <h2
           className="text-display text-glow mt-1 text-3xl font-black"
@@ -151,7 +151,7 @@ export function ChapterComplete() {
                   : "The shared worlds are behind you — the campaign finale awaits."}
               </p>
               <GameButton onClick={dismiss} className="w-full text-lg">
-                {finaleWorld ? `Onward to ${finaleWorld.name}` : "Continue the Adventure"}
+                {finaleWorld ? `Onward to ${finaleWorld.name}` : "Our journey continues!"}
               </GameButton>
             </>
           )}

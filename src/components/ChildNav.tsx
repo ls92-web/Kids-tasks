@@ -10,7 +10,7 @@ import { tapSpring } from "@/lib/motion";
 /* Three destinations, nothing more. A child should never wonder where to tap. */
 const items = [
   { href: "/app", icon: "home", label: "Adventure" },
-  { href: "/app/shop", icon: "chest", label: "Rewards" },
+  { href: "/app/shop", icon: "chest", label: "Treasures" },
   { href: "/app/character", icon: "shield", label: "Hero" },
 ];
 

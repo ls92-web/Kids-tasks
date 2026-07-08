@@ -61,7 +61,7 @@ export default function CampaignPage() {
         </h1>
         <p className="mt-1 text-sm font-semibold text-[var(--text-dim)]">
           {cs.campaignCompleted
-            ? "Campaign complete — a true Legend!"
+            ? "Our adventure is complete — a true Legend!"
             : `Four worlds together — ${cs.step} of ${cs.totalSteps} steps walked so far`}
         </p>
       </motion.div>
@@ -154,7 +154,7 @@ function ChapterCard({
                 background: "rgba(0,0,0,0.35)",
               }}
             >
-              {state === "completed" ? "Completed" : state === "active" ? "Exploring" : "Locked"}
+              {state === "completed" ? "Conquered!" : state === "active" ? "Exploring" : "Locked"}
             </span>
           </div>
 

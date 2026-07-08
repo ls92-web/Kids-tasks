@@ -127,7 +127,7 @@ export default function SettingsPage() {
 
       {/* identity */}
       <section className="panel p-5">
-        <h2 className="text-display mb-3 text-lg font-black">Hero identity</h2>
+        <h2 className="text-display mb-3 text-lg font-black">Your hero name</h2>
         <label className="block">
           <span className="text-display mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
             Nickname

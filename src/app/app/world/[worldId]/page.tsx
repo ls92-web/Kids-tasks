@@ -75,7 +75,7 @@ export default function WorldPage() {
             }}
           >
             {entry.state === "completed"
-              ? "Completed"
+              ? "Conquered!"
               : entry.state === "active"
                 ? "Exploring"
                 : "Locked"}

@@ -18,9 +18,9 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
   ninja: {
     id: "ninja",
     name: "Shadow Ninja Village",
-    tagline: "Move unseen. Complete the mission.",
+    tagline: "Move unseen. Begin the adventure.",
     coinName: "Moon Coins",
-    questWord: "Mission",
+    questWord: "Quest",
     verifyTitle: "Magic Scan",
     verifySteps: [
       "Unrolling the secret scroll…",

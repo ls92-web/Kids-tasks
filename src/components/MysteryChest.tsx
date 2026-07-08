@@ -139,7 +139,7 @@ export function MysteryChest({
                   +{reward.bonus} {reward.kind === "xp" ? "XP" : "Coins"}
                 </p>
                 <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
-                  {KIND_LABEL[reward.kind] ?? "Reward"}
+                  {KIND_LABEL[reward.kind] ?? "Treasure"}
                 </p>
               </motion.div>
             )}
@@ -148,7 +148,7 @@ export function MysteryChest({
             )}
             {phase === "done" && (
               <GameButton className="mt-5" onClick={onClose}>
-                {error ? "Aw, okay" : "Claim it!"}
+                {error ? "Aw, okay" : "It\u2019s ours!"}
               </GameButton>
             )}
           </motion.div>

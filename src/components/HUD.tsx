@@ -42,7 +42,7 @@ export function HUD() {
           href="/app/settings"
           onClick={() => sfx.click()}
           className="group grid h-10 w-10 place-items-center rounded-xl bg-black/25 text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
-          aria-label="Settings"
+          aria-label="Your Realm"
         >
           <span className="transition-transform duration-300 group-hover:rotate-90">
             <Icon name="gear" size={18} />

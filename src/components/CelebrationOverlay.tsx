@@ -22,10 +22,10 @@ export interface CelebrationData {
 }
 
 const ACHIEVEMENT_TITLES: Record<string, string> = {
-  streak_7: "7-Day Streak",
-  streak_30: "30-Day Streak",
-  tasks_100: "100 Missions Complete",
-  coins_1000: "1000 Coins Earned",
+  streak_7: "7 Days in a Row!",
+  streak_30: "30 Days in a Row!",
+  tasks_100: "100 Quests Conquered",
+  coins_1000: "1000 Coins Gathered",
   homework_hero: "Homework Hero",
   reading_legend: "Reading Legend",
 };
@@ -101,7 +101,7 @@ export function CelebrationOverlay({
           {...overlayFade}
           role="dialog"
           aria-modal="true"
-          aria-label={`${theme.questWord} complete`}
+          aria-label="We did it!"
           className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/75 backdrop-blur-sm"
         >
           {/* a soft bloom of light — the warmth of the moment, not a light show */}
@@ -190,7 +190,7 @@ export function CelebrationOverlay({
               transition={popSpring}
               className="text-display text-glow text-4xl font-black text-[var(--accent-2)] sm:text-5xl"
             >
-              {theme.questWord} Complete
+              We Did It!
             </motion.h2>
 
             {phase >= 1 && (
@@ -269,7 +269,7 @@ export function CelebrationOverlay({
                 className="mt-8"
               >
                 <GameButton onClick={onClose} className="px-8 text-lg">
-                  Onward
+                  Let&apos;s keep going!
                 </GameButton>
               </motion.div>
             )}

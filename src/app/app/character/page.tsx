@@ -349,7 +349,7 @@ export default function HeroHub() {
                 </p>
                 <p className="text-[10px] font-bold leading-tight text-[var(--text-dim)]">
                   {isLegend
-                    ? "Completed"
+                    ? "Conquered!"
                     : isActive
                       ? `Level ${companionLevel(bond.xp)}`
                       : awake
@@ -746,13 +746,13 @@ function HallDetail({
                 </div>
               </div>
               <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
-                <PlaqueStat label="Quests completed" value={`${bond.quests_done}`} />
+                <PlaqueStat label="Quests conquered" value={`${bond.quests_done}`} />
                 <PlaqueStat
-                  label="Completed on"
+                  label="Became a Legend"
                   value={bond.legend_at ? new Date(bond.legend_at).toLocaleDateString() : "—"}
                 />
                 <PlaqueStat label="Favorite world" value={finaleW?.name ?? "Their own"} />
-                <PlaqueStat label="Coins collected" value={`${coinsTogether}`} />
+                <PlaqueStat label="Coins gathered" value={`${coinsTogether}`} />
               </div>
             </div>
           </div>
