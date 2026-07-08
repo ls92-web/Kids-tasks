@@ -267,7 +267,7 @@ export default function DailyQuests() {
           return (
           <section data-tour="journey-map">
             <div className="mb-3 flex items-center gap-2">
-              <Icon name="map" size={18} className="text-[var(--accent-2)]" />
+              <Icon name="map" size={20} art className="mr-0.5" />
               <h2 className="text-display text-lg font-black">Your Journey</h2>
               <span className="text-display text-xs font-bold text-[var(--text-dim)]">
                 World {cs.currentWorldIndex + 1} of {cs.worlds.length}
@@ -380,7 +380,7 @@ export default function DailyQuests() {
               Mystery Chest
             </p>
             <div className="animate-[chest-shake_1.4s_ease-in-out_infinite] mx-auto mt-2 w-fit">
-              <Icon name="chest" size={44} className="text-[var(--gold)]" />
+              <Icon name="chest" size={48} art />
             </div>
             <p className="mt-1 text-xs text-[var(--text-dim)]">A surprise is waiting inside!</p>
             <GameButton variant="gold" className="mt-3 w-full text-sm" onClick={() => setChestActive(true)}>
@@ -436,7 +436,7 @@ export default function DailyQuests() {
                 Next Treasure
               </p>
               <div className="animate-floaty mx-auto mt-2 w-fit">
-                <Icon name="chest" size={40} className="text-[var(--gold)]" />
+                <Icon name="chest" size={44} art />
               </div>
               <p className="text-display mt-1 truncate text-sm font-bold">{nextReward.name}</p>
               <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/40">
@@ -501,7 +501,7 @@ export default function DailyQuests() {
 function SectionTitle({ icon, title }: { icon: string; title: string }) {
   return (
     <div className="mb-3 flex items-center gap-2">
-      <Icon name={icon} size={18} className="text-[var(--accent-2)]" />
+      <Icon name={icon} size={22} art className="text-[var(--accent-2)]" />
       <h2 className="text-display text-lg font-black">{title}</h2>
       <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
     </div>

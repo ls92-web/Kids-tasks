@@ -121,17 +121,41 @@ const paths: Record<string, React.ReactNode> = {
   ),
 };
 
+/* app icon name → delivered rendered-art slug (public/icons/<slug>.png).
+   Opt in per call site with <Icon art …/>; unmapped names fall back to SVG. */
+const ICON_ART: Record<string, string> = {
+  coin: "coin", star: "star", flame: "fire", clock: "time", map: "treasure-map",
+  chest: "chest", gift: "chest", home: "home", scroll: "scroll", camera: "camera",
+  book: "book", sword: "sword", trophy: "trophy", lightning: "energy", sparkle: "magic",
+  users: "family", lock: "lock", heart: "heart", shield: "hero-shield", gear: "settings",
+};
+
 export function Icon({
   name,
   size = 20,
   className = "",
   filled = false,
+  art = false,
 }: {
   name: keyof typeof paths | string;
   size?: number;
   className?: string;
   filled?: boolean;
+  /** render the delivered rendered-art icon instead of the flat SVG */
+  art?: boolean;
 }) {
+  if (art && ICON_ART[name]) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/icons/${ICON_ART[name]}.png`}
+        alt=""
+        width={size}
+        height={size}
+        className={`inline-block object-contain ${className}`}
+      />
+    );
+  }
   return (
     <svg
       width={size}

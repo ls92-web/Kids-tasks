@@ -12,13 +12,19 @@ import { useWorld } from "./ThemeProvider";
 /* task type → delivered rendered icon art (public/icons/<slug>.png) */
 const TYPE_ART: Record<string, string> = {
   chore: "home",
-  homework: "scroll",
+  homework: "multiplication",
   reading: "book",
-  prayer: "heart",
-  quran: "magic",
+  prayer: "prayer",
+  quran: "quraan",
   habit: "energy",
   other: "star",
 };
+
+/* a bed-making chore gets the glowing-bed icon */
+function questArt(task: Task): string {
+  if (task.task_type === "chore" && task.title.toLowerCase().includes("bed")) return "make-bed";
+  return TYPE_ART[task.task_type] ?? "star";
+}
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
   active: { label: "Ready", color: "var(--accent-2)" },
@@ -67,7 +73,7 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={iconArt(TYPE_ART[task.task_type] ?? "star")}
+              src={iconArt(questArt(task))}
               alt=""
               className={`h-10 w-10 object-contain ${done ? "opacity-50 grayscale" : ""}`}
             />

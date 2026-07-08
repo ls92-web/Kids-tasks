@@ -225,7 +225,7 @@ export default function HeroHub() {
       {/* hero hall — a museum of completed adventures */}
       <section id="hero-hall" data-tour="hero-hall" className="scroll-mt-4">
         <div className="mb-3 flex items-center gap-2">
-          <Icon name="sparkle" size={18} className="text-[var(--accent-2)]" />
+          <Icon name="sparkle" size={22} art className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">Hero Hall</h2>
           <span className="text-display text-xs font-bold text-[var(--gold)]">
             {bonds.filter((b) => b.status === "legend").length} Legend
@@ -380,7 +380,7 @@ export default function HeroHub() {
       {/* the active campaign's journey */}
       <section data-tour="campaign-journey">
         <div className="mb-3 flex items-center gap-2">
-          <Icon name="map" size={18} className="text-[var(--accent-2)]" />
+          <Icon name="map" size={22} art className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">
             {petMeta.name}&apos;s Campaign
           </h2>
@@ -431,7 +431,7 @@ export default function HeroHub() {
       {/* trophy room */}
       <section>
         <div className="mb-3 flex items-center gap-2">
-          <Icon name="trophy" size={18} className="text-[var(--gold)]" />
+          <Icon name="trophy" size={22} art className="text-[var(--gold)]" />
           <h2 className="text-display text-lg font-black">Trophy Room</h2>
           <span className="text-display text-xs font-bold text-[var(--text-dim)]">
             {earnedCount}/{BADGES.length}
@@ -513,7 +513,7 @@ export default function HeroHub() {
       {family.length > 1 && (
         <section>
           <div className="mb-3 flex items-center gap-2">
-            <Icon name="users" size={18} className="text-[var(--accent-2)]" />
+            <Icon name="users" size={22} art className="text-[var(--accent-2)]" />
             <h2 className="text-display text-lg font-black">Your Family</h2>
             <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
           </div>

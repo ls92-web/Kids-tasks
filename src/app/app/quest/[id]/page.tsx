@@ -182,7 +182,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
 
       {task.status === "completed" && (
         <div className="panel p-6 text-center">
-          <Icon name="trophy" size={36} className="mx-auto text-[var(--gold)]" />
+          <Icon name="trophy" size={44} art className="mx-auto" />
           <p className="text-display mt-2 text-xl font-black text-[var(--success)]">
             {theme.questWord} conquered
           </p>
@@ -196,7 +196,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           className="panel p-6"
         >
           <h2 className="text-display mb-3 flex items-center gap-2 text-lg font-black">
-            <Icon name="camera" size={20} className="text-[var(--accent-2)]" />
+            <Icon name="camera" size={22} art />
             Show us what you did!
           </h2>
 
