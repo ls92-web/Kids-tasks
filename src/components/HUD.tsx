@@ -18,7 +18,7 @@ export function HUD() {
   const { level } = levelFromXp(profile.xp);
 
   return (
-    <div className="panel relative z-20 mx-auto mt-4 flex w-[min(96%,900px)] items-center gap-3 px-4 py-3">
+    <div data-tour="hud" className="panel relative z-20 mx-auto mt-4 flex w-[min(96%,900px)] items-center gap-3 px-4 py-3">
       <Link
         href="/app/character"
         onClick={() => sfx.click()}

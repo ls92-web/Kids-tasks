@@ -19,7 +19,9 @@ import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { enter, pop, barFill } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
-import { Task, Reward, Profile, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
+import { Tour, useOnboardingTour } from "@/components/Tour";
+import { TourStep } from "@/lib/tour";
+import { Task, Reward, Profile, PETS, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
 import { getCampaign } from "@/lib/campaign";
 
 function untilMidnight(): string {
@@ -141,6 +143,36 @@ export default function DailyQuests() {
     ? STREAK_MILESTONES.find((m) => m > profile.streak_days)
     : undefined;
 
+  // the child's welcome — a first adventure, not a tutorial (companion-voiced)
+  const companionName = PETS.find((p) => p.id === profile?.pet)?.name ?? "your companion";
+  const heroTour = useOnboardingTour("hero", profile?.id, !loading && !celebration);
+  const heroSteps: TourStep[] = [
+    {
+      text: `Welcome, ${profile?.nickname ?? "hero"}! You and ${companionName} are about to begin your adventure together.`,
+    },
+    {
+      anchor: "today-quest",
+      title: "Your first quest",
+      text: "This is something real to do today. Finish it to take your very first step.",
+    },
+    {
+      anchor: "companion",
+      title: companionName,
+      text: `${companionName} travels everywhere with you — and grows stronger every time you do.`,
+    },
+    {
+      anchor: "hud",
+      title: "Your treasures",
+      text: "Up here: your XP as you grow, and the coins you earn for real rewards.",
+    },
+    {
+      anchor: "journey-map",
+      title: "Your adventure",
+      text: "This map is your journey. You're right here — every quest walks you one step toward the golden challenge.",
+    },
+    { text: "That's everything, hero. Go finish your first quest!" },
+  ];
+
   // companion reactions to the big moments: evolution + a finished Legend
   useEffect(() => {
     if (!profile || !companion) return;
@@ -238,7 +270,7 @@ export default function DailyQuests() {
         {profile && (() => {
           const cs = getCampaign(profile, companion);
           return (
-          <section>
+          <section data-tour="journey-map">
             <div className="mb-3 flex items-center gap-2">
               <Icon name="map" size={18} className="text-[var(--accent-2)]" />
               <h2 className="text-display text-lg font-black">Your Journey</h2>
@@ -265,10 +297,12 @@ export default function DailyQuests() {
         })()}
 
         {/* pet companion */}
-        <CompanionGuide messages={messages} />
+        <div data-tour="companion">
+          <CompanionGuide messages={messages} />
+        </div>
 
         {nextQuest ? (
-          <motion.div {...pop} className="panel panel-glow relative overflow-hidden p-6">
+          <motion.div {...pop} data-tour="today-quest" className="panel panel-glow relative overflow-hidden p-6">
             <p className="text-display text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent-2)]">
               Next {theme.questWord}
             </p>
@@ -449,6 +483,15 @@ export default function DailyQuests() {
         }}
       />
       <ChapterComplete />
+      {profile && (
+        <Tour
+          steps={heroSteps}
+          active={heroTour.active}
+          onDone={heroTour.onDone}
+          tone="hero"
+          companionSpecies={profile.pet}
+        />
+      )}
     </div>
   );
 }

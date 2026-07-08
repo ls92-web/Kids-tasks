@@ -8,10 +8,40 @@ import { Portrait } from "@/components/Portrait";
 import { XPBar } from "@/components/XPBar";
 import { Icon } from "@/components/Icon";
 import { EmptyNote } from "@/components/admin/ui";
+import { Tour, useOnboardingTour } from "@/components/Tour";
+import { TourStep } from "@/lib/tour";
 import { Profile, levelFromXp, rankName } from "@/lib/game";
+
+const PARENT_STEPS: TourStep[] = [
+  {
+    text: "Welcome to QuestForge. This is where your child's real-life adventures begin — you create quests, they complete them.",
+  },
+  {
+    anchor: "attention",
+    title: "What needs you",
+    text: "At a glance: proofs to review, reward wishes, and rewards to grant.",
+  },
+  {
+    anchor: "children",
+    title: "Your heroes",
+    text: "Each child's progress lives here. Invite more with your Family Code on the Heroes page.",
+  },
+  {
+    anchor: "nav-quests",
+    title: "Create a quest",
+    text: "Assign your child's first real-life quest here — difficulty fills in fair coins, XP and time.",
+  },
+  {
+    anchor: "nav-review",
+    title: "Approvals",
+    text: "When a hero submits a photo proof, you approve it here. Nothing is awarded until you do.",
+  },
+  { text: "Your family adventure is ready to begin." },
+];
 
 export default function AdminOverview() {
   const { profile } = useWorld();
+  const parentTour = useOnboardingTour("parent", profile?.id);
   const [children, setChildren] = useState<Profile[]>([]);
   const [pendingReviews, setPendingReviews] = useState(0);
   const [pendingWishes, setPendingWishes] = useState(0);
@@ -48,7 +78,7 @@ export default function AdminOverview() {
       <h1 className="text-display text-2xl font-black">Family Overview</h1>
 
       {/* attention needed */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div data-tour="attention" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <AttentionCard
           href="/admin/review"
           icon="eye"
@@ -79,7 +109,7 @@ export default function AdminOverview() {
           to get started.
         </EmptyNote>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div data-tour="children" className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {children.map((c) => {
             const { level } = levelFromXp(c.xp);
             return (
@@ -114,6 +144,7 @@ export default function AdminOverview() {
         </div>
       )}
 
+      <Tour steps={PARENT_STEPS} active={parentTour.active} onDone={parentTour.onDone} tone="parent" />
     </div>
   );
 }

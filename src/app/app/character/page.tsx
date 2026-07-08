@@ -45,6 +45,8 @@ import {
 import { getCampaign } from "@/lib/campaign";
 import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
+import { Tour, useOnboardingTour } from "@/components/Tour";
+import { TourStep } from "@/lib/tour";
 
 interface Ach {
   key: string;
@@ -123,6 +125,16 @@ export default function HeroHub() {
     (p) => !bonds.some((b) => b.species === p.id) && speciesUnlocked(p.id, profile, lifetimeCleared)
   );
   const resumeChoose = !companion && bonds.length > 0 && hasPickable;
+
+  // first visit to the Hall — a one-line discovery tip (never during a ceremony)
+  const hallTour = useOnboardingTour("disc_hall", profile.id, !legendReady && !resumeChoose, 900);
+  const hallStep: TourStep[] = [
+    {
+      anchor: "hero-hall",
+      title: "The Hero Hall",
+      text: "Every companion who finishes their adventure with you stands here forever. Locked ones are still waiting to meet you.",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -204,7 +216,7 @@ export default function HeroHub() {
       </motion.div>
 
       {/* hero hall — a museum of completed adventures */}
-      <section id="hero-hall" className="scroll-mt-4">
+      <section id="hero-hall" data-tour="hero-hall" className="scroll-mt-4">
         <div className="mb-3 flex items-center gap-2">
           <Icon name="sparkle" size={18} className="text-[var(--accent-2)]" />
           <h2 className="text-display text-lg font-black">Hero Hall</h2>
@@ -517,6 +529,14 @@ export default function HeroHub() {
           </div>
         </section>
       )}
+
+      <Tour
+        steps={hallStep}
+        active={hallTour.active}
+        onDone={hallTour.onDone}
+        tone="hero"
+        companionSpecies={profile.pet}
+      />
     </div>
   );
 }

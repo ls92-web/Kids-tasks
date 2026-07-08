@@ -11,6 +11,8 @@ import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
+import { Tour, useOnboardingTour } from "@/components/Tour";
+import { TourStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
 
 const CATEGORIES = [
@@ -60,6 +62,16 @@ export default function ShopPage() {
   // Escape closes whichever overlay is up (the chest only once it's open)
   useEscape(!!bought && chestOpen, () => setBought(null));
   useEscape(requestOpen, () => setRequestOpen(false));
+
+  // first visit to the vault — a single warm discovery tip
+  const shopTour = useOnboardingTour("disc_shop", profile?.id, !bought && !requestOpen);
+  const shopStep: TourStep[] = [
+    {
+      anchor: "shop-intro",
+      title: "The Treasure Vault",
+      text: "The coins you earn on quests buy real rewards here — your parent makes them real!",
+    },
+  ];
 
   useEffect(() => {
     const supabase = createClient();
@@ -125,7 +137,7 @@ export default function ShopPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div data-tour="shop-intro">
           <h1 className="text-display text-3xl font-black">Treasure Vault</h1>
           <p className="mt-1 text-sm text-[var(--text-dim)]">
             Spend your {theme.coinName.toLowerCase()} on real rewards
@@ -333,6 +345,16 @@ export default function ShopPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {profile && (
+        <Tour
+          steps={shopStep}
+          active={shopTour.active}
+          onDone={shopTour.onDone}
+          tone="hero"
+          companionSpecies={profile.pet}
+        />
+      )}
     </div>
   );
 }

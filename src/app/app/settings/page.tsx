@@ -9,6 +9,8 @@ import { Companion } from "@/components/Companion";
 import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
 import { sfx, soundsEnabled, setSoundsEnabled } from "@/lib/sound";
+import { HelpPanel } from "@/components/HelpPanel";
+import { CHILD_HELP, resetTours, CHILD_TOURS } from "@/lib/tour";
 import {
   PETS,
   THEMES,
@@ -239,6 +241,23 @@ export default function SettingsPage() {
             </button>
           ))}
         </div>
+      </section>
+
+      {/* help & tips — replay the welcome, or read any topic */}
+      <section className="panel p-5">
+        <h2 className="text-display mb-1 text-lg font-black">Help &amp; tips</h2>
+        <p className="mb-3 text-xs text-[var(--text-dim)]">
+          Replay your welcome, or tap a topic to learn more
+        </p>
+        <HelpPanel
+          topics={CHILD_HELP}
+          replayLabel="Replay my welcome"
+          accent="var(--accent-2)"
+          onReplay={() => {
+            resetTours(profile.id, CHILD_TOURS);
+            router.push("/app");
+          }}
+        />
       </section>
 
       {saved && (
