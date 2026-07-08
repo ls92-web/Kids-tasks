@@ -43,6 +43,7 @@ import {
   campaignCompleted,
 } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
+import { badgeArt } from "@/lib/assets";
 import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
 import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
@@ -463,19 +464,22 @@ export default function HeroHub() {
                 >
                   {rarity.label}
                 </span>
-                <div
-                  className="relative grid h-14 w-14 place-items-center rounded-full"
-                  style={{
-                    background: unlockedAt
-                      ? `radial-gradient(circle at 35% 30%, ${rarity.color}, ${rarity.color}55)`
-                      : "rgba(0,0,0,0.35)",
-                    boxShadow: unlockedAt ? `0 0 16px -2px ${rarity.color}` : "none",
-                  }}
-                >
-                  {unlockedAt ? (
-                    <Icon name={badge.icon} size={26} className="text-white" filled />
-                  ) : (
-                    <Icon name="lock" size={20} className="text-[var(--text-dim)]" />
+                <div className="relative grid h-16 w-16 place-items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={badgeArt(badge.key)}
+                    alt=""
+                    className={`h-full w-full object-contain transition ${
+                      unlockedAt ? "" : "opacity-45 grayscale"
+                    }`}
+                    style={unlockedAt ? { filter: `drop-shadow(0 0 10px ${rarity.color}88)` } : undefined}
+                  />
+                  {!unlockedAt && (
+                    <span className="absolute inset-0 grid place-items-center">
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-black/55">
+                        <Icon name="lock" size={13} className="text-white/70" />
+                      </span>
+                    </span>
                   )}
                 </div>
                 <p className={`text-display mt-2 text-sm font-bold ${unlockedAt ? "" : "text-[var(--text-dim)]"}`}>

@@ -4,16 +4,20 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Icon } from "./Icon";
 import { DIFFICULTY, Task } from "@/lib/game";
+import { iconArt } from "@/lib/assets";
 import { enter, stagger } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { useWorld } from "./ThemeProvider";
 
-const TYPE_ICONS: Record<string, string> = {
+/* task type → delivered rendered icon art (public/icons/<slug>.png) */
+const TYPE_ART: Record<string, string> = {
   chore: "home",
   homework: "scroll",
   reading: "book",
-  habit: "flame",
-  other: "sparkle",
+  prayer: "heart",
+  quran: "magic",
+  habit: "energy",
+  other: "star",
 };
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
@@ -61,10 +65,11 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px -4px rgba(0,0,0,0.6)",
             }}
           >
-            <Icon
-              name={TYPE_ICONS[task.task_type] ?? "sparkle"}
-              size={26}
-              className={done ? "text-[var(--text-dim)]" : "text-[var(--accent-2)]"}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={iconArt(TYPE_ART[task.task_type] ?? "star")}
+              alt=""
+              className={`h-10 w-10 object-contain ${done ? "opacity-50 grayscale" : ""}`}
             />
             {done && (
               <div

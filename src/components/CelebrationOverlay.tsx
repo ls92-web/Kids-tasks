@@ -7,7 +7,8 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
-import { rankName, levelFromXp, companionLevel } from "@/lib/game";
+import { rankName, levelFromXp, companionLevel, BADGES } from "@/lib/game";
+import { badgeArt } from "@/lib/assets";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
 
@@ -20,15 +21,6 @@ export interface CelebrationData {
   achievements?: string[];
   streak?: number;
 }
-
-const ACHIEVEMENT_TITLES: Record<string, string> = {
-  streak_7: "7 Days in a Row!",
-  streak_30: "30 Days in a Row!",
-  tasks_100: "100 Quests Conquered",
-  coins_1000: "1000 Coins Gathered",
-  homework_hero: "Homework Hero",
-  reading_legend: "Reading Legend",
-};
 
 const CONFETTI_COLORS = ["#ffd76a", "#8fd0ff", "#ff8ba6", "#9fdd7a", "#c77dff", "#ffffff"];
 
@@ -248,7 +240,9 @@ export function CelebrationOverlay({
             )}
 
             {phase >= 2 &&
-              data.achievements?.map((a, i) => (
+              data.achievements?.map((a, i) => {
+                const badge = BADGES.find((b) => b.title === a);
+                return (
                 <motion.div
                   key={a}
                   initial={{ x: -60, opacity: 0 }}
@@ -256,10 +250,16 @@ export function CelebrationOverlay({
                   transition={{ delay: 0.2 + i * 0.15 }}
                   className="panel mt-3 flex items-center gap-3 px-5 py-2.5"
                 >
-                  <Icon name="trophy" size={22} className="text-[var(--gold)]" />
-                  <span className="text-display font-bold">{ACHIEVEMENT_TITLES[a] ?? a}</span>
+                  {badge ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={badgeArt(badge.key)} alt="" className="h-9 w-9 shrink-0 object-contain" />
+                  ) : (
+                    <Icon name="trophy" size={22} className="text-[var(--gold)]" />
+                  )}
+                  <span className="text-display font-bold">New badge: {a}</span>
                 </motion.div>
-              ))}
+                );
+              })}
 
             {phase >= 2 && (
               <motion.div

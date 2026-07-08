@@ -14,7 +14,22 @@ import { petForm } from "./game";
 export const ASSET_ROOTS = {
   companions: "/companions",
   worlds: "/worlds",
+  badges: "/badges",
+  icons: "/icons",
 } as const;
+
+/** Rendered achievement-badge art (public/badges/<key>.png). Every key in the
+    BADGES catalog has a matching file. */
+export function badgeArt(key: string): string {
+  return `${ASSET_ROOTS.badges}/${key}.png`;
+}
+
+/** Delivered rendered icon art for the quest-type emblems, used instead of
+    the flat SVG icon set (public/icons/<slug>.png). Slugs:
+    home · scroll · book · heart · magic · energy · star */
+export function iconArt(slug: string): string {
+  return `${ASSET_ROOTS.icons}/${slug}.png`;
+}
 
 /* species id → companion folder (named after the companion, per the art drop) */
 export const COMPANION_DIRS: Record<string, string> = {

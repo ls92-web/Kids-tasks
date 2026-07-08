@@ -215,6 +215,8 @@ export const TASK_TYPES = [
   { id: "chore", label: "Chore" },
   { id: "homework", label: "Homework" },
   { id: "reading", label: "Reading" },
+  { id: "prayer", label: "Prayer" },
+  { id: "quran", label: "Qur'an" },
   { id: "habit", label: "Habit" },
   { id: "other", label: "Other" },
 ] as const;
@@ -498,27 +500,31 @@ export interface TaskCounts {
   homework: number;
   chore: number;
   reading: number;
+  prayer: number;
+  quran: number;
   helper: number;
   bed: number;
   morning: number;
 }
 
+/* The achievement badges — one rendered badge per entry lives at
+   public/badges/<key>.png (src/lib/assets.ts badgeArt). Milestone badges
+   (evolution/world/legend) are earned server-side and show target 1 with no
+   running counter; the rest track a real count. Keep keys in sync with the
+   award logic in the award_submission / complete_legend RPCs. */
 export const BADGES: BadgeDef[] = [
-  { key: "first_steps", title: "First Steps", icon: "sparkle", rarity: "common", description: "Complete your very first quest.", target: 1, progress: (x) => x.counts.total },
-  { key: "early_bird", title: "Early Bird", icon: "sparkle", rarity: "rare", description: "Complete 7 quests in the morning.", target: 7, progress: (x) => x.counts.morning },
+  { key: "first_steps", title: "First Steps", icon: "star", rarity: "common", description: "Finish your very first quest.", target: 1, progress: (x) => x.counts.total },
+  { key: "early_bird", title: "Early Bird", icon: "star", rarity: "rare", description: "Finish 7 quests in the morning.", target: 7, progress: (x) => x.counts.morning },
   { key: "bed_master", title: "Bed Master", icon: "home", rarity: "rare", description: "Make your bed 20 times.", target: 20, progress: (x) => x.counts.bed },
   { key: "reading_star", title: "Reading Star", icon: "book", rarity: "rare", description: "Finish 15 reading quests.", target: 15, progress: (x) => x.counts.reading },
-  { key: "family_helper", title: "Family Helper", icon: "users", rarity: "rare", description: "Help your family 25 times.", target: 25, progress: (x) => x.counts.helper },
+  { key: "family_helper", title: "Family Helper", icon: "heart", rarity: "rare", description: "Help your family 25 times.", target: 25, progress: (x) => x.counts.helper },
   { key: "streak_7", title: "7-Day Streak", icon: "flame", rarity: "rare", description: "Keep a 7-day streak alive.", target: 7, progress: (x) => x.profile.streak_days },
-  { key: "homework_hero", title: "Homework Hero", icon: "scroll", rarity: "epic", description: "Complete 30 homework quests.", target: 30, progress: (x) => x.counts.homework },
-  { key: "cleaning_champion", title: "Cleaning Champion", icon: "shield", rarity: "epic", description: "Complete 50 cleaning quests.", target: 50, progress: (x) => x.counts.chore },
-  { key: "reading_legend", title: "Reading Legend", icon: "book", rarity: "epic", description: "Finish 20 reading quests.", target: 20, progress: (x) => x.counts.reading },
-  { key: "streak_30", title: "Consistency Crown", icon: "flame", rarity: "epic", description: "Reach a 30-day streak.", target: 30, progress: (x) => x.profile.streak_days },
-  { key: "coins_1000", title: "Coin Collector", icon: "coin", rarity: "epic", description: "Earn 1000 coins in total.", target: 1000, progress: (x) => x.profile.total_coins_earned },
-  { key: "tasks_100", title: "Centurion", icon: "trophy", rarity: "epic", description: "Complete 100 quests.", target: 100, progress: (x) => x.counts.total },
-  { key: "streak_100", title: "Century Streak", icon: "flame", rarity: "legendary", description: "Blaze a 100-day streak.", target: 100, progress: (x) => x.profile.streak_days },
-  { key: "quest_master", title: "Quest Master", icon: "trophy", rarity: "legendary", description: "Complete 250 quests.", target: 250, progress: (x) => x.counts.total },
-  { key: "legendary_hero", title: "Legendary Hero", icon: "sword", rarity: "legendary", description: "Reach the highest rank.", target: 48000, progress: (x) => x.profile.xp },
+  { key: "homework_hero", title: "Homework Hero", icon: "scroll", rarity: "epic", description: "Finish 30 homework quests.", target: 30, progress: (x) => x.counts.homework },
+  { key: "prayer_guardian", title: "Prayer Guardian", icon: "sparkle", rarity: "epic", description: "Complete 50 prayer quests.", target: 50, progress: (x) => x.counts.prayer },
+  { key: "quran_companion", title: "Qur'an Companion", icon: "book", rarity: "epic", description: "Complete 30 Qur'an reading quests.", target: 30, progress: (x) => x.counts.quran },
+  { key: "first_evolution", title: "First Evolution", icon: "sparkle", rarity: "epic", description: "Evolve your companion for the first time.", target: 1, progress: () => 0 },
+  { key: "first_world", title: "World Explorer", icon: "map", rarity: "epic", description: "Complete your very first world.", target: 36, progress: (x) => x.profile.tasks_completed },
+  { key: "first_legend", title: "First Legend", icon: "trophy", rarity: "legendary", description: "Guide a companion to become a Legend.", target: 1, progress: () => 0 },
 ];
 
 export function computeCounts(tasks: Task[]): TaskCounts {
@@ -528,6 +534,8 @@ export function computeCounts(tasks: Task[]): TaskCounts {
     homework: done.filter((t) => t.task_type === "homework").length,
     chore: done.filter((t) => t.task_type === "chore").length,
     reading: done.filter((t) => t.task_type === "reading").length,
+    prayer: done.filter((t) => t.task_type === "prayer").length,
+    quran: done.filter((t) => t.task_type === "quran").length,
     helper: done.filter((t) => t.task_type === "other" || t.task_type === "habit").length,
     bed: done.filter((t) => t.task_type === "chore" && t.title.toLowerCase().includes("bed")).length,
     morning: done.filter((t) => new Date(t.created_at).getHours() < 12).length,
