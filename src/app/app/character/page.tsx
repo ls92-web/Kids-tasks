@@ -477,7 +477,7 @@ export default function HeroHub() {
                   {!unlockedAt && (
                     <span className="absolute inset-0 grid place-items-center">
                       <span className="grid h-6 w-6 place-items-center rounded-full bg-black/55">
-                        <Icon name="lock" size={13} className="text-white/70" />
+                        <Icon name="lock" size={14} art />
                       </span>
                     </span>
                   )}

@@ -508,7 +508,7 @@ export interface TaskCounts {
 }
 
 /* The achievement badges — one rendered badge per entry lives at
-   public/badges/<key>.png (src/lib/assets.ts badgeArt). Milestone badges
+   public/ui/badges/<key>.png (src/lib/assets.ts badgeArt). Milestone badges
    (evolution/world/legend) are earned server-side and show target 1 with no
    running counter; the rest track a real count. Keep keys in sync with the
    award logic in the award_submission / complete_legend RPCs. */

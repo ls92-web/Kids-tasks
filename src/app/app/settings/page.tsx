@@ -116,7 +116,7 @@ export default function SettingsPage() {
                 )}
                 {!unlocked && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-black/50">
-                    <Icon name="lock" size={13} className="text-white/70" />
+                    <Icon name="lock" size={14} art />
                   </span>
                 )}
               </motion.button>

@@ -121,7 +121,7 @@ const paths: Record<string, React.ReactNode> = {
   ),
 };
 
-/* app icon name → delivered rendered-art slug (public/icons/<slug>.png).
+/* app icon name → delivered rendered-art slug (public/ui/icons/<slug>.png).
    Opt in per call site with <Icon art …/>; unmapped names fall back to SVG. */
 const ICON_ART: Record<string, string> = {
   coin: "coin", star: "star", flame: "fire", clock: "time", map: "treasure-map",
@@ -152,7 +152,7 @@ export function Icon({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={`/icons/${ICON_ART[name]}.png`}
+        src={`/ui/icons/${ICON_ART[name]}.png`}
         alt=""
         width={size}
         height={size}

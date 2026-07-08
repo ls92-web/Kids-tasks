@@ -9,7 +9,7 @@ import { enter, stagger } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { useWorld } from "./ThemeProvider";
 
-/* task type → delivered rendered icon art (public/icons/<slug>.png) */
+/* task type → delivered rendered icon art (public/ui/icons/<slug>.png) */
 const TYPE_ART: Record<string, string> = {
   chore: "home",
   homework: "multiplication",

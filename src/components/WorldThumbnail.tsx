@@ -64,7 +64,7 @@ export function WorldThumbnail({
       )}
       {locked && (
         <span className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full bg-black/55">
-          <Icon name="lock" size={12} className="text-white/80" />
+          <Icon name="lock" size={14} art />
         </span>
       )}
     </div>
