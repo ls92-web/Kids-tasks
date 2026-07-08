@@ -254,7 +254,7 @@ export function CelebrationOverlay({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={badgeArt(badge.key)} alt="" className="h-9 w-9 shrink-0 object-contain" />
                   ) : (
-                    <Icon name="trophy" size={22} className="text-[var(--gold)]" />
+                    <Icon name="trophy" size={24} art />
                   )}
                   <span className="text-display font-bold">New badge: {a}</span>
                 </motion.div>

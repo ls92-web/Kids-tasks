@@ -308,14 +308,14 @@ export function LegendCeremony({
                 transition={{ ...popSpring, delay: 0.2 }}
                 className="text-display flex items-center gap-2 rounded-2xl bg-black/35 px-6 py-3 text-2xl font-black text-[var(--gold)]"
               >
-                <Icon name="coin" size={26} filled /> +{rewardCoins ?? 250}
+                <Icon name="coin" size={26} art /> +{rewardCoins ?? 250}
               </motion.div>
               <p className="text-sm font-bold text-[var(--text)]">
                 A hero&apos;s treasure — for finishing a whole adventure.
               </p>
               {/* the Hero Hall unlock */}
               <div className="flex items-center gap-2.5 rounded-xl bg-black/25 px-4 py-2.5">
-                <Icon name="trophy" size={18} filled className="shrink-0 text-[var(--gold)]" />
+                <Icon name="trophy" size={20} art className="shrink-0" />
                 <p className="text-left text-xs font-bold text-[var(--text-dim)]">
                   A new pedestal stands in your{" "}
                   <span className="text-[var(--gold)]">Hero Hall</span> — {petMeta.name} will be

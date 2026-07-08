@@ -183,7 +183,7 @@ export default function ShopPage() {
 
       {visible.length === 0 ? (
         <div className="panel p-10 text-center">
-          <Icon name="chest" size={40} className="mx-auto text-[var(--text-dim)]" />
+          <Icon name="chest" size={44} art className="mx-auto" />
           <p className="text-display mt-3 font-bold text-[var(--text-dim)]">
             {rewards.length === 0
               ? "The vault is being stocked. Check back soon!"

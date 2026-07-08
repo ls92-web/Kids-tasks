@@ -140,7 +140,7 @@ export default function ChallengesAdmin() {
           <div className="flex flex-col gap-2">
             {challenges.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <Icon name="lightning" size={18} className="shrink-0 text-[var(--accent-2)]" />
+                <Icon name="lightning" size={20} art muted className="shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{c.title}</p>
                   <p className="text-xs text-[var(--text-dim)]">
