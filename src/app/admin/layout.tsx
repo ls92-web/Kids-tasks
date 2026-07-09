@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { WorldBackground } from "@/components/WorldBackground";
 import { AdminLoader, ADMIN_REFRESH } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
 import { Profile } from "@/lib/game";
@@ -81,8 +80,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ThemeProvider initialProfile={profile}>
       <div className="relative min-h-screen">
-        {/* parents get the calm gradient only — no game scenery */}
-        <WorldBackground variant="plain" />
+        {/* official WonderNest splash backdrop, matching the entry screens —
+            a strong scrim keeps the console calm and the content readable */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/splash.png"
+          alt=""
+          className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover"
+        />
+        <div
+          className="pointer-events-none fixed inset-0 z-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(6,10,24,0.78) 0%, rgba(6,10,24,0.9) 100%)",
+          }}
+        />
         <div className="relative z-10 mx-auto flex w-[min(97%,1200px)] flex-col gap-5 py-5 lg:flex-row">
           {/* sidebar */}
           <aside className="panel h-fit shrink-0 p-3 lg:sticky lg:top-5 lg:w-56">
