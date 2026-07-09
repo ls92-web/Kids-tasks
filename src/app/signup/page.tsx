@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
@@ -73,13 +72,32 @@ function SignupInner() {
 
   return (
     <div className="relative min-h-screen">
-      <WorldBackground />
+      {/* official WonderNest hero art backdrop */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/login-hero.png"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(6,10,24,0.55) 0%, rgba(6,10,24,0.78) 52%, rgba(6,10,24,0.93) 100%)",
+        }}
+      />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className="panel panel-glow w-full max-w-md p-8"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/emblem.png"
+            alt="WonderNest"
+            className="mx-auto mb-3 h-auto w-14"
+          />
           <h1 className="text-display text-glow text-center text-3xl font-black text-[var(--accent-2)]">
             {step === "code" ? "Your Family is Ready" : "Create Your Family"}
           </h1>

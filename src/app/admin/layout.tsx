@@ -94,7 +94,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* sidebar */}
           <aside className="panel h-fit shrink-0 p-3 lg:sticky lg:top-5 lg:w-56">
             <div className="mb-3 px-2 pt-1">
-              <p className="text-display text-lg font-black text-[var(--accent-2)]">
+              {/* official WonderNest navigation logo */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-stacked.png"
+                alt="WonderNest"
+                className="mb-2 h-auto w-28"
+              />
+              <p className="text-display text-xs font-bold uppercase tracking-wide text-[var(--accent-2)]">
                 Parent Dashboard
               </p>
               <p className="truncate text-xs text-[var(--text-dim)]">{profile.nickname}</p>

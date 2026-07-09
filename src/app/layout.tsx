@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nunito, Chakra_Petch, Cinzel, Orbitron } from "next/font/google";
 import "./globals.css";
 
@@ -29,6 +29,23 @@ const orbitron = Orbitron({
 export const metadata: Metadata = {
   title: "WonderNest",
   description: "Turn every day into an adventure",
+  applicationName: "WonderNest",
+  appleWebApp: {
+    capable: true,
+    title: "WonderNest",
+    statusBarStyle: "black-translucent",
+  },
+  openGraph: {
+    title: "WonderNest",
+    description: "Turn every day into an adventure",
+    siteName: "WonderNest",
+    type: "website",
+    images: [{ url: "/brand/login-hero.png" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#060a18",
 };
 
 export default function RootLayout({
