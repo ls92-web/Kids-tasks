@@ -237,16 +237,17 @@ export default function ShopPage() {
                     rotate: Math.random() * 540,
                   }}
                   transition={{ duration: 1.5, delay: i * 0.04, ease: "easeOut" }}
-                  className="absolute grid place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
+                  className="absolute"
                   style={{
                     width: 18,
                     height: 18,
-                    background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
-                    boxShadow: "0 0 12px rgba(255,215,106,0.7)",
+                    backgroundImage: "url(/ui/icons/coin.png)",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    filter: "drop-shadow(0 0 8px rgba(255,215,106,0.7))",
                   }}
-                >
-                  C
-                </motion.div>
+                />
               ))}
 
             <motion.div

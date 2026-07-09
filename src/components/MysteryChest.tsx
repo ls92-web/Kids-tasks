@@ -105,14 +105,15 @@ export function MysteryChest({
                     rotate: i * 47,
                   }}
                   transition={{ duration: 1.5, delay: i * 0.03, ease: EASE_OUT }}
-                  className="absolute grid h-4 w-4 place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
+                  className="absolute h-4 w-4"
                   style={{
-                    background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
-                    boxShadow: "0 0 12px rgba(255,215,106,0.7)",
+                    backgroundImage: "url(/ui/icons/coin.png)",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    filter: "drop-shadow(0 0 8px rgba(255,215,106,0.7))",
                   }}
-                >
-                  C
-                </motion.div>
+                />
               ))}
             </>
           )}
@@ -161,38 +162,27 @@ export function MysteryChest({
 function ChestArt({ open }: { open: boolean }) {
   return (
     <div className={open ? "" : "animate-[chest-shake_0.9s_ease-in-out_infinite]"}>
-      <svg width="120" height="104" viewBox="0 0 120 104">
-        <defs>
-          <linearGradient id="mc-wood" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#a86b32" />
-            <stop offset="100%" stopColor="#6e3f16" />
-          </linearGradient>
-          <linearGradient id="mc-lid" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#c58343" />
-            <stop offset="100%" stopColor="#8a531f" />
-          </linearGradient>
-          <radialGradient id="mc-light" cx="50%" cy="100%" r="80%">
-            <stop offset="0%" stopColor="rgba(255,230,140,0.95)" />
-            <stop offset="100%" stopColor="rgba(255,230,140,0)" />
-          </radialGradient>
-        </defs>
-        {open && <ellipse cx="60" cy="52" rx="48" ry="32" fill="url(#mc-light)" />}
-        <rect x="18" y="52" width="84" height="42" rx="6" fill="url(#mc-wood)" />
-        <rect x="18" y="52" width="84" height="8" fill="rgba(0,0,0,0.25)" />
-        <g
+      <div className="relative grid h-28 w-28 place-items-center">
+        {/* burst of light when the official chest opens */}
+        {open && (
+          <div
+            className="absolute inset-[-18%] animate-pulse-glow rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,230,140,0.6), transparent 68%)" }}
+          />
+        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ui/icons/chest.png"
+          alt=""
+          className="relative h-full w-full object-contain transition-transform duration-500"
           style={{
-            transform: open ? "rotate(-40deg)" : "rotate(0deg)",
-            transformOrigin: "18px 52px",
-            transition: "transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1)",
+            transform: open ? "scale(1.08)" : "scale(1)",
+            filter: open
+              ? "drop-shadow(0 0 16px rgba(255,215,106,0.85))"
+              : "drop-shadow(0 4px 8px rgba(0,0,0,0.4))",
           }}
-        >
-          <path d="M18 52 Q18 24 60 24 Q102 24 102 52 Z" fill="url(#mc-lid)" />
-          <rect x="54" y="24" width="12" height="28" rx="3" fill="#ffd76a" opacity="0.9" />
-        </g>
-        <rect x="52" y="50" width="16" height="18" rx="4" fill="#ffd76a" />
-        <circle cx="60" cy="59" r="3.4" fill="#8a531f" />
-        <rect x="18" y="70" width="84" height="6" fill="#ffd76a" opacity="0.85" />
-      </svg>
+        />
+      </div>
     </div>
   );
 }

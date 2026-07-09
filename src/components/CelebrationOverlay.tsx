@@ -146,17 +146,16 @@ export function CelebrationOverlay({
               className="absolute"
             >
               <div
-                className="grid place-items-center rounded-full font-black text-[#4d3600]"
                 style={{
                   width: c.size,
                   height: c.size,
-                  fontSize: c.size * 0.5,
-                  background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
-                  boxShadow: "0 0 14px rgba(255,215,106,0.7)",
+                  backgroundImage: "url(/ui/icons/coin.png)",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  filter: "drop-shadow(0 0 8px rgba(255,215,106,0.7))",
                 }}
-              >
-                C
-              </div>
+              />
             </motion.div>
           ))}
 

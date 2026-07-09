@@ -8,8 +8,8 @@ import { useWorld } from "./ThemeProvider";
 
 export const REWARD_ICONS: Record<string, string> = {
   gift: "gift",
-  movie: "eye",
-  icecream: "sparkle",
+  movie: "ticket",
+  icecream: "potion",
   screen: "lightning",
   toy: "star",
   trip: "map",
@@ -19,10 +19,10 @@ export const REWARD_ICONS: Record<string, string> = {
   book: "book",
   clothing: "shield",
   weapon: "sword",
-  pet: "star",
-  petacc: "sparkle",
+  pet: "heart",
+  petacc: "diamond",
   decor: "home",
-  experience: "map",
+  experience: "ticket",
   outdoor: "flame",
   electronics: "lightning",
   parent: "users",
@@ -101,12 +101,8 @@ export function RewardCard({
         )}
         <div className="mt-auto flex items-center justify-between pt-3">
           <span className="text-display flex items-center gap-1.5 text-lg font-black text-[var(--gold)]">
-            <span
-              className="grid h-5 w-5 place-items-center rounded-full text-[10px] text-[#4d3600]"
-              style={{ background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)" }}
-            >
-              C
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ui/icons/coin.png" alt="" className="h-5 w-5 shrink-0 object-contain" />
             {reward.coin_cost}
           </span>
           <motion.button

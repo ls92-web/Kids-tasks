@@ -127,12 +127,8 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
             </span>
             <span className="text-display flex items-center gap-1 rounded-lg bg-black/25 px-2 py-0.5 text-[13px] font-black text-[var(--gold)]">
               +{task.coin_reward}
-              <span
-                className="grid h-3.5 w-3.5 place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
-                style={{ background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)" }}
-              >
-                C
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/ui/icons/coin.png" alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
             </span>
             <span className="flex items-center gap-1 text-[10px] text-[var(--text-dim)]">
               <Icon name="clock" size={11} /> {task.est_minutes}m
