@@ -183,7 +183,13 @@ export default function ShopPage() {
 
       {visible.length === 0 ? (
         <div className="panel p-10 text-center">
-          <Icon name="chest" size={44} art className="mx-auto" />
+          {/* Welcome Hero — shown whole, never cropped */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/login-hero.png"
+            alt=""
+            className="mx-auto w-full max-w-xs rounded-2xl"
+          />
           <p className="text-display mt-3 font-bold text-[var(--text-dim)]">
             {rewards.length === 0
               ? "The vault is being stocked. Check back soon!"

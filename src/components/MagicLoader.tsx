@@ -32,6 +32,11 @@ export function MagicLoader({
           src="/brand/loading.png"
           alt=""
           className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_0_18px_var(--glow)]"
+          style={{
+            // fade the illustration's baked soft-grey backdrop into transparency
+            WebkitMaskImage: "radial-gradient(circle, #000 58%, transparent 78%)",
+            maskImage: "radial-gradient(circle, #000 58%, transparent 78%)",
+          }}
           animate={{ y: [0, -6, 0], scale: [1, 1.04, 1] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         />

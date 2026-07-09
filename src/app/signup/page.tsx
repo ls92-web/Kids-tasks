@@ -75,7 +75,7 @@ function SignupInner() {
       {/* official WonderNest hero art backdrop */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/login-hero.png"
+        src="/brand/splash.png"
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
       />
