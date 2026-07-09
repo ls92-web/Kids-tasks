@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
+import { Companion } from "@/components/Companion";
 import { Input, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
@@ -161,6 +162,21 @@ export default function ChildrenPage() {
             </button>
           ))}
         </div>
+
+        {/* full-body Baby preview of the chosen companion — visual only */}
+        <div className="mt-5 flex flex-col items-center">
+          <p className="text-display mb-1 text-xs font-bold uppercase tracking-wider text-[var(--accent-2)]">
+            Your hero companion
+          </p>
+          <div className="relative grid min-h-[196px] place-items-center sm:min-h-[236px]">
+            {/* soft grounding shadow so the character feels planted */}
+            <div className="pointer-events-none absolute bottom-3 h-3 w-24 rounded-[50%] bg-black/50 blur-md" />
+            <div className="origin-bottom scale-[0.82] sm:scale-100">
+              <Companion species={pet} level={1} size={220} float />
+            </div>
+          </div>
+        </div>
+
         {msg && (
           <Callout tone={msg.ok ? "success" : "error"} className="mt-3">
             {msg.text}
