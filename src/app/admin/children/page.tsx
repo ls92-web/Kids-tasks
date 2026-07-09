@@ -160,8 +160,8 @@ export default function ChildrenPage() {
               key={p.id}
               onClick={() => setPet(p.id)}
               title={p.species}
-              className={`cursor-pointer rounded-full p-1 ${
-                pet === p.id ? "ring-2 ring-[var(--accent)]" : ""
+              className={`cursor-pointer rounded-full transition-transform ${
+                pet === p.id ? "scale-105" : "opacity-70 hover:opacity-100"
               }`}
             >
               <Portrait species={p.id} size={44} ring={pet === p.id} />
