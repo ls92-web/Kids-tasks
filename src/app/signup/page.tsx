@@ -8,12 +8,11 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { GameButton } from "@/components/GameButton";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
-import { CRESTS } from "@/lib/game";
 
-/* Founding a family: name it, choose its crest, create the parent account,
-   then receive the Family Code heroes use to join. */
+/* Founding a family: name it, create the parent account, then receive the
+   Family Code heroes use to join. */
 
-type Step = "family" | "crest" | "account" | "code";
+type Step = "family" | "account" | "code";
 
 export default function SignupPage() {
   return (
@@ -26,7 +25,7 @@ export default function SignupPage() {
 function SignupInner() {
   const [step, setStep] = useState<Step>("family");
   const [familyName, setFamilyName] = useState("");
-  const [crest, setCrest] = useState<string>("shield");
+  const [crest] = useState<string>("shield");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [familyCode, setFamilyCode] = useState<string | null>(null);
@@ -103,14 +102,14 @@ function SignupInner() {
           </h1>
           {step !== "code" && (
             <div className="mx-auto mt-3 flex w-fit items-center gap-1.5">
-              {(["family", "crest", "account"] as Step[]).map((s, i) => (
+              {(["family", "account"] as Step[]).map((s, i) => (
                 <div
                   key={s}
                   className="h-1.5 rounded-full transition-all"
                   style={{
                     width: step === s ? 28 : 14,
                     background:
-                      (["family", "crest", "account"] as Step[]).indexOf(step) >= i
+                      (["family", "account"] as Step[]).indexOf(step) >= i
                         ? "var(--accent)"
                         : "rgba(255,255,255,0.15)",
                   }}
@@ -129,7 +128,7 @@ function SignupInner() {
                 className="mt-6 flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  setStep("crest");
+                  setStep("account");
                 }}
               >
                 <p className="text-center text-sm text-[var(--text-dim)]">
@@ -146,53 +145,6 @@ function SignupInner() {
                   Next <Icon name="arrowRight" size={16} className="ml-1 inline" />
                 </GameButton>
               </motion.form>
-            )}
-
-            {step === "crest" && (
-              <motion.div
-                key="crest"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                className="mt-6 flex flex-col gap-4"
-              >
-                <p className="text-center text-sm text-[var(--text-dim)]">
-                  Choose the crest of <b className="text-[var(--accent-2)]">{familyName || "your family"}</b>
-                </p>
-                <div className="grid grid-cols-4 gap-2.5">
-                  {CRESTS.map((c) => {
-                    const chosen = crest === c.id;
-                    return (
-                      <motion.button
-                        key={c.id}
-                        whileHover={{ y: -3 }}
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => setCrest(c.id)}
-                        title={c.label}
-                        className={`grid aspect-square cursor-pointer place-items-center rounded-2xl transition-all ${
-                          chosen ? "ring-2 ring-[var(--accent)]" : "bg-black/25"
-                        }`}
-                        style={
-                          chosen
-                            ? {
-                                background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                                boxShadow: "0 0 20px -4px var(--glow)",
-                              }
-                            : {}
-                        }
-                      >
-                        <Icon name={c.id} size={26} art className={`transition-[filter,opacity] ${chosen ? "" : "opacity-45 saturate-[0.7]"}`} />
-                      </motion.button>
-                    );
-                  })}
-                </div>
-                <p className="text-display text-center text-xs font-bold text-[var(--accent-2)]">
-                  {CRESTS.find((c) => c.id === crest)?.label}
-                </p>
-                <GameButton onClick={() => setStep("account")} className="w-full text-lg">
-                  Next <Icon name="arrowRight" size={16} className="ml-1 inline" />
-                </GameButton>
-              </motion.div>
             )}
 
             {step === "account" && (
