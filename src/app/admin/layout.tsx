@@ -8,11 +8,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { AdminLoader, ADMIN_REFRESH } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
-import { HelpPanel } from "@/components/HelpPanel";
-import { PARENT_HELP, resetTours, PARENT_TOURS } from "@/lib/tour";
-import { overlayFade, popSpring } from "@/lib/motion";
-import { useEscape } from "@/lib/a11y";
-import { motion, AnimatePresence } from "framer-motion";
 import { Profile } from "@/lib/game";
 
 const NAV = [
@@ -30,8 +25,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [counts, setCounts] = useState<{ review: number; wishes: number }>({ review: 0, wishes: 0 });
-  const [helpOpen, setHelpOpen] = useState(false);
-  useEscape(helpOpen, () => setHelpOpen(false));
 
   useEffect(() => {
     const supabase = createClient();
@@ -150,15 +143,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 );
               })}
               <button
-                onClick={() => setHelpOpen(true)}
-                className="mt-1 flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--text)]"
-              >
-                <Icon name="help" size={20} art muted />
-                <span className="text-display">Help</span>
-              </button>
-              <button
                 onClick={logout}
-                className="flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] hover:text-[var(--danger)]"
+                className="mt-1 flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] hover:text-[var(--danger)]"
               >
                 <Icon name="exit" size={20} art muted />
                 <span className="text-display">Sign out</span>
@@ -169,49 +155,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <main className="min-w-0 flex-1">{children}</main>
         </div>
       </div>
-
-      {/* Help — replay the tour or read any topic, from any admin screen */}
-      <AnimatePresence>
-        {helpOpen && (
-          <motion.div
-            {...overlayFade}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Help"
-            onClick={() => setHelpOpen(false)}
-            className="fixed inset-0 z-[70] grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={popSpring}
-              onClick={(e) => e.stopPropagation()}
-              className="panel panel-glow max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-display text-lg font-black">Help &amp; guide</h2>
-                <button
-                  onClick={() => setHelpOpen(false)}
-                  aria-label="Close"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-black/25 text-[var(--text-dim)] hover:text-[var(--text)]"
-                >
-                  <Icon name="x" size={15} />
-                </button>
-              </div>
-              <HelpPanel
-                topics={PARENT_HELP}
-                replayLabel="Replay the dashboard tour"
-                onReplay={() => {
-                  if (profile) resetTours(profile.id, PARENT_TOURS);
-                  setHelpOpen(false);
-                  router.push("/admin");
-                }}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </ThemeProvider>
   );
 }

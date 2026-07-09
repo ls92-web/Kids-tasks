@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { XPBar } from "@/components/XPBar";
 import { Icon } from "@/components/Icon";
-import { EmptyNote } from "@/components/admin/ui";
+import { AdminButton } from "@/components/admin/ui";
 import { Tour, useOnboardingTour } from "@/components/Tour";
 import { TourStep } from "@/lib/tour";
 import { Profile, levelFromXp, rankName } from "@/lib/game";
@@ -22,9 +23,9 @@ const PARENT_STEPS: TourStep[] = [
     text: "At a glance: proofs to review, reward wishes, and rewards to grant.",
   },
   {
-    anchor: "children",
+    anchor: "nav-heroes",
     title: "Your heroes",
-    text: "Each child's progress lives here. Invite more with your Family Code on the Heroes page.",
+    text: "Each child's progress lives here. Create heroes and share your Family Code on the Heroes page.",
   },
   {
     anchor: "nav-quests",
@@ -41,6 +42,7 @@ const PARENT_STEPS: TourStep[] = [
 
 export default function AdminOverview() {
   const { profile } = useWorld();
+  const router = useRouter();
   const parentTour = useOnboardingTour("parent", profile?.id);
   const [children, setChildren] = useState<Profile[]>([]);
   const [pendingReviews, setPendingReviews] = useState(0);
@@ -101,13 +103,21 @@ export default function AdminOverview() {
 
       {/* children */}
       {children.length === 0 ? (
-        <EmptyNote>
-          No heroes yet.{" "}
-          <Link href="/admin/children" className="font-bold text-[var(--accent-2)] underline">
+        <div className="panel flex flex-col items-center gap-4 p-10 text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-black/25">
+            <Icon name="heroes" size={40} art muted />
+          </div>
+          <div className="max-w-sm">
+            <h2 className="text-display text-lg font-black">No heroes yet</h2>
+            <p className="mt-1.5 text-sm leading-snug text-[var(--text-dim)]">
+              Create your child&apos;s hero to start assigning real-life quests — or share your
+              Family Code so they can join the adventure.
+            </p>
+          </div>
+          <AdminButton onClick={() => router.push("/admin/children")}>
             Create your first hero
-          </Link>{" "}
-          to get started.
-        </EmptyNote>
+          </AdminButton>
+        </div>
       ) : (
         <div data-tour="children" className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {children.map((c) => {
