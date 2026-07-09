@@ -9,9 +9,9 @@ import { tapSpring } from "@/lib/motion";
 
 /* Three destinations, nothing more. A child should never wonder where to tap. */
 const items = [
-  { href: "/app", icon: "home", label: "Adventure" },
+  { href: "/app", icon: "adventure", label: "Adventure" },
   { href: "/app/shop", icon: "chest", label: "Treasures" },
-  { href: "/app/character", icon: "shield", label: "Hero" },
+  { href: "/app/character", icon: "hero", label: "Hero" },
 ];
 
 export function ChildNav() {
@@ -48,7 +48,12 @@ export function ChildNav() {
                   transition={tapSpring}
                 />
               )}
-              <Icon name={item.icon} size={24} className="relative" filled={active} />
+              <Icon
+                name={item.icon}
+                size={26}
+                art
+                className={`relative transition-[filter,opacity] ${active ? "" : "opacity-70 saturate-[0.9]"}`}
+              />
               <span className="text-display relative text-[11px] font-bold">{item.label}</span>
             </motion.div>
           </Link>

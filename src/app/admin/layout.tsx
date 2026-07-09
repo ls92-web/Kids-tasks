@@ -122,7 +122,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         : undefined
                     }
                   >
-                    <Icon name={item.icon} size={17} />
+                    <Icon name={item.icon} size={20} art muted />
                     <span className="text-display flex-1">{item.label}</span>
                     {count > 0 && (
                       <span
@@ -146,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setHelpOpen(true)}
                 className="mt-1 flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--text)]"
               >
-                <Icon name="eye" size={17} />
+                <Icon name="book" size={20} art muted />
                 <span className="text-display">Help</span>
               </button>
               <button

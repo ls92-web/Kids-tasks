@@ -45,7 +45,7 @@ export function HUD() {
           aria-label="Your Realm"
         >
           <span className="transition-transform duration-300 group-hover:rotate-90">
-            <Icon name="gear" size={18} />
+            <Icon name="gear" size={22} art />
           </span>
         </Link>
       </div>
@@ -80,13 +80,15 @@ export function CoinStat({ coins }: { coins: number }) {
       <motion.span
         animate={gained ? { scale: [1, 1.4, 1], rotate: [0, -12, 12, 0] } : {}}
         transition={{ duration: 0.5 }}
-        className="relative grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black text-[#4d3600]"
-        style={{
-          background: "radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 60%, #c99a1f)",
-          boxShadow: gained ? "0 0 16px rgba(255,215,106,0.9)" : "0 0 10px rgba(255,215,106,0.5)",
-        }}
+        className="relative grid h-6 w-6 shrink-0 place-items-center"
       >
-        C
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ui/icons/coin.png"
+          alt=""
+          className="h-full w-full object-contain"
+          style={{ filter: gained ? "drop-shadow(0 0 8px rgba(255,215,106,0.95))" : undefined }}
+        />
         {/* sparkle coins bursting from the balance when it grows */}
         {sparks.map((id) => (
           <motion.span
