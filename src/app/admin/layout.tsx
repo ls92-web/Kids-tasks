@@ -160,7 +160,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={logout}
                 className="flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] hover:text-[var(--danger)]"
               >
-                <Icon name="exit" size={17} art muted />
+                <Icon name="exit" size={20} art muted />
                 <span className="text-display">Sign out</span>
               </button>
             </nav>
