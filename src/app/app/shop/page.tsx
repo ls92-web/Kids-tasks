@@ -182,15 +182,15 @@ export default function ShopPage() {
       {error && <Callout tone="error">{error}</Callout>}
 
       {visible.length === 0 ? (
-        <div className="panel p-10 text-center">
-          {/* Welcome Hero — shown whole, never cropped */}
+        <div className="panel overflow-hidden text-center">
+          {/* Welcome Hero — fills the card width, shown whole, text below */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/login-hero.png"
             alt=""
-            className="mx-auto w-full max-w-xs rounded-2xl"
+            className="block w-full"
           />
-          <p className="text-display mt-3 font-bold text-[var(--text-dim)]">
+          <p className="text-display px-6 py-6 font-bold text-[var(--text-dim)]">
             {rewards.length === 0
               ? "The vault is being stocked. Check back soon!"
               : "Nothing on this shelf yet — try another one."}
