@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
-import { Input, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { Input, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
-import { PETS, CHARACTER_CLASSES, Profile, Family, levelFromXp } from "@/lib/game";
+import { PETS, Profile, Family, levelFromXp } from "@/lib/game";
 
 export default function ChildrenPage() {
   const { profile } = useWorld();
@@ -18,7 +18,7 @@ export default function ChildrenPage() {
   const [nickname, setNickname] = useState("");
   const [pin, setPin] = useState("");
   const [pet, setPet] = useState("dragon");
-  const [charClass, setCharClass] = useState("shadow_warrior");
+  const [charClass] = useState("shadow_warrior");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [adjust, setAdjust] = useState<Record<string, { coins: string; xp: string }>>({});
@@ -143,13 +143,6 @@ export default function ChildrenPage() {
             onChange={(e) => setNickname(e.target.value)}
             placeholder="Lightning Sara"
           />
-          <Select label="Character class" value={charClass} onChange={(e) => setCharClass(e.target.value)}>
-            {CHARACTER_CLASSES.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
         </div>
         <p className="text-display mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
           Companion
