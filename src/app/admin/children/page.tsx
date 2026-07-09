@@ -165,8 +165,8 @@ export default function ChildrenPage() {
 
         {/* full-body Baby preview of the chosen companion — visual only */}
         <div className="mt-5 flex flex-col items-center">
-          <p className="text-display mb-1 text-xs font-bold uppercase tracking-wider text-[var(--accent-2)]">
-            Your hero companion
+          <p className="text-display mb-1 text-sm font-black text-[var(--accent-2)]">
+            {PETS.find((p) => p.id === pet)?.name ?? "Companion"}
           </p>
           <div className="relative grid min-h-[196px] place-items-center sm:min-h-[236px]">
             {/* soft grounding shadow so the character feels planted */}
