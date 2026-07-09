@@ -111,7 +111,7 @@ export default function SettingsPage() {
                 </p>
                 {active && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-white/20">
-                    <Icon art name="check" size={14} className="text-white" />
+                    <Icon name="check" size={14} className="text-white" />
                   </span>
                 )}
                 {!unlocked && (

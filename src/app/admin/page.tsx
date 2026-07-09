@@ -132,7 +132,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="mt-3 flex gap-4 text-xs font-semibold text-[var(--text-dim)]">
                   <span className="flex items-center gap-1">
-                    <Icon art muted name="check" size={13} /> {c.tasks_completed} done
+                    <Icon name="check" size={13} /> {c.tasks_completed} done
                   </span>
                   <span className="flex items-center gap-1">
                     <Icon art muted name="flame" size={13} /> {c.streak_days}-day streak

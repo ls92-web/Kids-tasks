@@ -7,7 +7,7 @@ import { Icon } from "./Icon";
 type Tone = "error" | "success" | "info";
 
 const TONES: Record<Tone, { color: string; icon: string }> = {
-  error: { color: "var(--danger)", icon: "x" },
+  error: { color: "var(--danger)", icon: "close" },
   success: { color: "var(--success)", icon: "check" },
   info: { color: "var(--accent-2)", icon: "sparkle" },
 };

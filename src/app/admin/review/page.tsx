@@ -243,7 +243,7 @@ export default function ReviewPage() {
                         onClick={() => decide(s, "not_complete")}
                         title="Close this quest without a reward"
                       >
-                        <Icon name="x" size={14} /> Not complete
+                        <Icon art muted name="close" size={14} /> Not complete
                       </AdminButton>
                     </div>
                   </div>
