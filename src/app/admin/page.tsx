@@ -183,7 +183,7 @@ function AttentionCard({
         >
           <Icon
             name={icon}
-            size={26}
+            size={32}
             art
             muted
             className={count > 0 ? "" : "opacity-45"}
