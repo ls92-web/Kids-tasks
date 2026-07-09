@@ -132,7 +132,7 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div data-tour="shop-intro">
           <h1 className="text-display text-3xl font-black">Treasure Vault</h1>

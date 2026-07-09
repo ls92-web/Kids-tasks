@@ -60,7 +60,7 @@ export default function WorldPage() {
       {/* world header — quiet, one line of story */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-display text-glow text-2xl font-black" style={{ color: world.accent }}>
+          <h1 className="text-display text-2xl font-black" style={{ color: world.accent }}>
             {world.name}
           </h1>
           <span

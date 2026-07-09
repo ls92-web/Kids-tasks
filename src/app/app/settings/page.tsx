@@ -87,7 +87,7 @@ export default function SettingsPage() {
             return (
               <motion.button
                 key={tid}
-                whileHover={unlocked ? { y: -4 } : {}}
+                whileHover={unlocked ? { y: -3 } : {}}
                 whileTap={unlocked ? { scale: 0.96 } : {}}
                 onClick={() => unlocked && update({ theme: tid })}
                 disabled={!unlocked}

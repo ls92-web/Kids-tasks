@@ -350,7 +350,7 @@ export function LegendCeremony({
                     {pickable.map((p) => (
                       <motion.button
                         key={p.id}
-                        whileHover={{ y: -4 }}
+                        whileHover={{ y: -3 }}
                         whileTap={{ scale: 0.93 }}
                         disabled={busy}
                         onClick={() => choose(p.id)}

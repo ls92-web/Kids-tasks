@@ -168,7 +168,7 @@ export default function TasksAdmin() {
                   className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold capitalize transition-colors ${
                     form.difficulty === d
                       ? "bg-[var(--accent)] text-white"
-                      : "bg-black/25 text-[var(--text-dim)] hover:bg-black/35"
+                      : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
                   }`}
                 >
                   {DIFFICULTY[d].label}

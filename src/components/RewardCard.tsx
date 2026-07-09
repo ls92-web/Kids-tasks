@@ -54,7 +54,7 @@ export function RewardCard({
       initial={enter.initial}
       animate={enter.animate}
       transition={{ ...enter.transition, delay: stagger(index) }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -3 }}
       className="panel relative flex flex-col overflow-hidden p-0"
       style={{
         boxShadow: buyable
