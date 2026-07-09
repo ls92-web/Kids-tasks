@@ -8,9 +8,9 @@ import { useWorld } from "./ThemeProvider";
 
 export const REWARD_ICONS: Record<string, string> = {
   gift: "gift",
-  movie: "ticket",
+  movie: "movie",
   icecream: "potion",
-  screen: "lightning",
+  screen: "screen",
   toy: "star",
   trip: "map",
   ball: "sword",

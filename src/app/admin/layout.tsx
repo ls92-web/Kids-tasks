@@ -20,9 +20,9 @@ const NAV = [
   { href: "/admin/review", icon: "eye", label: "Review", badge: "review", tour: "nav-review" },
   { href: "/admin/tasks", icon: "sword", label: "Quests", badge: "", tour: "nav-quests" },
   { href: "/admin/rewards", icon: "gift", label: "Rewards", badge: "wishes", tour: "nav-rewards" },
-  { href: "/admin/children", icon: "users", label: "Heroes", badge: "", tour: "nav-heroes" },
-  { href: "/admin/insights", icon: "sparkle", label: "Insights", badge: "", tour: "" },
-  { href: "/admin/challenges", icon: "lightning", label: "Challenges", badge: "", tour: "" },
+  { href: "/admin/children", icon: "heroes", label: "Heroes", badge: "", tour: "nav-heroes" },
+  { href: "/admin/insights", icon: "insights", label: "Insights", badge: "", tour: "" },
+  { href: "/admin/challenges", icon: "challenges", label: "Challenges", badge: "", tour: "" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -153,14 +153,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setHelpOpen(true)}
                 className="mt-1 flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--text)]"
               >
-                <Icon name="book" size={20} art muted />
+                <Icon name="help" size={20} art muted />
                 <span className="text-display">Help</span>
               </button>
               <button
                 onClick={logout}
                 className="flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-dim)] hover:text-[var(--danger)]"
               >
-                <Icon name="logout" size={17} />
+                <Icon name="exit" size={17} art muted />
                 <span className="text-display">Sign out</span>
               </button>
             </nav>

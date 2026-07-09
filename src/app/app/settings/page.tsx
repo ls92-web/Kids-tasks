@@ -274,7 +274,7 @@ export default function SettingsPage() {
       )}
 
       <GameButton variant="ghost" onClick={logout} className="mx-auto w-fit text-sm">
-        <Icon name="logout" size={15} className="mr-1.5 inline" /> Leave the world
+        <Icon name="exit" size={15} art className="mr-1.5 inline" /> Leave the world
       </GameButton>
     </div>
   );

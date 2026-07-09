@@ -60,7 +60,7 @@ export function ChallengesPanel() {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
-        <Icon name="lightning" size={22} art />
+        <Icon name="challenges" size={22} art />
         <h2 className="text-display text-lg font-black">Family Challenges</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
       </div>
