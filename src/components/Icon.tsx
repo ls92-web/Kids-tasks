@@ -125,11 +125,11 @@ const paths: Record<string, React.ReactNode> = {
    Opt in per call site with <Icon art …/>; unmapped names fall back to SVG. */
 const ICON_ART: Record<string, string> = {
   coin: "coin", star: "star", flame: "fire", clock: "time", map: "treasure-map",
-  chest: "chest", gift: "chest", home: "home", scroll: "scroll", camera: "camera",
+  chest: "chest", home: "home", scroll: "scroll", camera: "camera",
   book: "book", sword: "sword", trophy: "trophy", lightning: "energy", sparkle: "magic",
   users: "family", lock: "lock", heart: "heart", shield: "hero-shield", gear: "settings",
   adventure: "adventure", hero: "hero", parent: "parent", eye: "camera", crystal: "crystal",
-  check: "check",
+  check: "check", gift: "gift",
 };
 
 export function Icon({

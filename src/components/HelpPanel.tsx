@@ -33,7 +33,7 @@ export function HelpPanel({
         className="text-display flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white transition-[filter] hover:brightness-110"
         style={{ background: `linear-gradient(160deg, ${accent}, var(--accent-deep))` }}
       >
-        <Icon name="sparkle" size={16} /> {replayLabel}
+        <Icon art name="sparkle" size={16} /> {replayLabel}
       </button>
 
       <div className="flex flex-col gap-2">
@@ -53,7 +53,7 @@ export function HelpPanel({
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
                   style={{ background: "rgba(0,0,0,0.3)", color: accent }}
                 >
-                  <Icon name={t.icon} size={17} />
+                  <Icon art name={t.icon} size={17} />
                 </span>
                 <span className="text-display flex-1 text-sm font-bold">{t.title}</span>
                 <motion.span animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2, ease: EASE_OUT }}>

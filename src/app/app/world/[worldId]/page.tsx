@@ -85,7 +85,7 @@ export default function WorldPage() {
           </span>
         </div>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-[var(--text-dim)]">
-          <Icon name={world.finale.icon} size={14} className="shrink-0 text-[var(--gold)]" />
+          <Icon art name={world.finale.icon} size={14} className="shrink-0 text-[var(--gold)]" />
           {world.finale.blurb}
         </p>
       </motion.div>

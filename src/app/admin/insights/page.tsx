@@ -143,7 +143,7 @@ export default function InsightsPage() {
                 {/* AI weekly summary */}
                 <div className="mb-4 rounded-xl bg-black/25 p-3.5">
                   <p className="text-display mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--accent-2)]">
-                    <Icon name="sparkle" size={13} /> This week&apos;s summary
+                    <Icon art muted name="sparkle" size={13} /> This week&apos;s summary
                   </p>
                   <p className="text-sm leading-relaxed text-[var(--text)]">{ins.summary}</p>
                 </div>
@@ -262,7 +262,7 @@ function Chip({ icon, color, text }: { icon: string; color: string; text: string
       className="text-display flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
       style={{ background: "rgba(0,0,0,0.3)", color }}
     >
-      <Icon name={icon} size={13} /> {text}
+      <Icon art muted name={icon} size={13} /> {text}
     </span>
   );
 }

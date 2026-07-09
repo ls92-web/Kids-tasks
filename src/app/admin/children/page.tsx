@@ -111,7 +111,7 @@ export default function ChildrenPage() {
                 <span className="font-bold text-[var(--success)]">Copied!</span>
               ) : (
                 <>
-                  <Icon name="users" size={14} className="mr-1 inline" />
+                  <Icon art muted name="users" size={14} className="mr-1 inline" />
                   {family.name} — they pick their own hero name, PIN and first companion
                 </>
               )}

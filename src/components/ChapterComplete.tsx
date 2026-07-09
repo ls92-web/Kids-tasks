@@ -113,7 +113,7 @@ export function ChapterComplete() {
           {world.name}
         </h2>
         <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-bold text-[var(--text)]">
-          <Icon name={world.finale.icon} size={15} filled className="text-[var(--gold)]" />
+          <Icon art name={world.finale.icon} size={15} filled className="text-[var(--gold)]" />
           {world.finale.name} — conquered!
         </p>
 

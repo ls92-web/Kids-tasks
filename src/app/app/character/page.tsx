@@ -738,7 +738,7 @@ function HallDetail({
                     boxShadow: "0 0 14px -2px #ffd76a",
                   }}
                 >
-                  <Icon name="trophy" size={17} filled className="text-white" />
+                  <Icon art name="trophy" size={17} filled className="text-white" />
                 </span>
                 <div>
                   <p className="text-display text-sm font-black text-[var(--gold)]">
@@ -786,7 +786,7 @@ function HallDetail({
                 />
               </div>
               <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-dim)]">
-                <Icon name="trophy" size={13} className="text-[var(--gold)]" />
+                <Icon art name="trophy" size={13} className="text-[var(--gold)]" />
                 {questsTogether} quest{questsTogether === 1 ? "" : "s"} conquered together
               </div>
             </div>
@@ -795,13 +795,13 @@ function HallDetail({
 
         {/* origin + campaign finale + what happens next */}
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
-          <Icon name="map" size={12} className="shrink-0 text-[var(--accent-2)]" />
+          <Icon art name="map" size={12} className="shrink-0 text-[var(--accent-2)]" />
           {originText(COMPANION_UNLOCKS[species])}
         </p>
         {(bond || awake) && FINALE_WORLDS[species] && (
           <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
             <span className="shrink-0" style={{ color: FINALE_WORLDS[species].accent }}>
-              <Icon name={FINALE_WORLDS[species].finale.icon} size={12} />
+              <Icon art name={FINALE_WORLDS[species].finale.icon} size={12} />
             </span>
             Campaign finale: {FINALE_WORLDS[species].name}
           </p>

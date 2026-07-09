@@ -111,7 +111,7 @@ export default function SettingsPage() {
                 </p>
                 {active && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-white/20">
-                    <Icon name="check" size={14} className="text-white" />
+                    <Icon art name="check" size={14} className="text-white" />
                   </span>
                 )}
                 {!unlocked && (
@@ -267,7 +267,7 @@ export default function SettingsPage() {
           className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2"
         >
           <div className="panel panel-glow flex items-center gap-2 px-5 py-2.5">
-            <Icon name="check" size={16} className="text-[var(--success)]" />
+            <Icon art name="check" size={16} className="text-[var(--success)]" />
             <span className="text-display text-sm font-bold">Saved</span>
           </div>
         </motion.div>

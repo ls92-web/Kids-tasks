@@ -49,7 +49,7 @@ export function WorldThumbnail({
         >
           <div className="grid h-full w-full place-items-center">
             <span style={{ color: locked ? "rgba(255,255,255,0.35)" : accent }}>
-              <Icon name={icon} size={40} filled />
+              <Icon art name={icon} size={40} filled />
             </span>
           </div>
         </div>

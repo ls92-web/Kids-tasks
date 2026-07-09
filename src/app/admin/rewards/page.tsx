@@ -135,7 +135,7 @@ export default function RewardsAdmin() {
                   </p>
                 </div>
                 <AdminButton size="sm" onClick={() => resolveWish(w, true)}>
-                  <Icon name="check" size={14} /> Approve
+                  <Icon art muted name="check" size={14} /> Approve
                 </AdminButton>
                 <AdminButton variant="ghost" size="sm" onClick={() => resolveWish(w, false)}>
                   Decline

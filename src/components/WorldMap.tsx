@@ -330,7 +330,7 @@ function Node({
           />
         )}
         {isFinal ? (
-          <Icon
+          <Icon art
             name={state === "locked" ? "lock" : finaleIcon}
             size={16}
             filled
@@ -338,8 +338,8 @@ function Node({
           />
         ) : isLandmark || isCurrent ? (
           <>
-            {state === "completed" && <Icon name="check" size={13} className="relative text-white" />}
-            {state === "current" && <Icon name="star" size={13} filled className="relative text-white" />}
+            {state === "completed" && <Icon art name="check" size={13} className="relative text-white" />}
+            {state === "current" && <Icon art name="star" size={13} filled className="relative text-white" />}
             {state === "locked" && <Icon name="lock" size={11} className="relative text-white/60" />}
           </>
         ) : (

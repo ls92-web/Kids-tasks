@@ -191,12 +191,12 @@ function ChapterCard({
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-dim)]">
             {isFinale ? (
               <>
-                <Icon name="trophy" size={13} filled className="shrink-0 text-[var(--gold)]" />
+                <Icon art name="trophy" size={13} filled className="shrink-0 text-[var(--gold)]" />
                 <span style={{ color: locked ? undefined : gold }}>{card.reward}</span>
               </>
             ) : (
               <>
-                <Icon name="gift" size={13} className="shrink-0 text-[var(--accent-2)]" />
+                <Icon art name="gift" size={13} className="shrink-0 text-[var(--accent-2)]" />
                 <span>{card.reward}</span>
                 {card.rewardSpecies && (
                   <span className={locked ? "opacity-40 grayscale" : ""}>

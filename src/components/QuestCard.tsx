@@ -86,7 +86,7 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
                   animation: "pop-seal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                 }}
               >
-                <Icon name="check" size={13} className="text-[#0a3d2a]" />
+                <Icon art name="check" size={13} className="text-[#0a3d2a]" />
               </div>
             )}
           </div>

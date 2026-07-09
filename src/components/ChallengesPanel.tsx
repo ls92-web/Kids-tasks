@@ -86,7 +86,7 @@ export function ChallengesPanel() {
                 </div>
                 {joined.has(c.id) ? (
                   <span className="text-display flex shrink-0 items-center gap-1 rounded-xl bg-black/30 px-3 py-1.5 text-xs font-bold text-[var(--success)]">
-                    <Icon name="check" size={14} /> In
+                    <Icon art name="check" size={14} /> In
                   </span>
                 ) : (
                   <GameButton className="!px-4 !py-2 text-sm" onClick={() => join(c)}>

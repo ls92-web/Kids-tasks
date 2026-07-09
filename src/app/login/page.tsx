@@ -116,7 +116,7 @@ function LoginInner() {
                   />
                 )}
                 <span className="relative flex items-center justify-center gap-2">
-                  <Icon name={m === "hero" ? "sword" : "shield"} size={16} />
+                  <Icon art name={m === "hero" ? "sword" : "shield"} size={16} />
                   {m === "hero" ? "I'm a Hero" : "I'm a Parent"}
                 </span>
               </button>

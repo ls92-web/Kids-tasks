@@ -28,7 +28,7 @@ export function Callout({
       className={`flex items-center gap-2.5 rounded-xl bg-black/25 px-4 py-3 text-sm font-bold ${className}`}
       style={{ color: t.color, boxShadow: `inset 0 0 0 1px ${t.color}33` }}
     >
-      <Icon name={t.icon} size={16} className="shrink-0" />
+      <Icon art name={t.icon} size={16} className="shrink-0" />
       <span className="min-w-0">{children}</span>
     </div>
   );

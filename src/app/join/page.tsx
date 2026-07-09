@@ -309,7 +309,7 @@ function JoinInner() {
                       {/* this choice matters — say so */}
                       <div className="w-full rounded-xl bg-black/30 px-4 py-3">
                         <p className="text-display flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--gold)]">
-                          <Icon name="sparkle" size={13} filled />
+                          <Icon art name="sparkle" size={13} filled />
                           Your companion will travel with you until it becomes Legendary.
                           Choose carefully!
                         </p>

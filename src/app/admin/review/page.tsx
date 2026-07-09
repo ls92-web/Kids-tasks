@@ -181,7 +181,7 @@ export default function ReviewPage() {
                             background: "rgba(0,0,0,0.35)",
                           }}
                         >
-                          <Icon name={v ? "check" : "eye"} size={12} />
+                          <Icon art muted name={v ? "check" : "eye"} size={12} />
                           {v ? "AI: looks acceptable" : "AI: awaiting your judgment"}
                         </span>
                         {confidence !== null && (
@@ -225,7 +225,7 @@ export default function ReviewPage() {
                         disabled={busy === s.id}
                         onClick={() => decide(s, "approve")}
                       >
-                        <Icon name="check" size={16} /> Approve
+                        <Icon art muted name="check" size={16} /> Approve
                       </AdminButton>
                       <AdminButton
                         variant="subtle"
@@ -280,7 +280,7 @@ export default function ReviewPage() {
                   </p>
                 </div>
                 <AdminButton size="sm" onClick={() => grant(r)}>
-                  <Icon name="check" size={14} /> Mark granted
+                  <Icon art muted name="check" size={14} /> Mark granted
                 </AdminButton>
               </motion.div>
             ))}
