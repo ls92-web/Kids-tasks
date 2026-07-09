@@ -124,7 +124,9 @@ export function Tour({
       setRect(null);
       return;
     }
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // only scroll if the anchor is actually off-screen — force-centering every
+    // step makes the page lurch between steps and reads as "jumpy / out of order"
+    el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     let raf = 0;
     const measure = () => {
       const r = el.getBoundingClientRect();

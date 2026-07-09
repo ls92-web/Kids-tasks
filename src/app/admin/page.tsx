@@ -23,9 +23,9 @@ const PARENT_STEPS: TourStep[] = [
     text: "At a glance: proofs to review, reward wishes, and rewards to grant.",
   },
   {
-    anchor: "nav-heroes",
-    title: "Your heroes",
-    text: "Each child's progress lives here. Create heroes and share your Family Code on the Heroes page.",
+    anchor: "nav-review",
+    title: "Approvals",
+    text: "When a hero submits a photo proof, you approve it here. Nothing is awarded until you do.",
   },
   {
     anchor: "nav-quests",
@@ -33,9 +33,9 @@ const PARENT_STEPS: TourStep[] = [
     text: "Assign your child's first real-life quest here — difficulty fills in fair coins, XP and time.",
   },
   {
-    anchor: "nav-review",
-    title: "Approvals",
-    text: "When a hero submits a photo proof, you approve it here. Nothing is awarded until you do.",
+    anchor: "nav-heroes",
+    title: "Your heroes",
+    text: "Create heroes and share your Family Code so your children can join — all on the Heroes page.",
   },
   { text: "Your family adventure is ready to begin." },
 ];
