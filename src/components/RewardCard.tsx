@@ -76,8 +76,8 @@ export function RewardCard({
           <Icon
             name={REWARD_ICONS[reward.icon] ?? "gift"}
             size={72}
+            art
             className="drop-shadow-[0_0_14px_var(--glow)]"
-            filled={false}
           />
         </motion.div>
         {/* rarity chip */}

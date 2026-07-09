@@ -129,6 +129,7 @@ const ICON_ART: Record<string, string> = {
   book: "book", sword: "sword", trophy: "trophy", lightning: "energy", sparkle: "magic",
   users: "family", lock: "lock", heart: "heart", shield: "hero-shield", gear: "settings",
   adventure: "adventure", hero: "hero", parent: "parent", eye: "camera", crystal: "crystal",
+  check: "check",
 };
 
 export function Icon({

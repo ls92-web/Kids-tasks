@@ -171,7 +171,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
 
       {waiting && !message && (
         <div className="panel p-5 text-center">
-          <Icon name="eye" size={28} className="mx-auto text-[var(--gold)]" />
+          <Icon name="eye" size={28} art className="mx-auto" />
           <p className="text-display mt-2 font-bold">
             {task.status === "submitted"
               ? "The scan is underway…"
@@ -234,7 +234,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
               onClick={() => fileRef.current?.click()}
               className="grid w-full cursor-pointer place-items-center gap-2 rounded-2xl border-2 border-dashed border-[var(--surface-border)] bg-black/25 py-10 transition-colors hover:border-[var(--accent)]"
             >
-              <Icon name="upload" size={34} className="text-[var(--accent-2)]" />
+              <Icon name="camera" size={34} art />
               <span className="text-display font-bold text-[var(--text-dim)]">
                 Snap or choose a photo
               </span>

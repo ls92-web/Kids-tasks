@@ -306,7 +306,7 @@ export default function ShopPage() {
             >
               {reqSent ? (
                 <div className="py-6 text-center">
-                  <Icon name="check" size={40} className="mx-auto text-[var(--success)]" />
+                  <Icon name="check" size={40} art className="mx-auto" />
                   <p className="text-display mt-3 text-lg font-black">Wish sent to your parent</p>
                 </div>
               ) : (

@@ -163,7 +163,7 @@ function SignupInner() {
                             : {}
                         }
                       >
-                        <Icon name={c.id} size={26} className={chosen ? "text-white" : "text-[var(--text-dim)]"} filled={chosen} />
+                        <Icon name={c.id} size={26} art className={`transition-[filter,opacity] ${chosen ? "" : "opacity-45 saturate-[0.7]"}`} />
                       </motion.button>
                     );
                   })}
@@ -215,7 +215,7 @@ function SignupInner() {
                     boxShadow: "0 0 30px -6px var(--glow)",
                   }}
                 >
-                  <Icon name={crest} size={30} className="text-white" filled />
+                  <Icon name={crest} size={30} art />
                 </div>
                 <p className="text-display text-lg font-black">{familyName || "My Family"}</p>
                 <p className="text-sm text-[var(--text-dim)]">
