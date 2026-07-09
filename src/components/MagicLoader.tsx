@@ -13,44 +13,28 @@ export function MagicLoader({
 }) {
   const core = (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative h-20 w-20">
+      <div className="relative h-28 w-28">
         {/* soft aura */}
         <div
           className="fx-light absolute inset-0 animate-pulse-glow rounded-full"
           style={{ background: "radial-gradient(circle, var(--glow-soft), transparent 70%)" }}
         />
-        {/* orbit ring */}
+        {/* rotating activity ring */}
         <motion.div
-          className="absolute inset-1 rounded-full"
+          className="absolute -inset-1 rounded-full"
           style={{ border: "2px dashed var(--surface-border)" }}
           animate={{ rotate: 360 }}
           transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
         />
-        {/* glowing core gem */}
-        <motion.div
-          className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-2xl"
-          style={{
-            background: "linear-gradient(150deg, var(--accent-2), var(--accent-deep))",
-            boxShadow: "0 0 26px -2px var(--glow)",
-          }}
-          animate={{ rotate: [0, 12, -12, 0], scale: [1, 1.12, 1] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        {/* official WonderNest loading illustration */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <motion.img
+          src="/brand/loading.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_0_18px_var(--glow)]"
+          animate={{ y: [0, -6, 0], scale: [1, 1.04, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         />
-        {/* orbiting stars */}
-        {[0, 120, 240].map((deg, i) => (
-          <motion.div
-            key={deg}
-            className="absolute left-1/2 top-1/2"
-            animate={{ rotate: [deg, deg + 360] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: "linear", delay: i * 0.2 }}
-            style={{ transformOrigin: "0 0" }}
-          >
-            <div
-              className="h-2.5 w-2.5 -translate-y-[34px] rounded-full"
-              style={{ background: "var(--gold)", boxShadow: "0 0 10px var(--gold)" }}
-            />
-          </motion.div>
-        ))}
       </div>
       {label && (
         <motion.p
@@ -65,7 +49,19 @@ export function MagicLoader({
   );
 
   if (full) {
-    return <div className="grid min-h-screen place-items-center bg-bg-0">{core}</div>;
+    return (
+      <div className="relative grid min-h-screen place-items-center overflow-hidden">
+        {/* official WonderNest launch backdrop for the app's boot moment */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/launch-bg.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: "rgba(6,10,24,0.72)" }} />
+        <div className="relative z-10">{core}</div>
+      </div>
+    );
   }
   return <div className="mt-16 grid place-items-center">{core}</div>;
 }

@@ -27,7 +27,7 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  title: "Questforge",
+  title: "WonderNest",
   description: "Turn every day into an adventure",
 };
 

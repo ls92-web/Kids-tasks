@@ -828,7 +828,7 @@ function HallDetail({
         )}
         {status === "Legendary" && (
           <p className="mt-2 text-[11px] font-bold text-[var(--gold)]">
-            Forever in your Hall — a true Legend of Questforge.
+            Forever in your Hall — a true Legend of WonderNest.
           </p>
         )}
       </motion.div>

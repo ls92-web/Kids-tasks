@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { WorldBackground } from "@/components/WorldBackground";
 import { GameButton } from "@/components/GameButton";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
@@ -64,14 +63,30 @@ function LoginInner() {
 
   return (
     <div className="relative min-h-screen">
-      <WorldBackground />
+      {/* official WonderNest hero art backdrop */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/login-hero.png"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(6,10,24,0.55) 0%, rgba(6,10,24,0.78) 52%, rgba(6,10,24,0.93) 100%)",
+        }}
+      />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <motion.div {...enter} className="panel panel-glow w-full max-w-md p-8">
           <div className="mb-2 text-center">
-            <h1 className="text-display text-glow shimmer-text text-4xl font-black">
-              QUESTFORGE
-            </h1>
-            <p className="mt-2 text-sm font-semibold text-[var(--text-dim)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/logo-stacked.png"
+              alt="WonderNest"
+              className="mx-auto w-44 max-w-[68%]"
+            />
+            <p className="mt-3 text-sm font-semibold text-[var(--text-dim)]">
               Every day is an adventure waiting to begin
             </p>
           </div>

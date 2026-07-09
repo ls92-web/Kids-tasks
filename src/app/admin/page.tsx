@@ -14,7 +14,7 @@ import { Profile, levelFromXp, rankName } from "@/lib/game";
 
 const PARENT_STEPS: TourStep[] = [
   {
-    text: "Welcome to QuestForge. This is where your child's real-life adventures begin — you create quests, they complete them.",
+    text: "Welcome to WonderNest. This is where your child's real-life adventures begin — you create quests, they complete them.",
   },
   {
     anchor: "attention",
