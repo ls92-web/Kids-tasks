@@ -27,6 +27,12 @@ export function useWorld() {
   return useContext(Ctx);
 }
 
+/** Coerce any stored theme value to a known ThemeId — a child whose
+    profile.theme is missing or unrecognised (e.g. a finale world) must never
+    crash the app; it just falls back to the default world. */
+const asThemeId = (t: string | null | undefined): ThemeId =>
+  t && THEMES[t as ThemeId] ? (t as ThemeId) : "ninja";
+
 export function ThemeProvider({
   initialProfile,
   initialCompanion = null,
@@ -38,7 +44,7 @@ export function ThemeProvider({
 }) {
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [companion, setCompanion] = useState<CompanionBond | null>(initialCompanion);
-  const [themeId, setThemeId] = useState<ThemeId>(initialProfile?.theme ?? "ninja");
+  const [themeId, setThemeId] = useState<ThemeId>(asThemeId(initialProfile?.theme));
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -51,12 +57,12 @@ export function ThemeProvider({
   return (
     <Ctx.Provider
       value={{
-        theme: THEMES[themeId],
-        setTheme: setThemeId,
+        theme: THEMES[themeId] ?? THEMES.ninja,
+        setTheme: (t) => setThemeId(asThemeId(t)),
         profile,
         setProfile: (p) => {
           setProfile(p);
-          setThemeId(p.theme);
+          setThemeId(asThemeId(p.theme));
         },
         companion,
         setCompanion,
