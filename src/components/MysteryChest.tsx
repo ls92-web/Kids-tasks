@@ -173,7 +173,7 @@ function ChestArt({ open }: { open: boolean }) {
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/ui/icons/chest.png"
+          src="/ui/icons/mystery-box.png"
           alt=""
           className="relative h-full w-full object-contain transition-transform duration-500"
           style={{

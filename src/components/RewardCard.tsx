@@ -7,25 +7,25 @@ import { enter, stagger } from "@/lib/motion";
 import { useWorld } from "./ThemeProvider";
 
 export const REWARD_ICONS: Record<string, string> = {
-  gift: "gift",
-  movie: "movie",
+  gift: "wrapped-gift",
+  movie: "golden-ticket",
   icecream: "potion",
   screen: "screen",
   toy: "star",
   trip: "map",
   ball: "sword",
   dinner: "flame",
-  mystery: "chest",
+  mystery: "mystery-box",
   book: "book",
   clothing: "shield",
   weapon: "sword",
   pet: "heart",
-  petacc: "diamond",
+  petacc: "gem-pile",
   decor: "home",
-  experience: "ticket",
+  experience: "reward-voucher",
   outdoor: "flame",
   electronics: "lightning",
-  parent: "users",
+  parent: "wrapped-gift",
   animation: "sparkle",
 };
 

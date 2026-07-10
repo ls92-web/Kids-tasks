@@ -133,6 +133,11 @@ const ICON_ART: Record<string, string> = {
   ticket: "ticket", key: "key", diamond: "diamond", potion: "potion", medal: "medal", coins: "coins",
   wish: "wish", movie: "movie-night", screen: "screen-time", challenges: "challenges",
   insights: "insights", help: "help", exit: "exit", heroes: "heroes",
+  // official WonderNest Rewards collection (public/ui/icons/<slug>.png)
+  "gold-coins": "gold-coins", "gem-pile": "gem-pile", "treasure-chest": "treasure-chest",
+  "magic-chest": "magic-chest", "golden-ticket": "golden-ticket", "mystery-box": "mystery-box",
+  "wrapped-gift": "wrapped-gift", "magic-crystal": "magic-crystal", "treasure-key": "treasure-key",
+  "reward-voucher": "reward-voucher", "wish-reward": "wish-reward",
 };
 
 export function Icon({

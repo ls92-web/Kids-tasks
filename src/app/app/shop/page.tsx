@@ -318,8 +318,14 @@ export default function ShopPage() {
                 </div>
               ) : (
                 <>
-                  <h2 className="text-display text-xl font-black">Make a Wish</h2>
-                  <p className="mt-1 text-sm text-[var(--text-dim)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/ui/icons/wish-reward.png"
+                    alt=""
+                    className="mx-auto mb-2 h-24 w-auto object-contain drop-shadow-[0_0_18px_var(--glow)]"
+                  />
+                  <h2 className="text-display text-center text-xl font-black">Make a Wish</h2>
+                  <p className="mt-1 text-center text-sm text-[var(--text-dim)]">
                     Ask for a treasure you would love to see in the vault
                   </p>
                   <input
@@ -362,55 +368,39 @@ export default function ShopPage() {
   );
 }
 
-/* A proper treasure chest: shakes shut, then the lid swings open with light */
+/* The official treasure chest: shakes shut, then crossfades to the glowing
+   magic chest as it bursts open. Both frames are mounted so the reveal art is
+   already loaded — no flash at the celebratory moment. */
 function TreasureChest({ open }: { open: boolean }) {
   return (
     <div className={open ? "" : "animate-[chest-shake_0.9s_ease-in-out_infinite]"}>
-      <svg width="120" height="104" viewBox="0 0 120 104">
-        <defs>
-          <linearGradient id="chest-wood" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#a86b32" />
-            <stop offset="100%" stopColor="#6e3f16" />
-          </linearGradient>
-          <linearGradient id="chest-lid" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#c58343" />
-            <stop offset="100%" stopColor="#8a531f" />
-          </linearGradient>
-          <radialGradient id="chest-light" cx="50%" cy="100%" r="80%">
-            <stop offset="0%" stopColor="rgba(255,230,140,0.95)" />
-            <stop offset="100%" stopColor="rgba(255,230,140,0)" />
-          </radialGradient>
-        </defs>
-
-        {/* light from inside */}
-        {open && <ellipse cx="60" cy="52" rx="46" ry="30" fill="url(#chest-light)" />}
-
-        {/* body */}
-        <rect x="18" y="52" width="84" height="42" rx="6" fill="url(#chest-wood)" />
-        <rect x="18" y="52" width="84" height="8" fill="rgba(0,0,0,0.25)" />
-        <rect x="26" y="52" width="5" height="42" fill="rgba(0,0,0,0.18)" />
-        <rect x="89" y="52" width="5" height="42" fill="rgba(0,0,0,0.18)" />
-
-        {/* lid — swings open */}
-        <g
+      <div className="relative grid h-28 w-28 place-items-center">
+        {/* light bursting from inside on open */}
+        {open && (
+          <div
+            className="absolute inset-[-18%] animate-pulse-glow rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,230,140,0.6), transparent 68%)" }}
+          />
+        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ui/icons/treasure-chest.png"
+          alt=""
+          className="relative col-start-1 row-start-1 h-full w-full object-contain transition-opacity duration-300"
+          style={{ opacity: open ? 0 : 1, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ui/icons/magic-chest.png"
+          alt=""
+          className="relative col-start-1 row-start-1 h-full w-full object-contain transition-all duration-500"
           style={{
-            transform: open ? "rotate(-38deg)" : "rotate(0deg)",
-            transformOrigin: "18px 52px",
-            transition: "transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1)",
+            opacity: open ? 1 : 0,
+            transform: open ? "scale(1.1)" : "scale(0.9)",
+            filter: "drop-shadow(0 0 16px rgba(255,215,106,0.85))",
           }}
-        >
-          <path d="M18 52 Q18 24 60 24 Q102 24 102 52 Z" fill="url(#chest-lid)" />
-          <path d="M18 52 Q18 24 60 24 Q102 24 102 52 L 102 46 Q102 30 60 30 Q18 30 18 46 Z" fill="rgba(255,255,255,0.12)" />
-          <rect x="54" y="24" width="12" height="28" rx="3" fill="#ffd76a" opacity="0.9" />
-        </g>
-
-        {/* clasp */}
-        <rect x="52" y="50" width="16" height="18" rx="4" fill="#ffd76a" />
-        <circle cx="60" cy="59" r="3.4" fill="#8a531f" />
-
-        {/* gold band */}
-        <rect x="18" y="70" width="84" height="6" fill="#ffd76a" opacity="0.85" />
-      </svg>
+        />
+      </div>
     </div>
   );
 }
