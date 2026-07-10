@@ -104,12 +104,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <img
                 src="/brand/logo-stacked.png"
                 alt="WonderNest"
-                className="mx-auto mb-2 block h-auto w-[186px]"
+                className="mx-auto block h-auto w-[186px]"
               />
-              <p className="text-display text-xs font-bold uppercase tracking-wide text-[var(--accent-2)]">
-                Parent Dashboard
-              </p>
-              <p className="truncate text-xs text-[var(--text-dim)]">{profile.nickname}</p>
             </div>
             <nav className="flex gap-1 overflow-x-auto">
               {NAV.map((item) => {
