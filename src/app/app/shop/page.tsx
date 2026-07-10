@@ -148,7 +148,7 @@ export default function ShopPage() {
           }}
           className="text-sm"
         >
-          <Icon art name="wish" size={24} className="mr-1.5 inline" /> Wish for something
+          <Icon art name="wish" size={30} className="mr-1.5 inline" /> Wish for something
         </GameButton>
       </div>
 
