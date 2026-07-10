@@ -14,6 +14,8 @@ interface Wish {
   name: string;
   description: string;
   status: string;
+  image_path?: string | null;
+  signedUrl?: string;
   profiles?: { nickname: string };
 }
 
@@ -66,7 +68,17 @@ export default function RewardsAdmin() {
         .eq("status", "pending"),
     ]);
     setRewards((r as Reward[]) ?? []);
-    setWishes((w as Wish[]) ?? []);
+    // sign any attached wish photos so the parent can view them
+    const wishesWithUrls = await Promise.all(
+      ((w as Wish[]) ?? []).map(async (wish) => {
+        if (!wish.image_path) return wish;
+        const { data: signed } = await supabase.storage
+          .from("proofs")
+          .createSignedUrl(wish.image_path, 3600);
+        return { ...wish, signedUrl: signed?.signedUrl };
+      })
+    );
+    setWishes(wishesWithUrls);
   }, [profile]);
 
   useEffect(() => {
@@ -128,7 +140,23 @@ export default function RewardsAdmin() {
           <div className="flex flex-col gap-2">
             {wishes.map((w) => (
               <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <Icon name="wish" size={20} art muted className="shrink-0" />
+                {w.signedUrl ? (
+                  <a
+                    href={w.signedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[var(--surface-border)]"
+                    aria-label={`View the picture ${w.profiles?.nickname ?? "your hero"} attached`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={w.signedUrl} alt="" className="h-full w-full object-cover" />
+                    <span className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
+                      <Icon name="eye" size={16} />
+                    </span>
+                  </a>
+                ) : (
+                  <Icon name="wish" size={20} art muted className="shrink-0" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{w.name}</p>
                   <p className="truncate text-xs text-[var(--text-dim)]">

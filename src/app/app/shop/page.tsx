@@ -56,6 +56,9 @@ export default function ShopPage() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [reqName, setReqName] = useState("");
   const [reqWhy, setReqWhy] = useState("");
+  const [reqImage, setReqImage] = useState<File | null>(null);
+  const [reqImageUrl, setReqImageUrl] = useState<string | null>(null);
+  const [reqSending, setReqSending] = useState(false);
   const [reqSent, setReqSent] = useState(false);
   const [error, setError] = useState("");
 
@@ -112,19 +115,64 @@ export default function ShopPage() {
     }, 950);
   }
 
+  function pickReqImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setError("");
+    if (!f.type.startsWith("image/")) {
+      setError("That file isn't a picture — try a photo.");
+      return;
+    }
+    if (f.size > 8 * 1024 * 1024) {
+      setError("That picture is too big (max 8 MB).");
+      return;
+    }
+    if (reqImageUrl) URL.revokeObjectURL(reqImageUrl);
+    setReqImage(f);
+    setReqImageUrl(URL.createObjectURL(f));
+  }
+
+  function clearReqImage() {
+    if (reqImageUrl) URL.revokeObjectURL(reqImageUrl);
+    setReqImage(null);
+    setReqImageUrl(null);
+  }
+
   async function sendRequest() {
-    if (!profile || reqName.trim().length < 2) return;
+    if (!profile || reqName.trim().length < 2 || reqSending) return;
+    setReqSending(true);
+    setError("");
     const supabase = createClient();
-    await supabase.from("reward_requests").insert({
-      family_id: profile.family_id,
-      child_id: profile.id,
-      name: reqName.trim(),
-      description: reqWhy.trim(),
-    });
+    try {
+      // an optional photo of the wish — uploaded to the child's own proofs
+      // folder so parents can view it (same RLS as quest proofs)
+      let imagePath: string | null = null;
+      if (reqImage) {
+        const ext = (reqImage.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${profile.id}/wish-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("proofs").upload(path, reqImage);
+        if (upErr) throw upErr;
+        imagePath = path;
+      }
+      const { error: insErr } = await supabase.from("reward_requests").insert({
+        family_id: profile.family_id,
+        child_id: profile.id,
+        name: reqName.trim(),
+        description: reqWhy.trim(),
+        image_path: imagePath,
+      });
+      if (insErr) throw insErr;
+    } catch {
+      setError("We couldn't send your wish — please try again.");
+      setReqSending(false);
+      return;
+    }
     sfx.complete();
+    setReqSending(false);
     setReqSent(true);
     setReqName("");
     setReqWhy("");
+    clearReqImage();
     setTimeout(() => {
       setReqSent(false);
       setRequestOpen(false);
@@ -341,12 +389,36 @@ export default function ShopPage() {
                     rows={3}
                     className="mt-3 w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
                   />
+                  {/* optional picture of the wish */}
+                  {reqImageUrl ? (
+                    <div className="relative mt-3 overflow-hidden rounded-xl border border-[var(--surface-border)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={reqImageUrl} alt="Your wish" className="max-h-48 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={clearReqImage}
+                        aria-label="Remove picture"
+                        className="absolute right-2 top-2 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                      >
+                        <Icon name="x" size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--surface-border)] bg-black/20 px-4 py-3 text-sm font-bold text-[var(--text-dim)] transition-colors hover:bg-black/30 hover:text-[var(--text)]">
+                      <Icon name="camera" size={18} art /> Add a picture{" "}
+                      <span className="font-semibold opacity-70">(optional)</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={pickReqImage} />
+                    </label>
+                  )}
+                  {error && (
+                    <p className="mt-2 text-center text-xs font-semibold text-[var(--danger)]">{error}</p>
+                  )}
                   <div className="mt-4 flex justify-end gap-3">
                     <GameButton variant="ghost" onClick={() => setRequestOpen(false)}>
                       Cancel
                     </GameButton>
-                    <GameButton variant="gold" onClick={sendRequest}>
-                      Send Wish
+                    <GameButton variant="gold" onClick={sendRequest} disabled={reqSending}>
+                      {reqSending ? "Sending…" : "Send Wish"}
                     </GameButton>
                   </div>
                 </>
