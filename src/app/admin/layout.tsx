@@ -98,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="relative z-10 mx-auto flex w-[min(97%,1200px)] flex-col gap-5 py-5">
           {/* top bar — same on phone, tablet, and full webpage */}
           <aside className="panel h-fit shrink-0 p-3">
-            <div className="mb-3 px-2 pt-1">
+            <div className="mb-3 px-2 pt-4">
               {/* official WonderNest navigation logo */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
