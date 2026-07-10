@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <img
                 src="/brand/logo-stacked.png"
                 alt="WonderNest"
-                className="mx-auto block h-auto w-[186px]"
+                className="mx-auto block h-auto w-[196px]"
               />
             </div>
             <nav className="flex gap-1 overflow-x-auto">
