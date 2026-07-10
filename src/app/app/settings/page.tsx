@@ -211,38 +211,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* animation intensity */}
-      <section className="panel p-5">
-        <h2 className="text-display mb-1 text-lg font-black">Magic intensity</h2>
-        <p className="mb-3 text-xs text-[var(--text-dim)]">
-          Turn effects down if the world feels too busy
-        </p>
-        <div className="flex gap-2">
-          {(["full", "reduced", "minimal"] as const).map((v) => (
-            <button
-              key={v}
-              aria-pressed={profile.animation_intensity === v}
-              onClick={() => update({ animation_intensity: v })}
-              className={`text-display flex-1 cursor-pointer rounded-xl px-3 py-2.5 text-sm font-bold capitalize transition-all ${
-                profile.animation_intensity === v
-                  ? "text-white"
-                  : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
-              }`}
-              style={
-                profile.animation_intensity === v
-                  ? {
-                      background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                      boxShadow: "0 0 16px -4px var(--glow)",
-                    }
-                  : {}
-              }
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* sounds */}
       <section className="panel p-5">
         <h2 className="text-display mb-1 text-lg font-black">Sounds</h2>
