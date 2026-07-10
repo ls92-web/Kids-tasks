@@ -35,7 +35,7 @@ export function MysteryChest({
   const [reward, setReward] = useState<ChestReward | null>(null);
   const [error, setError] = useState("");
   const rolledRef = useRef(false);
-  useEscape(active && phase === "done", onClose);
+  useEscape(active && phase !== "closed", onClose);
 
   useEffect(() => {
     if (!active) return;
@@ -82,8 +82,10 @@ export function MysteryChest({
           role="dialog"
           aria-modal="true"
           aria-label="Mystery chest"
-          className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm"
-          onClick={() => phase === "done" && onClose()}
+          className={`fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm ${
+            phase !== "closed" ? "cursor-pointer" : ""
+          }`}
+          onClick={() => phase !== "closed" && onClose()}
         >
           {phase === "open" && (
             <>
@@ -123,7 +125,6 @@ export function MysteryChest({
             animate={{ scale: 1, y: 0 }}
             transition={popSpring}
             className="panel panel-glow relative mx-4 flex max-w-sm flex-col items-center p-8 text-center"
-            onClick={(e) => e.stopPropagation()}
           >
             <ChestArt open={phase !== "closed"} />
             {phase === "closed" && (
