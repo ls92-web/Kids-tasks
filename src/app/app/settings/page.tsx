@@ -20,7 +20,7 @@ import {
   petForm,
   petElement,
 } from "@/lib/game";
-import { WORLD_MAPS, FINALE_WORLDS } from "@/lib/worlds";
+import { FINALE_WORLDS } from "@/lib/worlds";
 import { getCampaign } from "@/lib/campaign";
 
 export default function SettingsPage() {
@@ -74,44 +74,63 @@ export default function SettingsPage() {
         <p className="mb-3 text-xs text-[var(--text-dim)]">
           Your campaign&apos;s worlds unlock in order — complete each map to open the next
         </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {(Object.keys(THEMES) as ThemeId[]).map((tid, i) => {
-            const t = THEMES[tid];
-            const active = profile.theme === tid;
-            const unlocked = cs.worlds[i]?.state !== "locked";
-            const previews: Record<ThemeId, string> = {
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {cs.worlds.map((w) => {
+            const i = w.index;
+            const tid = (Object.keys(THEMES) as ThemeId[])[i]; // undefined on the finale
+            const isFinale = w.isFinale;
+            const active = !isFinale && profile.theme === tid;
+            const unlocked = w.state !== "locked";
+            // only the three shared worlds are theme choices; the finale is the
+            // companion's own climax — displayed, never a theme switch
+            const canSwitch = !isFinale && unlocked;
+            const previews: Record<string, string> = {
               ninja: "linear-gradient(160deg, #0c1430, #101c3f 60%, #1c2c5c)",
               samurai: "linear-gradient(160deg, #2c160c, #3d2012 60%, #5c3018)",
               speed: "linear-gradient(160deg, #0a2a5e, #0e3d7e 60%, #1258a8)",
+              finale: "linear-gradient(160deg, #3a2a0c, #5a3d10 55%, #7a5416)",
             };
             return (
               <motion.button
-                key={tid}
-                whileHover={unlocked ? { y: -3 } : {}}
-                whileTap={unlocked ? { scale: 0.96 } : {}}
-                onClick={() => unlocked && update({ theme: tid })}
-                disabled={!unlocked}
+                key={w.index}
+                whileHover={canSwitch ? { y: -3 } : {}}
+                whileTap={canSwitch ? { scale: 0.96 } : {}}
+                onClick={() => canSwitch && tid && update({ theme: tid })}
+                disabled={!canSwitch}
                 className={`relative overflow-hidden rounded-2xl p-4 text-left transition-shadow ${
                   active ? "ring-2 ring-[var(--accent)]" : ""
-                } ${unlocked ? "cursor-pointer" : "cursor-not-allowed"}`}
+                } ${isFinale && unlocked ? "ring-1 ring-[var(--gold)]/50" : ""} ${
+                  canSwitch ? "cursor-pointer" : "cursor-default"
+                }`}
                 style={{
-                  background: previews[tid],
-                  boxShadow: active ? "0 0 26px -4px var(--glow)" : "0 8px 20px -10px rgba(0,0,0,0.7)",
+                  background: isFinale ? previews.finale : previews[tid],
+                  boxShadow: active
+                    ? "0 0 26px -4px var(--glow)"
+                    : isFinale && unlocked
+                      ? "0 0 26px -6px rgba(255,215,106,0.5)"
+                      : "0 8px 20px -10px rgba(0,0,0,0.7)",
                   filter: unlocked ? "none" : "grayscale(0.7) brightness(0.6)",
                 }}
               >
                 <p className="text-display text-[10px] font-black uppercase tracking-wider text-white/60">
-                  Chapter {i + 1}
+                  {isFinale ? `Chapter ${i + 1} · Finale` : `Chapter ${i + 1}`}
                 </p>
-                <p className="text-display text-base font-black text-white">{t.name}</p>
+                <p className="text-display text-base font-black text-white">{w.world.name}</p>
                 <p className="mt-0.5 text-xs text-white/70">
                   {unlocked
-                    ? t.tagline
-                    : `Complete ${WORLD_MAPS[(Object.keys(THEMES) as ThemeId[])[i - 1]]?.name ?? "the previous world"} to unlock`}
+                    ? isFinale
+                      ? cs.finaleWorld?.finale.blurb ?? "The final trial of your bond."
+                      : THEMES[tid].tagline
+                    : `Complete ${cs.worlds[i - 1]?.world.name ?? "the previous world"} to unlock`}
                 </p>
                 {active && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-white/20">
                     <Icon name="check" size={14} className="text-white" />
+                  </span>
+                )}
+                {isFinale && unlocked && !active && (
+                  <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-[var(--gold)]/25">
+                    <Icon name={cs.finaleWorld?.finale.icon ?? "trophy"} size={14} art />
                   </span>
                 )}
                 {!unlocked && (
