@@ -89,7 +89,7 @@ export default function AdminOverview() {
         />
         <AttentionCard
           href="/admin/rewards"
-          icon="sparkle"
+          icon="star"
           count={pendingWishes}
           label="Reward wishes"
         />
