@@ -13,10 +13,9 @@ const NAV = [
   { href: "/admin", icon: "home", label: "Overview", badge: "", tour: "" },
   { href: "/admin/review", icon: "eye", label: "Review", badge: "review", tour: "nav-review" },
   { href: "/admin/tasks", icon: "sword", label: "Quests", badge: "", tour: "nav-quests" },
+  { href: "/admin/challenges", icon: "challenges", label: "Challenges", badge: "", tour: "" },
   { href: "/admin/rewards", icon: "gift", label: "Rewards", badge: "wishes", tour: "nav-rewards" },
   { href: "/admin/children", icon: "heroes", label: "Heroes", badge: "", tour: "nav-heroes" },
-  { href: "/admin/insights", icon: "insights", label: "Insights", badge: "", tour: "" },
-  { href: "/admin/challenges", icon: "challenges", label: "Challenges", badge: "", tour: "" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
