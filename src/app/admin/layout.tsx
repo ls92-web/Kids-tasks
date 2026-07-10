@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <img
                 src="/brand/logo-stacked.png"
                 alt="WonderNest"
-                className="mx-auto mb-2 block h-auto w-44"
+                className="mx-auto mb-2 block h-auto w-[186px]"
               />
               <p className="text-display text-xs font-bold uppercase tracking-wide text-[var(--accent-2)]">
                 Parent Dashboard
