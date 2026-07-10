@@ -33,7 +33,7 @@ export function HelpPanel({
         className="text-display flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white transition-[filter] hover:brightness-110"
         style={{ background: `linear-gradient(160deg, ${accent}, var(--accent-deep))` }}
       >
-        <Icon art name="world" size={20} /> {replayLabel}
+        <Icon art name="world" size={25} /> {replayLabel}
       </button>
 
       <div className="flex flex-col gap-2">
