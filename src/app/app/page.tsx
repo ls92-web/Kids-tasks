@@ -56,6 +56,9 @@ export default function DailyQuests() {
     if (!profile) return;
     const supabase = createClient();
     (async () => {
+      // materialize any recurring-quest occurrences due today before we read
+      // (idempotent + family-scoped; also expires yesterday's stale routines)
+      await supabase.rpc("generate_due_quests");
       const [{ data: t }, { data: r }, { data: ach }] = await Promise.all([
         supabase.from("tasks").select("*").eq("child_id", profile.id).order("created_at", { ascending: false }),
         supabase.from("rewards").select("*").eq("available", true).order("coin_cost", { ascending: true }),

@@ -605,7 +605,66 @@ export interface Task {
   status: "active" | "submitted" | "needs_review" | "completed" | "rejected" | "expired";
   created_at: string;
   completed_at: string | null;
+  /** Set only on occurrences materialized from a recurring quest_schedule. */
+  schedule_id?: string | null;
+  occurrence_date?: string | null;
+  slot_key?: string | null;
 }
+
+/* ---------- Recurring quests (routines) ----------
+   A quest_schedule is a lightweight template. generate_due_quests() lazily
+   materializes ordinary `tasks` rows from it — one per (schedule, child, local
+   day, slot) — so every downstream system (proof, review, XP, companion,
+   achievements, challenges) keeps working on plain task rows, unchanged. */
+
+/** A named, stable occurrence within a routine. `key` never changes once
+    created (it anchors de-duplication); `label` and `time` are display-only. */
+export interface QuestSlot {
+  key: string;
+  label: string;
+  /** optional local "HH:MM" — shown/ordered only; no prayer-time calc in v1. */
+  time: string | null;
+}
+
+export interface QuestSchedule {
+  id: string;
+  family_id: string;
+  child_id: string;
+  created_by: string;
+  title: string;
+  description: string;
+  task_type: string;
+  difficulty: Difficulty;
+  est_minutes: number;
+  coin_reward: number;
+  xp_reward: number;
+  /** Postgres dow convention: 0=Sunday … 6=Saturday. */
+  weekdays: number[];
+  slots: QuestSlot[];
+  active: boolean;
+  ended_at: string | null;
+  created_at: string;
+}
+
+/** Short weekday labels indexed by Postgres dow (0=Sun … 6=Sat). */
+export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** Weekday shortcut sets (dow arrays). Default families sit in Asia/Kuwait,
+    where the school week runs Sun–Thu and the weekend is Fri–Sat. */
+export const WEEKDAY_PRESETS: { id: string; label: string; days: number[] }[] = [
+  { id: "everyday", label: "Every day", days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: "school", label: "School days (Sun–Thu)", days: [0, 1, 2, 3, 4] },
+  { id: "weekend", label: "Weekend (Fri–Sat)", days: [5, 6] },
+];
+
+/** The five daily prayers as ready-made slots (parent may add optional times). */
+export const PRAYER_SLOTS: QuestSlot[] = [
+  { key: "fajr", label: "Fajr", time: null },
+  { key: "dhuhr", label: "Dhuhr", time: null },
+  { key: "asr", label: "Asr", time: null },
+  { key: "maghrib", label: "Maghrib", time: null },
+  { key: "isha", label: "Isha", time: null },
+];
 
 export interface Reward {
   id: string;
