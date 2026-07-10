@@ -112,17 +112,35 @@ export default function SettingsPage() {
                   filter: unlocked ? "none" : "grayscale(0.7) brightness(0.6)",
                 }}
               >
-                <p className="text-display text-[10px] font-black uppercase tracking-wider text-white/60">
-                  {isFinale ? `Chapter ${i + 1} · Finale` : `Chapter ${i + 1}`}
-                </p>
-                <p className="text-display text-base font-black text-white">{w.world.name}</p>
-                <p className="mt-0.5 text-xs text-white/70">
-                  {unlocked
-                    ? isFinale
-                      ? cs.finaleWorld?.finale.blurb ?? "The final trial of your bond."
-                      : THEMES[tid].tagline
-                    : `Complete ${cs.worlds[i - 1]?.world.name ?? "the previous world"} to unlock`}
-                </p>
+                {/* the world's own painted map, dimmed to a thrilling backdrop */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={w.world.map}
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                  style={{ opacity: unlocked ? 0.42 : 0.3 }}
+                />
+                {/* scrim so the label stays crisp over the art */}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{ background: "linear-gradient(180deg, rgba(6,10,24,0.32) 0%, rgba(6,10,24,0.82) 100%)" }}
+                />
+                <div className="relative">
+                  <p className="text-display text-[10px] font-black uppercase tracking-wider text-white/60">
+                    {isFinale ? `Chapter ${i + 1} · Finale` : `Chapter ${i + 1}`}
+                  </p>
+                  <p className="text-display text-base font-black text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.7)]">
+                    {w.world.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-white/80 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">
+                    {unlocked
+                      ? isFinale
+                        ? cs.finaleWorld?.finale.blurb ?? "The final trial of your bond."
+                        : THEMES[tid].tagline
+                      : `Complete ${cs.worlds[i - 1]?.world.name ?? "the previous world"} to unlock`}
+                  </p>
+                </div>
                 {active && (
                   <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-white/20">
                     <Icon name="check" size={14} className="text-white" />
