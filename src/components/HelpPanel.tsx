@@ -47,17 +47,17 @@ export function HelpPanel({
                   setOpen(isOpen ? null : i);
                 }}
                 aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                className="flex w-full items-center gap-3.5 px-4 py-4 text-left"
               >
                 <span
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-xl"
                   style={{ background: "rgba(0,0,0,0.3)", color: accent }}
                 >
-                  <Icon art name={t.icon} size={17} />
+                  <Icon art name={t.icon} size={26} />
                 </span>
-                <span className="text-display flex-1 text-sm font-bold">{t.title}</span>
+                <span className="text-display flex-1 text-base font-bold">{t.title}</span>
                 <motion.span animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2, ease: EASE_OUT }}>
-                  <Icon name="arrowRight" size={15} className="text-[var(--text-dim)]" />
+                  <Icon name="arrowRight" size={18} className="text-[var(--text-dim)]" />
                 </motion.span>
               </button>
               <AnimatePresence initial={false}>
