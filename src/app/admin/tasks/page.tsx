@@ -19,11 +19,11 @@ import {
   PRAYER_SLOTS,
 } from "@/lib/game";
 import {
-  QuestProfile,
+  QUEST_LIBRARY,
+  PILLARS,
   profileDifficulty,
   profileRoutine,
 } from "@/lib/questLibrary";
-import { QuestLibraryModal } from "@/components/admin/QuestLibraryModal";
 
 const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: number }> = {
   easy: { coins: 10, xp: 20, minutes: 10 },
@@ -75,7 +75,7 @@ export default function TasksAdmin() {
   const [weekdays, setWeekdays] = useState<number[]>(EVERY_DAY);
   const [slots, setSlots] = useState<QuestSlot[]>(DEFAULT_SLOTS);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libProfileId, setLibProfileId] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -137,20 +137,27 @@ export default function TasksAdmin() {
 
   function resetForm() {
     setEditingId(null);
+    setLibProfileId("");
     setRepeat(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
     setForm((f) => ({ ...f, title: "", description: "", deadline: "" }));
   }
 
-  // ---- pre-fill the form from an Official Library profile --------------------
-  // Everything remains editable; this only seeds sensible defaults. The economy
-  // stays difficulty-based (rewards from DIFF_DEFAULTS), the operational
+  // ---- pick an Official Library quest from the dropdown ----------------------
+  // Auto-fills type, difficulty, coins, XP, minutes and the suggested routine —
+  // title & description stay fully editable. Everything remains editable; the
+  // economy stays difficulty-based (rewards from DIFF_DEFAULTS), the operational
   // taxonomy stays task_type, and the routine maps onto the existing system.
-  function prefillFromProfile(p: QuestProfile) {
+  function pickLibrary(id: string) {
+    setLibProfileId(id);
+    if (!id) return; // "Custom quest" — leave whatever the parent has typed
+    const p = QUEST_LIBRARY.find((q) => q.id === id);
+    if (!p) return;
     const diff = profileDifficulty(p);
     const routine = profileRoutine(p);
     setEditingId(null);
+    setMsg(null);
     setForm((f) => ({
       ...f,
       title: p.name,
@@ -165,14 +172,6 @@ export default function TasksAdmin() {
     setRepeat(routine.repeat);
     setWeekdays(routine.weekdays);
     setSlots(routine.slots);
-    setLibraryOpen(false);
-    setMsg({
-      ok: true,
-      text: routine.repeat
-        ? `Loaded “${p.name}” — a suggested routine. Edit anything, then create it.`
-        : `Loaded “${p.name}” from the library. Edit anything, then assign it.`,
-    });
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ---- one-off quest ---------------------------------------------------------
@@ -249,6 +248,7 @@ export default function TasksAdmin() {
 
   function editRoutine(s: QuestSchedule) {
     setEditingId(s.id);
+    setLibProfileId("");
     setRepeat(true);
     setWeekdays(s.weekdays?.length ? s.weekdays : EVERY_DAY);
     setSlots(s.slots?.length ? s.slots : DEFAULT_SLOTS);
@@ -309,11 +309,26 @@ export default function TasksAdmin() {
         ) : (
           <>
             {!editingId && (
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <AdminButton variant="ghost" onClick={() => setLibraryOpen(true)}>
-                  <Icon name="scroll" size={16} art muted /> Choose from the Official Library
-                </AdminButton>
-                <span className="text-xs text-[var(--text-dim)]">or fill in your own below</span>
+              <div className="mb-3">
+                <Select
+                  label="Start from the Official Library (optional)"
+                  value={libProfileId}
+                  onChange={(e) => pickLibrary(e.target.value)}
+                >
+                  <option value="">Custom quest — write your own</option>
+                  {PILLARS.map((pl) => (
+                    <optgroup key={pl.id} label={pl.label}>
+                      {QUEST_LIBRARY.filter((q) => q.pillar === pl.id).map((q) => (
+                        <option key={q.id} value={q.id}>
+                          {q.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </Select>
+                <p className="mt-1 text-[11px] text-[var(--text-dim)]">
+                  Picks a quest and fills type, difficulty, coins, XP and schedule — you can edit everything below.
+                </p>
               </div>
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -640,10 +655,6 @@ export default function TasksAdmin() {
           </div>
         )}
       </SectionCard>
-
-      {libraryOpen && (
-        <QuestLibraryModal onPick={prefillFromProfile} onClose={() => setLibraryOpen(false)} />
-      )}
     </div>
   );
 }
