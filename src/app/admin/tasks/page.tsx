@@ -18,6 +18,12 @@ import {
   WEEKDAY_PRESETS,
   PRAYER_SLOTS,
 } from "@/lib/game";
+import {
+  QuestProfile,
+  profileDifficulty,
+  profileRoutine,
+} from "@/lib/questLibrary";
+import { QuestLibraryModal } from "@/components/admin/QuestLibraryModal";
 
 const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: number }> = {
   easy: { coins: 10, xp: 20, minutes: 10 },
@@ -69,6 +75,7 @@ export default function TasksAdmin() {
   const [weekdays, setWeekdays] = useState<number[]>(EVERY_DAY);
   const [slots, setSlots] = useState<QuestSlot[]>(DEFAULT_SLOTS);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -134,6 +141,38 @@ export default function TasksAdmin() {
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
     setForm((f) => ({ ...f, title: "", description: "", deadline: "" }));
+  }
+
+  // ---- pre-fill the form from an Official Library profile --------------------
+  // Everything remains editable; this only seeds sensible defaults. The economy
+  // stays difficulty-based (rewards from DIFF_DEFAULTS), the operational
+  // taxonomy stays task_type, and the routine maps onto the existing system.
+  function prefillFromProfile(p: QuestProfile) {
+    const diff = profileDifficulty(p);
+    const routine = profileRoutine(p);
+    setEditingId(null);
+    setForm((f) => ({
+      ...f,
+      title: p.name,
+      description: "",
+      task_type: p.taskType,
+      difficulty: diff,
+      coin_reward: String(DIFF_DEFAULTS[diff].coins),
+      xp_reward: String(DIFF_DEFAULTS[diff].xp),
+      est_minutes: String(DIFF_DEFAULTS[diff].minutes),
+      deadline: "",
+    }));
+    setRepeat(routine.repeat);
+    setWeekdays(routine.weekdays);
+    setSlots(routine.slots);
+    setLibraryOpen(false);
+    setMsg({
+      ok: true,
+      text: routine.repeat
+        ? `Loaded “${p.name}” — a suggested routine. Edit anything, then create it.`
+        : `Loaded “${p.name}” from the library. Edit anything, then assign it.`,
+    });
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ---- one-off quest ---------------------------------------------------------
@@ -269,6 +308,14 @@ export default function TasksAdmin() {
           <EmptyNote>Create a hero first, then assign quests.</EmptyNote>
         ) : (
           <>
+            {!editingId && (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <AdminButton variant="ghost" onClick={() => setLibraryOpen(true)}>
+                  <Icon name="scroll" size={16} art muted /> Choose from the Official Library
+                </AdminButton>
+                <span className="text-xs text-[var(--text-dim)]">or fill in your own below</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Select
                 label="Hero"
@@ -593,6 +640,10 @@ export default function TasksAdmin() {
           </div>
         )}
       </SectionCard>
+
+      {libraryOpen && (
+        <QuestLibraryModal onPick={prefillFromProfile} onClose={() => setLibraryOpen(false)} />
+      )}
     </div>
   );
 }
