@@ -80,7 +80,7 @@ export function ChallengesPanel() {
                   <h3 className="text-display text-lg font-bold">{c.title}</h3>
                   {c.description && <p className="mt-0.5 text-sm text-[var(--text-dim)]">{c.description}</p>}
                   <p className="mt-1 text-xs font-bold text-[var(--accent-2)]">
-                    +{c.bonus_xp} bonus XP — ends{" "}
+                    Race to the top of the board — ends{" "}
                     {new Date(c.ends_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </p>
                 </div>

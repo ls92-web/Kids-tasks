@@ -5,6 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import {
+  CHALLENGE_LIBRARY,
+  ChallengeDuration,
+  DURATION_LABEL,
+  durationEndsAt,
+} from "@/lib/rewardLibrary";
 
 interface Challenge {
   id: string;
@@ -35,7 +41,30 @@ export default function ChallengesAdmin() {
     bonus_xp: "100",
     ends_at: "",
   });
+  const [libChallengeId, setLibChallengeId] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // ---- pick an Official Library challenge from the dropdown ------------------
+  // Auto-fills title, kind, objective, XP goal and the end date from the
+  // template's duration — everything stays editable. Only templates the current
+  // scoring system can express are offered; scoring itself is unchanged.
+  function pickChallengeLibrary(id: string) {
+    setLibChallengeId(id);
+    if (!id) return; // "Custom challenge" — leave whatever the parent has typed
+    const c = CHALLENGE_LIBRARY.find((x) => x.id === id);
+    if (!c) return;
+    setForm({
+      title: c.name,
+      description: c.objective,
+      metric: c.metric,
+      bonus_xp: String(c.bonusXp),
+      ends_at: durationEndsAt(c.duration),
+    });
+  }
+
+  function applyDuration(d: ChallengeDuration) {
+    setForm((f) => ({ ...f, ends_at: durationEndsAt(d) }));
+  }
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -67,6 +96,7 @@ export default function ChallengesAdmin() {
     });
     setBusy(false);
     setForm((f) => ({ ...f, title: "", description: "", ends_at: "" }));
+    setLibChallengeId("");
     load();
   }
 
@@ -82,8 +112,25 @@ export default function ChallengesAdmin() {
 
       <SectionCard
         title="Start a family challenge"
-        subtitle="Heroes join from their map and race for bonus XP"
+        subtitle="Heroes join from their map and race to the top of the board"
       >
+        <div className="mb-3">
+          <Select
+            label="Start from the Official Library (optional)"
+            value={libChallengeId}
+            onChange={(e) => pickChallengeLibrary(e.target.value)}
+          >
+            <option value="">Custom challenge — write your own</option>
+            {CHALLENGE_LIBRARY.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} — {DURATION_LABEL[c.duration]}
+              </option>
+            ))}
+          </Select>
+          <p className="mt-1 text-[11px] text-[var(--text-dim)]">
+            Picks a challenge and fills the title, kind, goal and end date — you can edit everything below.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input
             label="Title"
@@ -112,16 +159,29 @@ export default function ChallengesAdmin() {
             />
           </div>
           <Input
-            label="Bonus XP"
+            label="XP goal (not auto-awarded yet)"
             value={form.bonus_xp}
             onChange={(e) => setForm((f) => ({ ...f, bonus_xp: e.target.value }))}
           />
-          <Input
-            label="Ends"
-            type="datetime-local"
-            value={form.ends_at}
-            onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
-          />
+          <div>
+            <Input
+              label="Ends"
+              type="datetime-local"
+              value={form.ends_at}
+              onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
+            />
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {(Object.keys(DURATION_LABEL) as ChallengeDuration[]).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => applyDuration(d)}
+                  className="text-display cursor-pointer rounded-lg bg-black/30 px-2.5 py-1 text-[11px] font-bold text-[var(--text-dim)] hover:bg-black/50 hover:text-[var(--text)]"
+                >
+                  {DURATION_LABEL[d]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="mt-4">
           <AdminButton
@@ -144,7 +204,7 @@ export default function ChallengesAdmin() {
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{c.title}</p>
                   <p className="text-xs text-[var(--text-dim)]">
-                    {METRICS.find((m) => m.id === c.metric)?.label} — +{c.bonus_xp} XP — ends{" "}
+                    {METRICS.find((m) => m.id === c.metric)?.label} — {c.bonus_xp} XP goal — ends{" "}
                     {new Date(c.ends_at).toLocaleDateString()}
                   </p>
                 </div>

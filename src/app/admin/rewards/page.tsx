@@ -7,6 +7,7 @@ import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
 import { REWARD_ICONS } from "@/components/RewardCard";
 import { Reward } from "@/lib/game";
+import { REWARD_LIBRARY, REWARD_CATEGORIES } from "@/lib/rewardLibrary";
 
 interface Wish {
   id: string;
@@ -51,6 +52,7 @@ export default function RewardsAdmin() {
     quantity: "",
     expires_at: "",
   });
+  const [libRewardId, setLibRewardId] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -85,6 +87,24 @@ export default function RewardsAdmin() {
     load();
   }, [load]);
 
+  // ---- pick an Official Library reward from the dropdown ---------------------
+  // Auto-fills name, description, cost and the matching official icon — every
+  // field stays editable, and custom rewards work exactly as before. The Dream
+  // Reward (RW039) leaves the cost blank for the parent to choose.
+  function pickRewardLibrary(id: string) {
+    setLibRewardId(id);
+    if (!id) return; // "Custom reward" — leave whatever the parent has typed
+    const r = REWARD_LIBRARY.find((x) => x.id === id);
+    if (!r) return;
+    setForm((f) => ({
+      ...f,
+      name: r.name,
+      description: r.description,
+      icon: r.icon,
+      coin_cost: r.cost === null ? "" : String(r.cost),
+    }));
+  }
+
   async function createReward(prefill?: { name: string; description: string }) {
     if (!profile) return;
     const name = prefill?.name ?? form.name;
@@ -102,6 +122,7 @@ export default function RewardsAdmin() {
     });
     setBusy(false);
     setForm((f) => ({ ...f, name: "", description: "", quantity: "", expires_at: "" }));
+    setLibRewardId("");
     load();
   }
 
@@ -176,6 +197,28 @@ export default function RewardsAdmin() {
       )}
 
       <SectionCard title="Create a reward">
+        <div className="mb-3">
+          <Select
+            label="Start from the Official Library (optional)"
+            value={libRewardId}
+            onChange={(e) => pickRewardLibrary(e.target.value)}
+          >
+            <option value="">Custom reward — write your own</option>
+            {REWARD_CATEGORIES.map((cat) => (
+              <optgroup key={cat} label={cat}>
+                {REWARD_LIBRARY.filter((r) => r.category === cat).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                    {r.cost !== null ? ` — ${r.cost}c` : ""}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </Select>
+          <p className="mt-1 text-[11px] text-[var(--text-dim)]">
+            Picks a reward and fills the name, description, cost and card art — you can edit everything below.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input
             label="Name"
@@ -222,7 +265,10 @@ export default function RewardsAdmin() {
           />
         </div>
         <div className="mt-4">
-          <AdminButton onClick={() => createReward()} disabled={busy || form.name.trim().length < 2}>
+          <AdminButton
+            onClick={() => createReward()}
+            disabled={busy || form.name.trim().length < 2 || !form.coin_cost.trim()}
+          >
             {busy ? "Adding\u2026" : "Add reward"}
           </AdminButton>
         </div>
