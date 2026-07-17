@@ -29,6 +29,14 @@ const METRICS = [
   { id: "homework", label: "Homework challenge" },
   { id: "cleaning", label: "Cleaning challenge" },
   { id: "habits", label: "Healthy habits challenge" },
+  // pillar + prayer metrics (count quests by development pillar / prayer type)
+  { id: "prayer", label: "Prayer challenge" },
+  { id: "faith", label: "Faith challenge" },
+  { id: "learning", label: "Learning challenge" },
+  { id: "responsibility", label: "Responsibility challenge" },
+  { id: "wellbeing", label: "Wellbeing challenge" },
+  { id: "character", label: "Character & kindness challenge" },
+  { id: "family", label: "Family challenge" },
 ];
 
 export default function ChallengesAdmin() {

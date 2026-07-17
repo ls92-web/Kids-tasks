@@ -101,11 +101,24 @@ export const REWARD_CATEGORIES: string[] = [...new Set(REWARD_LIBRARY.map((r) =>
    mode, and bonus XP remains display-only (not yet auto-awarded). */
 
 export type ChallengeDuration = "7d" | "weekend" | "30d";
+export type ChallengeMetric =
+  | "tasks"
+  | "reading"
+  | "homework"
+  | "cleaning"
+  | "habits"
+  | "prayer"
+  | "faith"
+  | "learning"
+  | "responsibility"
+  | "wellbeing"
+  | "character"
+  | "family";
 
 export interface ChallengeProfile {
   id: string; // official ID, e.g. "CH001"
   name: string;
-  metric: "tasks" | "reading" | "homework" | "cleaning" | "habits";
+  metric: ChallengeMetric;
   duration: ChallengeDuration;
   objective: string;
   bonusXp: number;
@@ -123,8 +136,14 @@ const C = (
 export const CHALLENGE_LIBRARY: ChallengeProfile[] = [
   C("CH001", "Reading Champion", "reading", "7d", "Complete the most Reading Quests.", 80),
   C("CH002", "Homework Hero", "homework", "7d", "Complete the most Homework Quests.", 100),
+  C("CH003", "Prayer Champion", "prayer", "7d", "Complete the most Prayer Quests.", 200),
+  C("CH004", "Kindness Champion", "character", "7d", "Complete the most Character Quests.", 80),
   C("CH005", "Healthy Habits Week", "habits", "7d", "Complete the most Wellbeing Quests.", 80),
   C("CH006", "Responsibility Star", "cleaning", "7d", "Complete the most Responsibility Quests.", 100),
+  // Exercise is a category within Wellbeing — approved approximation: scored
+  // via the wellbeing pillar; the objective text keeps the official wording.
+  C("CH007", "Exercise Challenge", "wellbeing", "7d", "Complete the most Exercise Quests.", 60),
+  C("CH008", "Knowledge Explorer", "learning", "7d", "Complete the most Learning Quests.", 80),
   C("CH009", "Weekend Quest Sprint", "tasks", "weekend", "Complete the most Quests.", 60),
   C("CH010", "Monthly Champion", "tasks", "30d", "Highest total completed Quests.", 250),
 ];

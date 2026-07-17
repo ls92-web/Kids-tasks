@@ -200,6 +200,26 @@ export const QUEST_LIBRARY: QuestProfile[] = [
    freely change; they never change reward math or the operational taxonomy.
    -------------------------------------------------------------------------- */
 
+/** Default development pillar for a task type — used to auto-populate the
+    hidden `pillar` metadata on custom quests (library quests carry their own).
+    "other" has no natural home, so it stays unclassified. */
+export function defaultPillar(taskType: string): Pillar | null {
+  switch (taskType) {
+    case "prayer":
+    case "quran":
+      return "faith";
+    case "reading":
+    case "homework":
+      return "learning";
+    case "chore":
+      return "responsibility";
+    case "habit":
+      return "wellbeing";
+    default:
+      return null;
+  }
+}
+
 const TIME_W: Record<TimeClass, number> = { tiny: 0, short: 1, medium: 2, long: 3, epic: 4 };
 const EFFORT_W: Record<EffortClass, number> = { low: 0, moderate: 1, high: 2, exceptional: 3 };
 

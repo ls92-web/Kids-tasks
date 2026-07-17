@@ -23,6 +23,7 @@ import {
   PILLARS,
   profileDifficulty,
   profileRoutine,
+  defaultPillar,
 } from "@/lib/questLibrary";
 
 const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: number }> = {
@@ -76,6 +77,9 @@ export default function TasksAdmin() {
   const [slots, setSlots] = useState<QuestSlot[]>(DEFAULT_SLOTS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [libProfileId, setLibProfileId] = useState("");
+  // hidden development-pillar metadata: from the library profile when one is
+  // picked, otherwise derived from task_type at save time (v1: no UI field)
+  const [libPillar, setLibPillar] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -138,6 +142,7 @@ export default function TasksAdmin() {
   function resetForm() {
     setEditingId(null);
     setLibProfileId("");
+    setLibPillar(null);
     setRepeat(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
@@ -151,9 +156,13 @@ export default function TasksAdmin() {
   // taxonomy stays task_type, and the routine maps onto the existing system.
   function pickLibrary(id: string) {
     setLibProfileId(id);
-    if (!id) return; // "Custom quest" — leave whatever the parent has typed
+    if (!id) {
+      setLibPillar(null);
+      return; // "Custom quest" — leave whatever the parent has typed
+    }
     const p = QUEST_LIBRARY.find((q) => q.id === id);
     if (!p) return;
+    setLibPillar(p.pillar);
     const diff = profileDifficulty(p);
     const routine = profileRoutine(p);
     setEditingId(null);
@@ -192,6 +201,7 @@ export default function TasksAdmin() {
       xp_reward: parseInt(form.xp_reward, 10) || 20,
       deadline: form.deadline ? new Date(form.deadline).toISOString() : null,
       created_by: profile.id,
+      pillar: libPillar ?? defaultPillar(form.task_type),
     });
     setBusy(false);
     if (error) return setMsg({ ok: false, text: error.message });
@@ -229,6 +239,7 @@ export default function TasksAdmin() {
       xp_reward: parseInt(form.xp_reward, 10) || 5,
       weekdays,
       slots: cleanSlots,
+      pillar: libPillar ?? defaultPillar(form.task_type),
     };
     const { error } = editingId
       ? await supabase.from("quest_schedules").update(payload).eq("id", editingId)
@@ -249,6 +260,7 @@ export default function TasksAdmin() {
   function editRoutine(s: QuestSchedule) {
     setEditingId(s.id);
     setLibProfileId("");
+    setLibPillar(s.pillar ?? null); // keep the routine's existing pillar on edit
     setRepeat(true);
     setWeekdays(s.weekdays?.length ? s.weekdays : EVERY_DAY);
     setSlots(s.slots?.length ? s.slots : DEFAULT_SLOTS);

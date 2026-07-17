@@ -609,6 +609,8 @@ export interface Task {
   schedule_id?: string | null;
   occurrence_date?: string | null;
   slot_key?: string | null;
+  /** Informational development pillar (auto-populated; hidden in the v1 UI). */
+  pillar?: string | null;
 }
 
 /* ---------- Recurring quests (routines) ----------
@@ -644,6 +646,8 @@ export interface QuestSchedule {
   active: boolean;
   ended_at: string | null;
   created_at: string;
+  /** Informational development pillar (auto-populated; hidden in the v1 UI). */
+  pillar?: string | null;
 }
 
 /** Short weekday labels indexed by Postgres dow (0=Sun … 6=Sat). */
