@@ -57,9 +57,10 @@ export default function DailyQuests() {
     const supabase = createClient();
     (async () => {
       // materialize any recurring-quest occurrences due today before we read
-      // (idempotent + family-scoped; also expires yesterday's stale routines)
-      await supabase.rpc("generate_due_quests");
-      const [{ data: t }, { data: r }, { data: ach }] = await Promise.all([
+      // (idempotent + family-scoped; also expires yesterday's stale routines),
+      // and settle any challenges whose end time has passed (bonus XP payout)
+      await Promise.all([supabase.rpc("generate_due_quests"), supabase.rpc("settle_challenges")]);
+      const [{ data: t }, { data: r }, { data: ach }, { data: wins }] = await Promise.all([
         supabase.from("tasks").select("*").eq("child_id", profile.id).order("created_at", { ascending: false }),
         supabase.from("rewards").select("*").eq("available", true).order("coin_cost", { ascending: true }),
         supabase
@@ -67,6 +68,13 @@ export default function DailyQuests() {
           .select("title, unlocked_at")
           .eq("child_id", profile.id)
           .order("unlocked_at", { ascending: false }),
+        supabase
+          .from("events")
+          .select("payload, created_at")
+          .eq("child_id", profile.id)
+          .eq("type", "challenge_won")
+          .order("created_at", { ascending: false })
+          .limit(10),
       ]);
       const list = (t as Task[]) ?? [];
       setTasks(list);
@@ -90,17 +98,33 @@ export default function DailyQuests() {
               .map((a) => a.title)
           : [];
 
-      if (fresh.length > 0 && !firstVisit) {
+      // challenge victories settled while the hero was away
+      const freshWins =
+        lastVisit && wins
+          ? (wins as { payload: { title?: string; xp?: number }; created_at: string }[]).filter(
+              (w) => w.created_at > lastVisit
+            )
+          : [];
+      const winXp = freshWins.reduce((sum, w) => sum + (w.payload?.xp ?? 0), 0);
+
+      if ((fresh.length > 0 || freshWins.length > 0) && !firstVisit) {
         const lastXp = Number(localStorage.getItem(xpKey) ?? profile.xp);
         const oldLevel = levelFromXp(lastXp).level;
         const newLevel = levelFromXp(profile.xp).level;
+        const questFeedback =
+          fresh.length === 0
+            ? ""
+            : fresh.length === 1
+              ? `"${fresh[0].title}" was approved!`
+              : `${fresh.length} ${theme.questWord.toLowerCase()}s were approved!`;
+        const winFeedback =
+          freshWins.length === 0
+            ? ""
+            : `You won the "${freshWins[0].payload?.title ?? "family"}" challenge!`;
         setCelebration({
           coins: fresh.reduce((sum, task) => sum + task.coin_reward, 0),
-          xp: fresh.reduce((sum, task) => sum + task.xp_reward, 0),
-          feedback:
-            fresh.length === 1
-              ? `"${fresh[0].title}" was approved!`
-              : `${fresh.length} ${theme.questWord.toLowerCase()}s were approved!`,
+          xp: fresh.reduce((sum, task) => sum + task.xp_reward, 0) + winXp,
+          feedback: [winFeedback, questFeedback].filter(Boolean).join(" "),
           leveledUp: newLevel > oldLevel,
           newLevel,
           streak: profile.streak_days,

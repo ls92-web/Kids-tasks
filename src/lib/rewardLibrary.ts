@@ -122,6 +122,10 @@ export interface ChallengeProfile {
   duration: ChallengeDuration;
   objective: string;
   bonusXp: number;
+  /** competitive = race for the top; cooperative = shared family goal. */
+  mode: "competitive" | "cooperative";
+  /** Family goal for cooperative challenges (completed quests, summed). */
+  goalTarget?: number;
 }
 
 const C = (
@@ -130,8 +134,10 @@ const C = (
   metric: ChallengeProfile["metric"],
   duration: ChallengeDuration,
   objective: string,
-  bonusXp: number
-): ChallengeProfile => ({ id, name, metric, duration, objective, bonusXp });
+  bonusXp: number,
+  mode: ChallengeProfile["mode"] = "competitive",
+  goalTarget?: number
+): ChallengeProfile => ({ id, name, metric, duration, objective, bonusXp, mode, goalTarget });
 
 export const CHALLENGE_LIBRARY: ChallengeProfile[] = [
   C("CH001", "Reading Champion", "reading", "7d", "Complete the most Reading Quests.", 80),
@@ -146,6 +152,16 @@ export const CHALLENGE_LIBRARY: ChallengeProfile[] = [
   C("CH008", "Knowledge Explorer", "learning", "7d", "Complete the most Learning Quests.", 80),
   C("CH009", "Weekend Quest Sprint", "tasks", "weekend", "Complete the most Quests.", 60),
   C("CH010", "Monthly Champion", "tasks", "30d", "Highest total completed Quests.", 250),
+  // Cooperative (shared family goal; "each" payout per the doc). Only the
+  // quest-countable templates are seeded — screen-free/minutes-based ones are
+  // deferred. CH014/CH015 goal targets are app defaults (doc omits numbers):
+  // 35 = five daily prayers x 7 days; 7 = daily Quran reading x 7 days.
+  C("CH011", "Family Helper Week", "cleaning", "7d", "Complete 40 household Quests together.", 100, "cooperative", 40),
+  C("CH014", "Prayer Together", "prayer", "7d", "Complete family Prayer Quests.", 120, "cooperative", 35),
+  C("CH015", "Quran Together", "faith", "7d", "Complete family Quran Reading Quests.", 120, "cooperative", 7),
+  C("CH016", "Family Walk Challenge", "family", "7d", "Complete five family walks.", 100, "cooperative", 5),
+  C("CH017", "Kindness Week", "character", "7d", "Complete 30 Kind Acts together.", 100, "cooperative", 30),
+  C("CH018", "Healthy Eating Week", "wellbeing", "7d", "Complete 21 Healthy Meal Quests.", 100, "cooperative", 21),
 ];
 
 export const DURATION_LABEL: Record<ChallengeDuration, string> = {

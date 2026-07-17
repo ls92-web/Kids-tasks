@@ -21,6 +21,8 @@ interface Challenge {
   starts_at: string;
   ends_at: string;
   status: string;
+  mode: "competitive" | "cooperative";
+  goal_target: number | null;
 }
 
 const METRICS = [
@@ -48,6 +50,8 @@ export default function ChallengesAdmin() {
     metric: "tasks",
     bonus_xp: "100",
     ends_at: "",
+    mode: "competitive" as "competitive" | "cooperative",
+    goal_target: "",
   });
   const [libChallengeId, setLibChallengeId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -67,6 +71,8 @@ export default function ChallengesAdmin() {
       metric: c.metric,
       bonus_xp: String(c.bonusXp),
       ends_at: durationEndsAt(c.duration),
+      mode: c.mode,
+      goal_target: c.goalTarget ? String(c.goalTarget) : "",
     });
   }
 
@@ -77,6 +83,8 @@ export default function ChallengesAdmin() {
   const load = useCallback(async () => {
     if (!profile) return;
     const supabase = createClient();
+    // settle any naturally-expired challenges first (idempotent, family-scoped)
+    await supabase.rpc("settle_challenges");
     const { data } = await supabase
       .from("challenges")
       .select("*")
@@ -91,6 +99,7 @@ export default function ChallengesAdmin() {
 
   async function createChallenge() {
     if (!profile || form.title.trim().length < 2 || !form.ends_at) return;
+    if (form.mode === "cooperative" && !(parseInt(form.goal_target, 10) > 0)) return;
     setBusy(true);
     const supabase = createClient();
     await supabase.from("challenges").insert({
@@ -101,6 +110,8 @@ export default function ChallengesAdmin() {
       bonus_xp: parseInt(form.bonus_xp, 10) || 100,
       ends_at: new Date(form.ends_at).toISOString(),
       created_by: profile.id,
+      mode: form.mode,
+      goal_target: form.mode === "cooperative" ? parseInt(form.goal_target, 10) : null,
     });
     setBusy(false);
     setForm((f) => ({ ...f, title: "", description: "", ends_at: "" }));
@@ -110,7 +121,11 @@ export default function ChallengesAdmin() {
 
   async function endChallenge(id: string) {
     const supabase = createClient();
-    await supabase.from("challenges").update({ status: "finished" }).eq("id", id);
+    // ending early settles with NO award — only natural expiry pays bonus XP
+    await supabase
+      .from("challenges")
+      .update({ status: "finished", settled_at: new Date().toISOString() })
+      .eq("id", id);
     load();
   }
 
@@ -129,16 +144,54 @@ export default function ChallengesAdmin() {
             onChange={(e) => pickChallengeLibrary(e.target.value)}
           >
             <option value="">Custom challenge — write your own</option>
-            {CHALLENGE_LIBRARY.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {DURATION_LABEL[c.duration]}
-              </option>
-            ))}
+            <optgroup label="Competitive — race for the top">
+              {CHALLENGE_LIBRARY.filter((c) => c.mode === "competitive").map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} — {DURATION_LABEL[c.duration]}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Cooperative — one family goal">
+              {CHALLENGE_LIBRARY.filter((c) => c.mode === "cooperative").map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} — {DURATION_LABEL[c.duration]}
+                </option>
+              ))}
+            </optgroup>
           </Select>
           <p className="mt-1 text-[11px] text-[var(--text-dim)]">
             Picks a challenge and fills the title, kind, goal and end date — you can edit everything below.
           </p>
         </div>
+
+        {/* mode — competitive races on a leaderboard, cooperative shares one goal */}
+        <div className="mb-3">
+          <p className="text-display mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
+            Mode
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { id: "competitive", label: "Competitive — race for the top" },
+                { id: "cooperative", label: "Cooperative — one family goal" },
+              ] as const
+            ).map((m) => (
+              <button
+                key={m.id}
+                aria-pressed={form.mode === m.id}
+                onClick={() => setForm((f) => ({ ...f, mode: m.id }))}
+                className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold transition-colors ${
+                  form.mode === m.id
+                    ? "bg-[var(--accent)] text-white"
+                    : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input
             label="Title"
@@ -166,8 +219,16 @@ export default function ChallengesAdmin() {
               placeholder="Whoever finishes the most reading quests this week wins"
             />
           </div>
+          {form.mode === "cooperative" && (
+            <Input
+              label="Family goal (quests together)"
+              value={form.goal_target}
+              onChange={(e) => setForm((f) => ({ ...f, goal_target: e.target.value }))}
+              placeholder="40"
+            />
+          )}
           <Input
-            label="XP goal (not auto-awarded yet)"
+            label={form.mode === "cooperative" ? "Bonus XP (each, on success)" : "Bonus XP (champion)"}
             value={form.bonus_xp}
             onChange={(e) => setForm((f) => ({ ...f, bonus_xp: e.target.value }))}
           />
@@ -194,7 +255,12 @@ export default function ChallengesAdmin() {
         <div className="mt-4">
           <AdminButton
             onClick={createChallenge}
-            disabled={busy || !form.title.trim() || !form.ends_at}
+            disabled={
+              busy ||
+              !form.title.trim() ||
+              !form.ends_at ||
+              (form.mode === "cooperative" && !(parseInt(form.goal_target, 10) > 0))
+            }
           >
             {busy ? "Starting…" : "Start challenge"}
           </AdminButton>
@@ -212,8 +278,11 @@ export default function ChallengesAdmin() {
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{c.title}</p>
                   <p className="text-xs text-[var(--text-dim)]">
-                    {METRICS.find((m) => m.id === c.metric)?.label} — {c.bonus_xp} XP goal — ends{" "}
-                    {new Date(c.ends_at).toLocaleDateString()}
+                    {METRICS.find((m) => m.id === c.metric)?.label} —{" "}
+                    {c.mode === "cooperative"
+                      ? `family goal ${c.goal_target ?? "?"} — +${c.bonus_xp} XP each`
+                      : `race for the top — +${c.bonus_xp} XP champion`}{" "}
+                    — ends {new Date(c.ends_at).toLocaleDateString()}
                   </p>
                 </div>
                 <span

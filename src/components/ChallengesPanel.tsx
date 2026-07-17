@@ -14,6 +14,8 @@ interface Challenge {
   description: string;
   bonus_xp: number;
   ends_at: string;
+  mode?: "competitive" | "cooperative";
+  goal_target?: number | null;
   participants?: { child_id: string; score: number }[];
 }
 
@@ -67,6 +69,9 @@ export function ChallengesPanel() {
       <div className="flex flex-col gap-3">
         {challenges.map((c, i) => {
           const sorted = [...(c.participants ?? [])].sort((a, b) => b.score - a.score);
+          const coop = c.mode === "cooperative";
+          const teamScore = (c.participants ?? []).reduce((sum, p) => sum + p.score, 0);
+          const goal = Math.max(1, c.goal_target ?? 1);
           return (
             <motion.div
               key={c.id}
@@ -80,7 +85,9 @@ export function ChallengesPanel() {
                   <h3 className="text-display text-lg font-bold">{c.title}</h3>
                   {c.description && <p className="mt-0.5 text-sm text-[var(--text-dim)]">{c.description}</p>}
                   <p className="mt-1 text-xs font-bold text-[var(--accent-2)]">
-                    Race to the top of the board — ends{" "}
+                    {coop
+                      ? `Reach the goal together — +${c.bonus_xp} XP each — ends `
+                      : `The champion wins +${c.bonus_xp} XP — ends `}
                     {new Date(c.ends_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </p>
                 </div>
@@ -94,30 +101,67 @@ export function ChallengesPanel() {
                   </GameButton>
                 )}
               </div>
-              {sorted.length > 0 && (
-                <div className="mt-3 flex flex-col gap-1.5">
-                  {sorted.map((p, pi) => {
-                    const hero = heroes.find((h) => h.id === p.child_id);
-                    if (!hero) return null;
-                    return (
-                      <div key={p.child_id} className="flex items-center gap-2 rounded-lg bg-black/25 px-3 py-1.5">
-                        <span className="text-display w-5 text-xs font-black text-[var(--gold)]">{pi + 1}</span>
-                        <span className="text-display flex-1 truncate text-sm font-bold">{hero.nickname}</span>
-                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/40">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${Math.min(100, p.score * 10)}%`,
-                              background: "var(--accent)",
-                              boxShadow: "0 0 8px var(--glow)",
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-[var(--text-dim)]">{p.score}</span>
-                      </div>
-                    );
-                  })}
+              {coop ? (
+                <div className="mt-3">
+                  {/* one shared bar — the whole family fills it together */}
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-black/40">
+                      <div
+                        className="h-full rounded-full transition-[width] duration-700"
+                        style={{
+                          width: `${Math.min(100, (teamScore / goal) * 100)}%`,
+                          background: "linear-gradient(90deg, var(--accent), var(--success))",
+                          boxShadow: "0 0 10px var(--glow)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-display shrink-0 text-xs font-black text-[var(--accent-2)]">
+                      {teamScore} / {c.goal_target}
+                    </span>
+                  </div>
+                  {sorted.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {sorted.map((p) => {
+                        const hero = heroes.find((h) => h.id === p.child_id);
+                        if (!hero) return null;
+                        return (
+                          <span
+                            key={p.child_id}
+                            className="text-display rounded-lg bg-black/25 px-2.5 py-1 text-xs font-bold text-[var(--text-dim)]"
+                          >
+                            {hero.nickname} <span className="text-[var(--accent-2)]">{p.score}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+              ) : (
+                sorted.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-1.5">
+                    {sorted.map((p, pi) => {
+                      const hero = heroes.find((h) => h.id === p.child_id);
+                      if (!hero) return null;
+                      return (
+                        <div key={p.child_id} className="flex items-center gap-2 rounded-lg bg-black/25 px-3 py-1.5">
+                          <span className="text-display w-5 text-xs font-black text-[var(--gold)]">{pi + 1}</span>
+                          <span className="text-display flex-1 truncate text-sm font-bold">{hero.nickname}</span>
+                          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/40">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(100, p.score * 10)}%`,
+                                background: "var(--accent)",
+                                boxShadow: "0 0 8px var(--glow)",
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-[var(--text-dim)]">{p.score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               )}
             </motion.div>
           );
