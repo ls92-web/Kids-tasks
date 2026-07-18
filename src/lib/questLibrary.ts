@@ -275,3 +275,18 @@ export function scheduleRoutine(schedule: ScheduleHint): {
 export function profileRoutine(p: QuestProfile): ReturnType<typeof scheduleRoutine> {
   return scheduleRoutine(p.schedule);
 }
+
+/* ---------- Confirmation-method mapping ----------
+   Maps a documented verification recommendation (library profile text or the
+   AI assistant's suggestion) onto the evidence/verifier model. v1 rules:
+   voice evidence is parent-only; photo defaults to parent verification (the
+   documentation never prescribes AI) — parents can enable AI on the form. */
+export function verificationFromText(text: string): {
+  evidence: "none" | "photo" | "voice";
+  verifier: "parent" | "ai" | "ai_parent";
+} {
+  const t = (text || "").toLowerCase();
+  if (t.includes("voice")) return { evidence: "voice", verifier: "parent" };
+  if (t.includes("photo")) return { evidence: "photo", verifier: "parent" };
+  return { evidence: "none", verifier: "parent" };
+}

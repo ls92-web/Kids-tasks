@@ -618,7 +618,28 @@ export interface Task {
   slot_key?: string | null;
   /** Informational development pillar (auto-populated; hidden in the v1 UI). */
   pillar?: string | null;
+  /** Confirmation method (null = legacy: photo + AI pre-screen + parent). */
+  evidence?: QuestEvidence | null;
+  verifier?: QuestVerifier | null;
 }
+
+/* ---------- Quest confirmation methods ----------
+   Evidence (what the child provides) is separate from verification authority
+   (who confirms). v1 rules: AI requires photo; voice is parent-only; a
+   parent-only quest may need no evidence ("I did it" -> parent queue). */
+export type QuestEvidence = "none" | "photo" | "voice";
+export type QuestVerifier = "parent" | "ai" | "ai_parent";
+
+export const EVIDENCE_OPTIONS: { id: QuestEvidence; label: string }[] = [
+  { id: "none", label: "No proof needed" },
+  { id: "photo", label: "Photo" },
+  { id: "voice", label: "Voice recording" },
+];
+export const VERIFIER_OPTIONS: { id: QuestVerifier; label: string }[] = [
+  { id: "parent", label: "Parent" },
+  { id: "ai", label: "AI check" },
+  { id: "ai_parent", label: "AI + Parent" },
+];
 
 /* ---------- Recurring quests (routines) ----------
    A quest_schedule is a lightweight template. generate_due_quests() lazily
@@ -655,6 +676,9 @@ export interface QuestSchedule {
   created_at: string;
   /** Informational development pillar (auto-populated; hidden in the v1 UI). */
   pillar?: string | null;
+  /** Confirmation method (null = legacy: photo + AI pre-screen + parent). */
+  evidence?: QuestEvidence | null;
+  verifier?: QuestVerifier | null;
 }
 
 /** Short weekday labels indexed by Postgres dow (0=Sun … 6=Sat). */

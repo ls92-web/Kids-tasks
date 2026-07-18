@@ -17,6 +17,10 @@ import {
   WEEKDAY_LABELS,
   WEEKDAY_PRESETS,
   PRAYER_SLOTS,
+  QuestEvidence,
+  QuestVerifier,
+  EVIDENCE_OPTIONS,
+  VERIFIER_OPTIONS,
 } from "@/lib/game";
 import {
   QUEST_LIBRARY,
@@ -25,6 +29,7 @@ import {
   profileRoutine,
   scheduleRoutine,
   defaultPillar,
+  verificationFromText,
   ScheduleHint,
 } from "@/lib/questLibrary";
 
@@ -82,8 +87,22 @@ export default function TasksAdmin() {
   // hidden development-pillar metadata: from the library profile when one is
   // picked, otherwise derived from task_type at save time (v1: no UI field)
   const [libPillar, setLibPillar] = useState<string | null>(null);
+  // confirmation method — a new custom quest defaults to Parent + no evidence
+  const [evidence, setEvidence] = useState<QuestEvidence>("none");
+  const [verifier, setVerifier] = useState<QuestVerifier>("parent");
   const [aiBusy, setAiBusy] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // v1 rules, enforced by auto-correction (and the DB check constraint):
+  // AI verification requires photo evidence; voice/none are parent-only.
+  function chooseEvidence(e: QuestEvidence) {
+    setEvidence(e);
+    if (e !== "photo") setVerifier("parent");
+  }
+  function chooseVerifier(v: QuestVerifier) {
+    setVerifier(v);
+    if (v !== "parent") setEvidence("photo");
+  }
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -146,6 +165,8 @@ export default function TasksAdmin() {
     setEditingId(null);
     setLibProfileId("");
     setLibPillar(null);
+    setEvidence("none");
+    setVerifier("parent");
     setRepeat(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
@@ -166,6 +187,9 @@ export default function TasksAdmin() {
     const p = QUEST_LIBRARY.find((q) => q.id === id);
     if (!p) return;
     setLibPillar(p.pillar);
+    const v = verificationFromText(p.verification);
+    setEvidence(v.evidence);
+    setVerifier(v.verifier);
     const diff = profileDifficulty(p);
     const routine = profileRoutine(p);
     setEditingId(null);
@@ -213,6 +237,9 @@ export default function TasksAdmin() {
       est_minutes: String(rec.est_minutes),
     }));
     setLibPillar(rec.pillar ?? null);
+    const v = verificationFromText(rec.verification ?? "");
+    setEvidence(v.evidence);
+    setVerifier(v.verifier);
     const routine = scheduleRoutine(rec.schedule as ScheduleHint);
     setRepeat(routine.repeat);
     setWeekdays(routine.weekdays);
@@ -242,6 +269,8 @@ export default function TasksAdmin() {
       deadline: form.deadline ? new Date(form.deadline).toISOString() : null,
       created_by: profile.id,
       pillar: libPillar ?? defaultPillar(form.task_type),
+      evidence,
+      verifier,
     });
     setBusy(false);
     if (error) return setMsg({ ok: false, text: error.message });
@@ -280,6 +309,8 @@ export default function TasksAdmin() {
       weekdays,
       slots: cleanSlots,
       pillar: libPillar ?? defaultPillar(form.task_type),
+      evidence,
+      verifier,
     };
     const { error } = editingId
       ? await supabase.from("quest_schedules").update(payload).eq("id", editingId)
@@ -301,6 +332,9 @@ export default function TasksAdmin() {
     setEditingId(s.id);
     setLibProfileId("");
     setLibPillar(s.pillar ?? null); // keep the routine's existing pillar on edit
+    // legacy routines (nulls) display their equivalent: photo + AI pre-screen + parent
+    setEvidence((s.evidence as QuestEvidence) ?? "photo");
+    setVerifier((s.verifier as QuestVerifier) ?? "ai_parent");
     setRepeat(true);
     setWeekdays(s.weekdays?.length ? s.weekdays : EVERY_DAY);
     setSlots(s.slots?.length ? s.slots : DEFAULT_SLOTS);
@@ -452,6 +486,65 @@ export default function TasksAdmin() {
                   {DIFFICULTY[d].label}
                 </button>
               ))}
+            </div>
+
+            {/* confirmation method — evidence + who verifies */}
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-display mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
+                  Proof from your hero
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {EVIDENCE_OPTIONS.map((o) => (
+                    <button
+                      key={o.id}
+                      aria-pressed={evidence === o.id}
+                      onClick={() => chooseEvidence(o.id)}
+                      className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold transition-colors ${
+                        evidence === o.id
+                          ? "bg-[var(--accent)] text-white"
+                          : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-display mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
+                  Confirmed by
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {VERIFIER_OPTIONS.map((o) => {
+                    const needsPhoto = o.id !== "parent" && evidence !== "photo";
+                    return (
+                      <button
+                        key={o.id}
+                        aria-pressed={verifier === o.id}
+                        onClick={() => chooseVerifier(o.id)}
+                        title={needsPhoto ? "Selecting this switches proof to Photo" : undefined}
+                        className={`text-display min-h-[40px] cursor-pointer rounded-xl px-4 text-sm font-bold transition-colors ${
+                          verifier === o.id
+                            ? "bg-[var(--accent)] text-white"
+                            : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-[11px] text-[var(--text-dim)]">
+                  {verifier === "ai"
+                    ? "AI approves clear passes instantly; anything uncertain still comes to you."
+                    : verifier === "ai_parent"
+                      ? "AI pre-screens the photo, then you make the final call."
+                      : evidence === "none"
+                        ? "Your hero taps “I did it!” and it comes straight to you."
+                        : "The proof comes straight to you for approval."}
+                </p>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
