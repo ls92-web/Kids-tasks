@@ -122,8 +122,21 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       await new Promise((r) => setTimeout(r, 2400));
       setVerifying(false);
 
-      // The AI only recommends — a parent always makes the final call, so the
-      // outcome here is either "try again" or "sent to the council".
+      // AI-only quests may auto-complete on a clear pass; the full ceremony
+      // plays on the Adventure board (the fresh-victory celebration).
+      if (result.outcome === "auto_approved") {
+        setTask({ ...task, status: "completed" });
+        setMessage({
+          tone: "info",
+          text:
+            result.feedback ||
+            `The ${theme.verifyTitle} approved it — rewards earned. Amazing work!`,
+        });
+        return;
+      }
+
+      // Otherwise the AI only recommends — a parent always makes the final
+      // call, so the outcome here is either "try again" or "sent to the council".
       if (result.outcome === "try_again") {
         setTask({ ...task, status: "active" });
         setMessage({

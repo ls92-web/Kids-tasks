@@ -12,14 +12,25 @@ const json = (body: unknown, status = 200) =>
   });
 
 interface Verdict {
-  status: "redo_requested" | "pending_parent_review";
+  status: "approved" | "redo_requested" | "pending_parent_review";
   confidence: number; // 0-100, informational only — never used as a threshold
   reason: string;
   childMessage: string;
   flags: string[];
 }
 
-const SYSTEM_PROMPT = `You review proof photos submitted by children in a family quest app (homework, room cleaning, toy cleanup, reading/writing, chores).
+/* Two operating modes, chosen by the quest's verifier:
+   - ai_parent / legacy: the AI only RECOMMENDS (2-way verdict) and the parent
+     always makes the final call. Unchanged behavior.
+   - ai (AI-only, parent chose to delegate): 3-way verdict — a clear pass
+     auto-completes through award_submission, a clear fail asks for a retry,
+     and ANY uncertainty still goes to the parent queue. */
+const SHARED_RULES = `Other rules:
+- reason: written for the parent — say what you saw that supports your recommendation (e.g. "The visible worksheet shows all questions answered" or "The photo shows a bookshelf, not the bed described in the task"). Do not describe the image beyond task-relevant evidence and never identify any person.
+- childMessage: max 2 short sentences, warm, kind and kid-friendly, no emojis. For a redo, use gentle "give it another try" energy — never scold. For parent review, tell them a grown-up will take a look soon.
+- flags: short strings for anything a parent should know (e.g. "possibly_reused_photo", "image_unclear"), else [].`;
+
+const REVIEW_PROMPT = `You review proof photos submitted by children in a family quest app (homework, room cleaning, toy cleanup, reading/writing, chores).
 
 You make a RECOMMENDATION only. A parent always makes the final decision, awards the coins, and completes the task — never say the task is approved, finished, or rewarded.
 
@@ -36,10 +47,26 @@ How to choose the status — judge the actual evidence, not a score:
 - "redo_requested": ONLY when you are highly confident the submission genuinely does not satisfy the task — clearly incorrect, clearly incomplete, unrelated to the task, apparently fake or reused, or too blurry to show anything relevant. If you can articulate exactly what is wrong, this is the right choice.
 - "pending_parent_review": everything else — the proof looks acceptable, the task appears complete, or you are uncertain in ANY way. Uncertainty always goes to the parent, never to a redo.
 
-Other rules:
-- reason: written for the parent — say what you saw that supports your recommendation (e.g. "The visible worksheet shows all questions answered" or "The photo shows a bookshelf, not the bed described in the task"). Do not describe the image beyond task-relevant evidence and never identify any person.
-- childMessage: max 2 short sentences, warm, kind and kid-friendly, no emojis. For a redo, use gentle "give it another try" energy — never scold. For parent review, tell them a grown-up will take a look soon.
-- flags: short strings for anything a parent should know (e.g. "possibly_reused_photo", "image_unclear"), else [].`;
+${SHARED_RULES}`;
+
+const AUTONOMOUS_PROMPT = `You verify proof photos submitted by children in a family quest app (homework, room cleaning, toy cleanup, reading/writing, chores). For THIS quest the parent has delegated verification to you: a clear pass completes the quest and awards the rewards.
+
+Respond with JSON ONLY — no markdown, no code fences, no extra text. Exact schema:
+{
+  "status": "approved" | "redo_requested" | "pending_parent_review",
+  "confidence": 0-100,
+  "reason": "one or two concise sentences explaining WHY you chose this",
+  "childMessage": "positive encouraging message for the child",
+  "flags": []
+}
+
+How to choose the status — judge the actual evidence, not a score:
+- "approved": ONLY when you are highly confident the photo genuinely shows the task complete — the evidence is clear, relevant, and convincing. This awards the child immediately, so when in ANY doubt do not choose it.
+- "redo_requested": ONLY when you are highly confident the submission genuinely does not satisfy the task — clearly incorrect, clearly incomplete, unrelated to the task, apparently fake or reused, or too blurry to show anything relevant.
+- "pending_parent_review": everything in between — plausible but not fully convincing, partially complete, or uncertain in any way. Uncertainty always goes to a parent, never to an approval or a redo.
+
+${SHARED_RULES}
+- For an approval, childMessage should celebrate the accomplishment.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -66,6 +93,8 @@ Deno.serve(async (req: Request) => {
     if (sub.status !== "pending") return json({ error: "already processed", status: sub.status }, 400);
 
     const task = sub.tasks;
+    // AI-only quests (parent delegated verification): a clear pass auto-awards.
+    const aiOnly = task.verifier === "ai";
 
     const needsReview = async (feedback: string, verdict: unknown = null) => {
       await admin.from("submissions").update({
@@ -129,7 +158,7 @@ Deno.serve(async (req: Request) => {
     // OpenRouter's OpenAI-compatible multimodal format: the user message content
     // is an array of one text part and one image_url part (data URL).
     const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: aiOnly ? AUTONOMOUS_PROMPT : REVIEW_PROMPT },
       {
         role: "user",
         content: [
@@ -165,7 +194,10 @@ Deno.serve(async (req: Request) => {
         const end = content.lastIndexOf("}");
         if (start === -1 || end === -1) return null;
         const parsed = JSON.parse(content.slice(start, end + 1));
-        if (!["redo_requested", "pending_parent_review"].includes(parsed.status)) {
+        const allowed = aiOnly
+          ? ["approved", "redo_requested", "pending_parent_review"]
+          : ["redo_requested", "pending_parent_review"];
+        if (!allowed.includes(parsed.status)) {
           return null;
         }
         return {
@@ -196,9 +228,36 @@ Deno.serve(async (req: Request) => {
     }
     const storedVerdict = { ...verdict, model: servedBy };
 
+    // AI-only quests: a clear pass completes the quest through the exact same
+    // award_submission pipeline the parent uses — rewards, companion growth,
+    // challenge scoring and achievements all flow identically. Anything less
+    // than a clear pass never auto-awards.
+    if (verdict.status === "approved" && aiOnly) {
+      await admin.from("submissions").update({
+        ai_verdict: storedVerdict, ai_confidence: verdict.confidence,
+      }).eq("id", submission_id);
+      const { data: award, error: awardErr } = await admin.rpc("award_submission", {
+        p_submission_id: submission_id,
+        p_feedback: verdict.childMessage,
+      });
+      if (awardErr) {
+        console.warn(`auto-award failed: ${awardErr.message}`);
+        return await needsReview(
+          verdict.childMessage || "A grown-up will take a look at this one!",
+          storedVerdict
+        );
+      }
+      return json({
+        outcome: "auto_approved",
+        feedback: verdict.childMessage,
+        award,
+        verdict,
+      });
+    }
+
     // No thresholds: the model's recommendation decides the route.
-    // The AI never awards coins and never completes tasks — only the parent
-    // does, from the review queue.
+    // Below this point the AI never awards coins and never completes tasks —
+    // only the parent does, from the review queue.
     if (verdict.status === "redo_requested") {
       await admin.from("submissions").update({
         status: "rejected", ai_verdict: storedVerdict, ai_feedback: verdict.childMessage, ai_confidence: verdict.confidence,
