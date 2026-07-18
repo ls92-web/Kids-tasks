@@ -500,6 +500,8 @@ export interface TaskCounts {
   homework: number;
   chore: number;
   reading: number;
+  /** Minutes read — sum of est_minutes across completed reading quests. */
+  readingMinutes: number;
   prayer: number;
   quran: number;
   helper: number;
@@ -510,18 +512,20 @@ export interface TaskCounts {
 /* The achievement badges — one rendered badge per entry lives at
    public/ui/badges/<key>.png (src/lib/assets.ts badgeArt). Milestone badges
    (evolution/world/legend) are earned server-side and show target 1 with no
-   running counter; the rest track a real count. Keep keys in sync with the
-   award logic in the award_submission / complete_legend RPCs. */
+   running counter; the rest track a real count. Requirements follow the
+   Official Achievement Library v1.0 (source of truth going forward); keys
+   already earned at older thresholds stay unlocked. Keep in sync with
+   check_achievements / complete_legend in the database. */
 export const BADGES: BadgeDef[] = [
   { key: "first_steps", title: "First Steps", icon: "star", rarity: "common", description: "Finish your very first quest.", target: 1, progress: (x) => x.counts.total },
   { key: "early_bird", title: "Early Bird", icon: "star", rarity: "rare", description: "Finish 7 quests in the morning.", target: 7, progress: (x) => x.counts.morning },
-  { key: "bed_master", title: "Bed Master", icon: "home", rarity: "rare", description: "Make your bed 20 times.", target: 20, progress: (x) => x.counts.bed },
-  { key: "reading_star", title: "Reading Star", icon: "book", rarity: "rare", description: "Finish 15 reading quests.", target: 15, progress: (x) => x.counts.reading },
-  { key: "family_helper", title: "Family Helper", icon: "heart", rarity: "rare", description: "Help your family 25 times.", target: 25, progress: (x) => x.counts.helper },
+  { key: "bed_master", title: "Bed Master", icon: "home", rarity: "rare", description: "Make your bed 50 times.", target: 50, progress: (x) => x.counts.bed },
+  { key: "reading_star", title: "Reading Star", icon: "book", rarity: "rare", description: "Read for 1,000 minutes.", target: 1000, progress: (x) => x.counts.readingMinutes },
+  { key: "family_helper", title: "Family Helper", icon: "heart", rarity: "rare", description: "Complete 100 household quests.", target: 100, progress: (x) => x.counts.chore },
   { key: "streak_7", title: "7-Day Streak", icon: "flame", rarity: "rare", description: "Keep a 7-day streak alive.", target: 7, progress: (x) => x.profile.streak_days },
-  { key: "homework_hero", title: "Homework Hero", icon: "scroll", rarity: "epic", description: "Finish 30 homework quests.", target: 30, progress: (x) => x.counts.homework },
-  { key: "prayer_guardian", title: "Prayer Guardian", icon: "sparkle", rarity: "epic", description: "Complete 50 prayer quests.", target: 50, progress: (x) => x.counts.prayer },
-  { key: "quran_companion", title: "Qur'an Companion", icon: "book", rarity: "epic", description: "Complete 30 Qur'an reading quests.", target: 30, progress: (x) => x.counts.quran },
+  { key: "homework_hero", title: "Homework Hero", icon: "scroll", rarity: "epic", description: "Finish 100 homework quests.", target: 100, progress: (x) => x.counts.homework },
+  { key: "prayer_guardian", title: "Prayer Guardian", icon: "sparkle", rarity: "epic", description: "Complete 100 prayer quests.", target: 100, progress: (x) => x.counts.prayer },
+  { key: "quran_companion", title: "Qur'an Companion", icon: "book", rarity: "epic", description: "Complete 50 Qur'an reading quests.", target: 50, progress: (x) => x.counts.quran },
   { key: "first_evolution", title: "First Evolution", icon: "sparkle", rarity: "epic", description: "Evolve your companion for the first time.", target: 1, progress: () => 0 },
   { key: "first_world", title: "World Explorer", icon: "map", rarity: "epic", description: "Complete your very first world.", target: 36, progress: (x) => x.profile.tasks_completed },
   { key: "first_legend", title: "First Legend", icon: "trophy", rarity: "legendary", description: "Guide a companion to become a Legend.", target: 1, progress: () => 0 },
@@ -534,6 +538,9 @@ export function computeCounts(tasks: Task[]): TaskCounts {
     homework: done.filter((t) => t.task_type === "homework").length,
     chore: done.filter((t) => t.task_type === "chore").length,
     reading: done.filter((t) => t.task_type === "reading").length,
+    readingMinutes: done
+      .filter((t) => t.task_type === "reading")
+      .reduce((sum, t) => sum + (t.est_minutes || 0), 0),
     prayer: done.filter((t) => t.task_type === "prayer").length,
     quran: done.filter((t) => t.task_type === "quran").length,
     helper: done.filter((t) => t.task_type === "other" || t.task_type === "habit").length,

@@ -53,6 +53,8 @@ export default function RewardsAdmin() {
     expires_at: "",
   });
   const [libRewardId, setLibRewardId] = useState("");
+  // official category metadata, persisted with the reward (null for custom)
+  const [libRewardCategory, setLibRewardCategory] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -93,9 +95,13 @@ export default function RewardsAdmin() {
   // Reward (RW039) leaves the cost blank for the parent to choose.
   function pickRewardLibrary(id: string) {
     setLibRewardId(id);
-    if (!id) return; // "Custom reward" — leave whatever the parent has typed
+    if (!id) {
+      setLibRewardCategory(null);
+      return; // "Custom reward" — leave whatever the parent has typed
+    }
     const r = REWARD_LIBRARY.find((x) => x.id === id);
     if (!r) return;
+    setLibRewardCategory(r.category);
     setForm((f) => ({
       ...f,
       name: r.name,
@@ -119,10 +125,12 @@ export default function RewardsAdmin() {
       coin_cost: parseInt(form.coin_cost, 10) || 100,
       quantity: form.quantity ? parseInt(form.quantity, 10) : null,
       expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
+      category: prefill ? null : libRewardCategory,
     });
     setBusy(false);
     setForm((f) => ({ ...f, name: "", description: "", quantity: "", expires_at: "" }));
     setLibRewardId("");
+    setLibRewardCategory(null);
     load();
   }
 
