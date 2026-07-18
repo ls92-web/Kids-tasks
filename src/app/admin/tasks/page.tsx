@@ -23,7 +23,9 @@ import {
   PILLARS,
   profileDifficulty,
   profileRoutine,
+  scheduleRoutine,
   defaultPillar,
+  ScheduleHint,
 } from "@/lib/questLibrary";
 
 const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: number }> = {
@@ -80,6 +82,7 @@ export default function TasksAdmin() {
   // hidden development-pillar metadata: from the library profile when one is
   // picked, otherwise derived from task_type at save time (v1: no UI field)
   const [libPillar, setLibPillar] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -181,6 +184,43 @@ export default function TasksAdmin() {
     setRepeat(routine.repeat);
     setWeekdays(routine.weekdays);
     setSlots(routine.slots);
+  }
+
+  // ---- AI Quest Assistant ----------------------------------------------------
+  // Classifies the parent's custom quest against the Official Library and fills
+  // type, difficulty, rewards, pillar and a suggested schedule. Recommendations
+  // only — every field stays editable, and the AI never assigns anything.
+  async function aiSuggest() {
+    if (aiBusy || form.title.trim().length < 3) return;
+    setAiBusy(true);
+    setMsg(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.functions.invoke("classify-quest", {
+      body: { title: form.title.trim(), description: form.description.trim() },
+    });
+    setAiBusy(false);
+    const rec = data?.recommendation;
+    if (error || !rec) {
+      setMsg({ ok: false, text: "The assistant is resting — fill in the quest manually for now." });
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      task_type: rec.task_type,
+      difficulty: rec.difficulty as Difficulty,
+      coin_reward: String(rec.coins),
+      xp_reward: String(rec.xp),
+      est_minutes: String(rec.est_minutes),
+    }));
+    setLibPillar(rec.pillar ?? null);
+    const routine = scheduleRoutine(rec.schedule as ScheduleHint);
+    setRepeat(routine.repeat);
+    setWeekdays(routine.weekdays);
+    setSlots(routine.slots);
+    setMsg({
+      ok: true,
+      text: `AI suggests: ${rec.match ? `like “${rec.match}” — ` : ""}${rec.reason || "classified."} Everything below is editable.`,
+    });
   }
 
   // ---- one-off quest ---------------------------------------------------------
@@ -338,9 +378,17 @@ export default function TasksAdmin() {
                     </optgroup>
                   ))}
                 </Select>
-                <p className="mt-1 text-[11px] text-[var(--text-dim)]">
-                  Picks a quest and fills type, difficulty, coins, XP and schedule — you can edit everything below.
-                </p>
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] text-[var(--text-dim)]">
+                    Picks a quest and fills type, difficulty, coins, XP and schedule — you can edit everything below.
+                  </p>
+                  {!libProfileId && form.title.trim().length >= 3 && (
+                    <AdminButton size="sm" variant="ghost" onClick={aiSuggest} disabled={aiBusy}>
+                      <Icon name="sparkle" size={14} art muted />{" "}
+                      {aiBusy ? "Thinking…" : "AI suggestions for this quest"}
+                    </AdminButton>
+                  )}
+                </div>
               </div>
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

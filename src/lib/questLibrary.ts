@@ -236,16 +236,16 @@ const EVERYDAY = [0, 1, 2, 3, 4, 5, 6];
 const SCHOOL_DAYS = [0, 1, 2, 3, 4]; // Asia/Kuwait school week (Sun–Thu)
 const ONE_SLOT: QuestSlot[] = [{ key: "default", label: "", time: null }];
 
-/** Map a profile's suggested schedule onto the existing routine system.
-    Schedules the routine engine can express become a pre-filled routine;
-    "monthly"/"optional" (not expressible as weekday cadences) fall back to a
-    one-off quest so nothing is invented. */
-export function profileRoutine(p: QuestProfile): {
+/** Map a suggested schedule onto the existing routine system. Schedules the
+    routine engine can express become a pre-filled routine; "monthly"/"optional"
+    (not expressible as weekday cadences) fall back to a one-off quest so
+    nothing is invented. Used by both library picks and AI suggestions. */
+export function scheduleRoutine(schedule: ScheduleHint): {
   repeat: boolean;
   weekdays: number[];
   slots: QuestSlot[];
 } {
-  switch (p.schedule) {
+  switch (schedule) {
     case "daily":
       return { repeat: true, weekdays: EVERYDAY, slots: ONE_SLOT };
     case "school":
@@ -269,4 +269,9 @@ export function profileRoutine(p: QuestProfile): {
     default:
       return { repeat: false, weekdays: EVERYDAY, slots: ONE_SLOT };
   }
+}
+
+/** A profile's suggested routine — delegates to the shared schedule mapping. */
+export function profileRoutine(p: QuestProfile): ReturnType<typeof scheduleRoutine> {
+  return scheduleRoutine(p.schedule);
 }
