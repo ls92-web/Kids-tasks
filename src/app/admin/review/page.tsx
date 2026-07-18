@@ -181,8 +181,12 @@ export default function ReviewPage() {
                             background: "rgba(0,0,0,0.35)",
                           }}
                         >
-                          <Icon art muted name={v ? "check" : "eye"} size={12} />
-                          {v ? "AI: looks acceptable" : "AI: awaiting your judgment"}
+                          <Icon art muted name={v ? "check" : s.image_path ? "eye" : "heart"} size={12} />
+                          {v
+                            ? "AI: looks acceptable"
+                            : s.image_path
+                              ? "AI: awaiting your judgment"
+                              : "Hero's word — no photo for this quest"}
                         </span>
                         {confidence !== null && (
                           <div className="flex items-center gap-2">

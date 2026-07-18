@@ -42,9 +42,42 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
     setMessage(null);
   }
 
+  // Confirmation method (null on both = legacy: photo + AI pre-screen + parent)
+  const evidence = task?.evidence ?? "photo";
+  const verifier = task?.verifier ?? "ai_parent";
+  const aiInvolved = verifier === "ai" || verifier === "ai_parent";
+
+  /* No-evidence quests (parent verification): the hero taps "I did it!" and
+     the quest goes straight to the parent review queue. Voice quests use the
+     same path until the voice recorder ships (slice 4). */
+  async function submitWord() {
+    if (!task || !profile) return;
+    setMessage(null);
+    const supabase = createClient();
+    try {
+      const { error: subErr } = await supabase.from("submissions").insert({
+        task_id: task.id,
+        child_id: profile.id,
+        family_id: profile.family_id,
+        image_path: null,
+        status: "needs_review",
+      });
+      if (subErr) throw subErr;
+      await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
+      setTask({ ...task, status: "needs_review" });
+      setMessage({
+        tone: "info",
+        text: "Sent straight to your grown-up. Great work!",
+      });
+    } catch (e) {
+      setMessage({ tone: "bad", text: "Something interrupted the magic. Please try again." });
+      console.error(e);
+    }
+  }
+
   async function submitProof() {
     if (!file || !task || !profile) return;
-    setVerifying(true);
+    if (aiInvolved) setVerifying(true);
     setMessage(null);
     const supabase = createClient();
     try {
@@ -60,10 +93,22 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           child_id: profile.id,
           family_id: profile.family_id,
           image_path: path,
+          // parent-only photo quests skip the AI and go straight to review
+          ...(aiInvolved ? {} : { status: "needs_review" }),
         })
         .select()
         .single();
       if (subErr) throw subErr;
+
+      if (!aiInvolved) {
+        await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
+        setTask({ ...task, status: "needs_review" });
+        setMessage({
+          tone: "info",
+          text: "Your photo flew straight to your grown-up. Great work!",
+        });
+        return;
+      }
 
       await supabase.from("tasks").update({ status: "submitted" }).eq("id", task.id);
 
@@ -189,7 +234,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         </div>
       )}
 
-      {canSubmit && (
+      {canSubmit && evidence === "photo" && (
         <motion.div
           {...enter}
           transition={{ ...enter.transition, delay: 0.08 }}
@@ -223,7 +268,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
                   New photo
                 </GameButton>
                 <GameButton variant="gold" onClick={submitProof}>
-                  Send to the {theme.verifyTitle}
+                  {aiInvolved ? `Send to the ${theme.verifyTitle}` : "Send to your grown-up"}
                 </GameButton>
               </div>
             </div>
@@ -240,6 +285,27 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
               </span>
             </motion.button>
           )}
+        </motion.div>
+      )}
+
+      {canSubmit && evidence !== "photo" && (
+        <motion.div
+          {...enter}
+          transition={{ ...enter.transition, delay: 0.08 }}
+          className="panel p-6 text-center"
+        >
+          <h2 className="text-display mb-1 flex items-center justify-center gap-2 text-lg font-black">
+            <Icon name="check" size={22} art />
+            Done with this {theme.questWord.toLowerCase()}?
+          </h2>
+          <p className="mx-auto max-w-sm text-sm text-[var(--text-dim)]">
+            {evidence === "voice"
+              ? "Tell your grown-up all about it — voice recording is coming soon!"
+              : "No photo needed — your word goes straight to your grown-up."}
+          </p>
+          <GameButton variant="gold" className="mt-4" onClick={submitWord}>
+            I did it!
+          </GameButton>
         </motion.div>
       )}
 
