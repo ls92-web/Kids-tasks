@@ -144,6 +144,7 @@ export default function ReviewPage() {
             {subs.map((s) => {
               const v = s.ai_verdict;
               const confidence = typeof v?.confidence === "number" ? v.confidence : null;
+              const isAudio = /\.(webm|m4a|mp4|ogg|mp3)$/i.test(s.image_path ?? "");
               return (
                 <motion.div
                   key={s.id}
@@ -152,7 +153,12 @@ export default function ReviewPage() {
                   transition={{ duration: 0.25, ease: EASE_OUT }}
                   className="overflow-hidden rounded-xl bg-black/25"
                 >
-                  {s.signedUrl && (
+                  {s.signedUrl && isAudio && (
+                    <div className="px-4 pt-4">
+                      <audio controls src={s.signedUrl} className="w-full" />
+                    </div>
+                  )}
+                  {s.signedUrl && !isAudio && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.signedUrl} alt="proof" className="max-h-56 w-full object-cover" />
                   )}
@@ -181,12 +187,19 @@ export default function ReviewPage() {
                             background: "rgba(0,0,0,0.35)",
                           }}
                         >
-                          <Icon art muted name={v ? "check" : s.image_path ? "eye" : "heart"} size={12} />
-                          {v
-                            ? "AI: looks acceptable"
-                            : s.image_path
-                              ? "AI: awaiting your judgment"
-                              : "Hero's word — no photo for this quest"}
+                          <Icon
+                            art={!isAudio}
+                            muted={!isAudio}
+                            name={isAudio ? "mic" : v ? "check" : s.image_path ? "eye" : "heart"}
+                            size={12}
+                          />
+                          {isAudio
+                            ? "Voice message from your hero"
+                            : v
+                              ? "AI: looks acceptable"
+                              : s.image_path
+                                ? "AI: awaiting your judgment"
+                                : "Hero's word — no photo for this quest"}
                         </span>
                         {confidence !== null && (
                           <div className="flex items-center gap-2">
