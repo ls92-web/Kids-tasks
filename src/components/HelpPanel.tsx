@@ -7,35 +7,19 @@ import { EASE_OUT } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { HelpTopic } from "@/lib/tour";
 
-/* Help mode — replay the welcome, or read any topic on its own. Calm
-   accordion, one topic open at a time, never a wall of text. Used in the
-   child's Settings and the parent console. */
+/* Help mode — read any topic on its own. Calm accordion, one topic open at a
+   time, never a wall of text. Used in the child's Settings. */
 export function HelpPanel({
   topics,
-  onReplay,
-  replayLabel = "Replay the welcome tour",
   accent = "var(--accent)",
 }: {
   topics: HelpTopic[];
-  onReplay: () => void;
-  replayLabel?: string;
   accent?: string;
 }) {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
     <div className="flex flex-col gap-3">
-      <button
-        onClick={() => {
-          sfx.click();
-          onReplay();
-        }}
-        className="text-display flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white transition-[filter] hover:brightness-110"
-        style={{ background: `linear-gradient(160deg, ${accent}, var(--accent-deep))` }}
-      >
-        <Icon art name="world" size={25} /> {replayLabel}
-      </button>
-
       <div className="flex flex-col gap-2">
         {topics.map((t, i) => {
           const isOpen = open === i;

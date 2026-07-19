@@ -10,7 +10,7 @@ import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
 import { sfx, soundsEnabled, setSoundsEnabled } from "@/lib/sound";
 import { HelpPanel } from "@/components/HelpPanel";
-import { CHILD_HELP, resetTours, CHILD_TOURS } from "@/lib/tour";
+import { CHILD_HELP } from "@/lib/tour";
 import {
   PETS,
   THEMES,
@@ -248,21 +248,13 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* adventure guide — let your companion show you around again */}
+      {/* adventure guide — read about anything again */}
       <section className="panel p-5">
         <h2 className="text-display mb-1 text-lg font-black">Adventure Guide</h2>
         <p className="mb-3 text-xs text-[var(--text-dim)]">
-          Let your companion guide you through everything again
+          Learn more about anything in your adventure
         </p>
-        <HelpPanel
-          topics={CHILD_HELP}
-          replayLabel="Adventure with my companion again"
-          accent="var(--accent-2)"
-          onReplay={() => {
-            resetTours(profile.id, CHILD_TOURS);
-            router.push("/app");
-          }}
-        />
+        <HelpPanel topics={CHILD_HELP} accent="var(--accent-2)" />
       </section>
 
       {saved && (
