@@ -73,6 +73,17 @@ const QUEST_ICON_OPTIONS = [
   { id: "adventure", label: "Adventure" },
 ];
 
+/* one status → row-badge lookup shared by both the Current and History
+   views of the merged Quests list (see QuestRow below). */
+const QUEST_ROW_META: Record<string, { label: string; color: string; icon: string }> = {
+  active: { label: "Active", color: "var(--accent-2)", icon: "sword" },
+  submitted: { label: "Pending Review", color: "var(--gold)", icon: "eye" },
+  needs_review: { label: "Pending Review", color: "var(--gold)", icon: "eye" },
+  completed: { label: "Approved", color: "var(--success)", icon: "check" },
+  rejected: { label: "Rejected", color: "var(--danger)", icon: "x" },
+  expired: { label: "Expired", color: "var(--text-dim)", icon: "clock" },
+};
+
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 const DEFAULT_SLOTS: QuestSlot[] = [{ key: "default", label: "", time: null }];
 
@@ -95,15 +106,68 @@ function weekdaySummary(days: number[]): string {
   return sorted.map((d) => WEEKDAY_LABELS[d]).join(", ");
 }
 
+/* One row shared by the Quests page's Current and History views — same
+   appearance either way; History just omits the delete button. */
+function QuestRow({
+  task,
+  childName,
+  readOnly,
+  onDelete,
+}: {
+  task: Task;
+  childName: string;
+  readOnly: boolean;
+  onDelete: () => void;
+}) {
+  const meta = QUEST_ROW_META[task.status] ?? QUEST_ROW_META.expired;
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+      <Icon name={meta.icon} size={18} art muted className="shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-display truncate text-sm font-bold">
+          {task.title}
+          {task.schedule_id && (
+            <Icon name="refresh" size={12} className="ml-1.5 inline text-[var(--text-dim)]" />
+          )}
+        </p>
+        <p className="text-xs text-[var(--text-dim)]">
+          {childName} — {task.task_type} —{" "}
+          {new Date(task.completed_at ?? task.created_at).toLocaleDateString()}
+          {task.status === "completed" && ` — +${task.coin_reward}c / +${task.xp_reward}xp`}
+        </p>
+      </div>
+      <span
+        className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+        style={{ color: meta.color, background: "rgba(0,0,0,0.3)" }}
+      >
+        {meta.label}
+      </span>
+      {!readOnly && (
+        <button
+          onClick={onDelete}
+          className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--danger)]"
+          title="Delete quest"
+          aria-label={`Delete quest: ${task.title}`}
+        >
+          <Icon name="x" size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function TasksAdmin() {
   const { profile } = useWorld();
   const [children, setChildren] = useState<Profile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [schedules, setSchedules] = useState<QuestSchedule[]>([]);
-  // text-only quest history (approved/not approved/expired), last 2 months —
-  // photos and voice recordings are purged as soon as a quest is approved
+  // text-only quest history (approved, last 2 months) — photos and voice
+  // recordings are purged as soon as a quest is approved
   const [history, setHistory] = useState<Task[]>([]);
-  const [historyHero, setHistoryHero] = useState("");
+  // merged "Quests" list controls: hero filter (shared by both views) and
+  // which view is showing — Current (in-flight) or History (approved)
+  const [questHero, setQuestHero] = useState("");
+  const [questView, setQuestView] = useState<"current" | "history">("current");
   const [form, setForm] = useState({
     child_id: "",
     title: "",
@@ -438,12 +502,18 @@ export default function TasksAdmin() {
   const childName = (id: string) => children.find((c) => c.id === id)?.nickname ?? "?";
   const primaryAction = repeat ? saveRoutine : createTask;
 
-  const HISTORY_OUTCOME: Record<string, { label: string; color: string; icon: string }> = {
-    completed: { label: "Approved", color: "var(--success)", icon: "check" },
-    rejected: { label: "Not approved", color: "var(--danger)", icon: "x" },
-    expired: { label: "Expired", color: "var(--text-dim)", icon: "clock" },
-  };
-  const filteredHistory = historyHero ? history.filter((t) => t.child_id === historyHero) : history;
+  // Current view: everything still in flight (active/pending review/rejected/
+  // expired) — never approved/completed. Reuses the existing "all quests"
+  // query (60 most recent, any status), just filtered client-side.
+  const currentQuests = tasks.filter(
+    (t) => t.status !== "completed" && (!questHero || t.child_id === questHero)
+  );
+  // History view: only approved quests, from the existing 2-month history
+  // query — unchanged retention window, just filtered client-side to drop
+  // the rejected/expired rows (those now live in Current instead).
+  const historyQuests = history.filter(
+    (t) => t.status === "completed" && (!questHero || t.child_id === questHero)
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -843,99 +913,62 @@ export default function TasksAdmin() {
         </SectionCard>
       )}
 
-      <SectionCard title="All quests">
-        {tasks.length === 0 ? (
-          <EmptyNote>No quests yet.</EmptyNote>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {tasks.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-display truncate text-sm font-bold">
-                    {t.title}
-                    {t.schedule_id && (
-                      <Icon name="refresh" size={12} className="ml-1.5 inline text-[var(--text-dim)]" />
-                    )}
-                  </p>
-                  <p className="text-xs text-[var(--text-dim)]">
-                    {childName(t.child_id)} — {t.task_type} — {t.status} — +{t.coin_reward}c / +
-                    {t.xp_reward}xp
-                  </p>
-                </div>
-                <span
-                  className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
-                  style={{
-                    color:
-                      t.status === "completed"
-                        ? "var(--success)"
-                        : t.status === "needs_review"
-                          ? "var(--gold)"
-                          : "var(--text-dim)",
-                    background: "rgba(0,0,0,0.3)",
-                  }}
-                >
-                  {t.status.replace("_", " ")}
-                </span>
-                <button
-                  onClick={() => removeTask(t.id)}
-                  className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--danger)]"
-                  title="Delete quest"
-                  aria-label={`Delete quest: ${t.title}`}
-                >
-                  <Icon name="x" size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
-
       <SectionCard
-        title="Quest History"
-        subtitle="What each hero has done over the last 2 months — photos and voice recordings are removed once a quest is approved"
+        title="Quests"
+        subtitle={
+          questView === "current"
+            ? "Active, pending review, rejected, and expired quests"
+            : "Approved quests over the last 2 months — photos and voice recordings are removed once a quest is approved"
+        }
       >
-        {children.length > 1 && (
-          <div className="mb-3">
-            <Select
-              label="Hero"
-              value={historyHero}
-              onChange={(e) => setHistoryHero(e.target.value)}
-            >
-              <option value="">All heroes</option>
-              {children.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nickname}
-                </option>
+        <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Select label="Hero" value={questHero} onChange={(e) => setQuestHero(e.target.value)}>
+            <option value="">All Heroes</option>
+            {children.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nickname}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="View"
+            value={questView}
+            onChange={(e) => setQuestView(e.target.value as "current" | "history")}
+          >
+            <option value="current">Current</option>
+            <option value="history">History</option>
+          </Select>
+        </div>
+
+        {questView === "current" ? (
+          currentQuests.length === 0 ? (
+            <EmptyNote>No quests yet.</EmptyNote>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {currentQuests.map((t) => (
+                <QuestRow
+                  key={t.id}
+                  task={t}
+                  childName={childName(t.child_id)}
+                  readOnly={false}
+                  onDelete={() => removeTask(t.id)}
+                />
               ))}
-            </Select>
-          </div>
-        )}
-        {filteredHistory.length === 0 ? (
+            </div>
+          )
+        ) : historyQuests.length === 0 ? (
           <EmptyNote>No quest history yet.</EmptyNote>
         ) : (
           <div className="flex flex-col gap-2">
-            {filteredHistory.map((t) => {
-              const outcome = HISTORY_OUTCOME[t.status] ?? HISTORY_OUTCOME.expired;
-              return (
-                <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                  <Icon name={outcome.icon} size={18} art muted className="shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-display truncate text-sm font-bold">{t.title}</p>
-                    <p className="text-xs text-[var(--text-dim)]">
-                      {childName(t.child_id)} —{" "}
-                      {new Date(t.completed_at ?? t.created_at).toLocaleDateString()}
-                      {t.status === "completed" && ` — +${t.coin_reward}c / +${t.xp_reward}xp`}
-                    </p>
-                  </div>
-                  <span
-                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
-                    style={{ color: outcome.color, background: "rgba(0,0,0,0.3)" }}
-                  >
-                    {outcome.label}
-                  </span>
-                </div>
-              );
-            })}
+            {historyQuests.map((t) => (
+              <QuestRow
+                key={t.id}
+                task={t}
+                childName={childName(t.child_id)}
+                readOnly
+                onDelete={() => {}}
+              />
+            ))}
           </div>
         )}
       </SectionCard>
