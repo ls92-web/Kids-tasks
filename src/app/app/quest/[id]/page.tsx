@@ -304,7 +304,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           </span>
           <span className="flex gap-0.5">
             {Array.from({ length: diff.stars }).map((_, i) => (
-              <Icon art key={i} name="star" size={13} filled className="text-[var(--gold)]" />
+              <Icon art key={i} name="star" size={16} filled className="text-[var(--gold)]" />
             ))}
           </span>
         </div>
@@ -515,7 +515,7 @@ function Fact({
   return (
     <div className="rounded-xl bg-black/25 px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
-        <Icon art name={icon} size={12} /> {label}
+        <Icon art name={icon} size={16} /> {label}
       </div>
       <div
         className="text-display mt-0.5 text-lg font-black"
