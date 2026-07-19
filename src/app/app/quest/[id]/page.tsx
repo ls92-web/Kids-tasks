@@ -328,7 +328,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
             }
           />
           <Fact icon="coin" label={theme.coinName} value={`+${task.coin_reward}`} gold />
-          <Fact icon="lightning" label="XP" value={`+${task.xp_reward}`} accent />
+          <Fact icon="xp" label="XP" value={`+${task.xp_reward}`} accent />
         </div>
       </motion.div>
 
