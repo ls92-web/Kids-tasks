@@ -221,6 +221,19 @@ export const TASK_TYPES = [
   { id: "other", label: "Other" },
 ] as const;
 
+/* task_type → default icon slug. The single source of truth for the "same
+   automation" that both QuestCard's display fallback and the quest create
+   form's icon-picker default use. */
+export const TASK_TYPE_ICON: Record<string, string> = {
+  chore: "home",
+  homework: "multiplication",
+  reading: "book",
+  prayer: "prayer",
+  quran: "quraan",
+  habit: "energy",
+  other: "star",
+};
+
 /* ---------- Families ---------- */
 /* Crest choices for family creation (ids map to Icon names). */
 export const CRESTS = [
@@ -621,6 +634,8 @@ export interface Task {
   /** Confirmation method (null = legacy: photo + AI pre-screen + parent). */
   evidence?: QuestEvidence | null;
   verifier?: QuestVerifier | null;
+  /** Parent-chosen icon slug (null = auto-derived from task_type). */
+  icon?: string | null;
 }
 
 /* ---------- Quest confirmation methods ----------
@@ -679,6 +694,8 @@ export interface QuestSchedule {
   /** Confirmation method (null = legacy: photo + AI pre-screen + parent). */
   evidence?: QuestEvidence | null;
   verifier?: QuestVerifier | null;
+  /** Parent-chosen icon slug, carried into every generated occurrence. */
+  icon?: string | null;
 }
 
 /** Short weekday labels indexed by Postgres dow (0=Sun … 6=Sat). */

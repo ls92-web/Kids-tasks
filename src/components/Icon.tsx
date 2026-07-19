@@ -141,6 +141,14 @@ const ICON_ART: Record<string, string> = {
   wish: "wish", movie: "movie-night", screen: "screen-time", challenges: "challenges",
   insights: "insights", help: "help", exit: "exit", heroes: "heroes", world: "world",
   xp: "xp",
+  // quest/challenge icon-picker pool (public/ui/icons/<slug>.png, name = slug)
+  "make-bed": "make-bed", multiplication: "multiplication", homework: "homework",
+  prayer: "prayer", quraan: "quraan", energy: "energy", health: "health",
+  "hero-shield": "hero-shield", backpack: "backpack", family: "family", friends: "friends",
+  nature: "nature", celebration: "celebration", "quest-scroll": "quest-scroll",
+  "quest-target": "quest-target", tasks: "tasks", calendar: "calendar", time: "time",
+  compass: "compass", champion: "champion", legendary: "legendary", leaderboard: "leaderboard",
+  progress: "progress",
   // official WonderNest Rewards collection (public/ui/icons/<slug>.png)
   "gold-coins": "gold-coins", "gem-pile": "gem-pile", "treasure-chest": "treasure-chest",
   "magic-chest": "magic-chest", "golden-ticket": "golden-ticket", "mystery-box": "mystery-box",

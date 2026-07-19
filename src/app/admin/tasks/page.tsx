@@ -5,11 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { IconPicker } from "@/components/admin/IconPicker";
 import { Callout } from "@/components/Callout";
 import {
   Profile,
   Task,
   TASK_TYPES,
+  TASK_TYPE_ICON,
   DIFFICULTY,
   Difficulty,
   QuestSchedule,
@@ -39,6 +41,37 @@ const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: nu
   hard: { coins: 40, xp: 90, minutes: 40 },
   epic: { coins: 80, xp: 180, minutes: 60 },
 };
+
+/* curated, quest-appropriate slice of the icon pool (public/ui/icons/) */
+const QUEST_ICON_OPTIONS = [
+  { id: "home", label: "Home & Chores" },
+  { id: "make-bed", label: "Make Bed" },
+  { id: "multiplication", label: "Math" },
+  { id: "homework", label: "Homework" },
+  { id: "book", label: "Reading" },
+  { id: "prayer", label: "Prayer" },
+  { id: "quraan", label: "Qur'an" },
+  { id: "energy", label: "Energy" },
+  { id: "health", label: "Health" },
+  { id: "heart", label: "Kindness" },
+  { id: "star", label: "General" },
+  { id: "sword", label: "Bravery" },
+  { id: "hero", label: "Hero" },
+  { id: "hero-shield", label: "Responsibility" },
+  { id: "backpack", label: "School" },
+  { id: "family", label: "Family" },
+  { id: "friends", label: "Friends" },
+  { id: "nature", label: "Outdoors" },
+  { id: "celebration", label: "Celebration" },
+  { id: "quest-scroll", label: "Quest" },
+  { id: "quest-target", label: "Goal" },
+  { id: "tasks", label: "Tasks" },
+  { id: "calendar", label: "Schedule" },
+  { id: "time", label: "Time" },
+  { id: "world", label: "World" },
+  { id: "compass", label: "Explore" },
+  { id: "adventure", label: "Adventure" },
+];
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 const DEFAULT_SLOTS: QuestSlot[] = [{ key: "default", label: "", time: null }];
@@ -81,6 +114,7 @@ export default function TasksAdmin() {
     coin_reward: "10",
     xp_reward: "20",
     deadline: "",
+    icon: TASK_TYPE_ICON.chore,
   });
   // recurring-quest (routine) state — only used when `repeat` is on
   const [repeat, setRepeat] = useState(false);
@@ -185,7 +219,13 @@ export default function TasksAdmin() {
     setRepeat(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
-    setForm((f) => ({ ...f, title: "", description: "", deadline: "" }));
+    setForm((f) => ({
+      ...f,
+      title: "",
+      description: "",
+      deadline: "",
+      icon: TASK_TYPE_ICON[f.task_type] ?? "star",
+    }));
   }
 
   // ---- pick an Official Library quest from the dropdown ----------------------
@@ -219,6 +259,7 @@ export default function TasksAdmin() {
       xp_reward: String(DIFF_DEFAULTS[diff].xp),
       est_minutes: String(DIFF_DEFAULTS[diff].minutes),
       deadline: "",
+      icon: TASK_TYPE_ICON[p.taskType] ?? "star",
     }));
     setRepeat(routine.repeat);
     setWeekdays(routine.weekdays);
@@ -250,6 +291,7 @@ export default function TasksAdmin() {
       coin_reward: String(rec.coins),
       xp_reward: String(rec.xp),
       est_minutes: String(rec.est_minutes),
+      icon: TASK_TYPE_ICON[rec.task_type] ?? "star",
     }));
     setLibPillar(rec.pillar ?? null);
     const v = verificationFromText(rec.verification ?? "");
@@ -286,6 +328,7 @@ export default function TasksAdmin() {
       pillar: libPillar ?? defaultPillar(form.task_type),
       evidence,
       verifier,
+      icon: form.icon,
     });
     setBusy(false);
     if (error) return setMsg({ ok: false, text: error.message });
@@ -326,6 +369,7 @@ export default function TasksAdmin() {
       pillar: libPillar ?? defaultPillar(form.task_type),
       evidence,
       verifier,
+      icon: form.icon,
     };
     const { error } = editingId
       ? await supabase.from("quest_schedules").update(payload).eq("id", editingId)
@@ -363,6 +407,7 @@ export default function TasksAdmin() {
       coin_reward: String(s.coin_reward),
       xp_reward: String(s.xp_reward),
       deadline: "",
+      icon: s.icon ?? TASK_TYPE_ICON[s.task_type] ?? "star",
     });
     setMsg(null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -462,7 +507,13 @@ export default function TasksAdmin() {
               <Select
                 label="Type"
                 value={form.task_type}
-                onChange={(e) => setForm((f) => ({ ...f, task_type: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    task_type: e.target.value,
+                    icon: TASK_TYPE_ICON[e.target.value] ?? "star",
+                  }))
+                }
               >
                 {TASK_TYPES.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -486,6 +537,14 @@ export default function TasksAdmin() {
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Pull the covers neat and place the pillows at the top"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <IconPicker
+                  label="Quest icon"
+                  options={QUEST_ICON_OPTIONS}
+                  value={form.icon}
+                  onChange={(icon) => setForm((f) => ({ ...f, icon }))}
                 />
               </div>
             </div>

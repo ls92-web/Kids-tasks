@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { IconPicker } from "@/components/admin/IconPicker";
 import {
   CHALLENGE_LIBRARY,
   ChallengeDuration,
@@ -23,6 +24,7 @@ interface Challenge {
   status: string;
   mode: "competitive" | "cooperative";
   goal_target: number | null;
+  icon: string | null;
 }
 
 const METRICS = [
@@ -41,6 +43,49 @@ const METRICS = [
   { id: "family", label: "Family challenge" },
 ];
 
+/* metric → default icon slug — the same "same automation" default pattern
+   the quest form uses for task_type. */
+const METRIC_ICON: Record<string, string> = {
+  tasks: "sword",
+  reading: "book",
+  homework: "multiplication",
+  cleaning: "home",
+  habits: "energy",
+  prayer: "prayer",
+  faith: "quraan",
+  learning: "quest-target",
+  responsibility: "hero-shield",
+  wellbeing: "heart",
+  character: "star",
+  family: "family",
+};
+
+/* curated, challenge-appropriate slice of the icon pool */
+const CHALLENGE_ICON_OPTIONS = [
+  { id: "sword", label: "Quests" },
+  { id: "trophy", label: "Champion" },
+  { id: "champion", label: "Champion" },
+  { id: "medal", label: "Medal" },
+  { id: "legendary", label: "Legendary" },
+  { id: "leaderboard", label: "Leaderboard" },
+  { id: "star", label: "General" },
+  { id: "quest-target", label: "Goal" },
+  { id: "flame", label: "Streak" },
+  { id: "energy", label: "Habits" },
+  { id: "book", label: "Reading" },
+  { id: "prayer", label: "Prayer" },
+  { id: "quraan", label: "Qur'an" },
+  { id: "multiplication", label: "Homework" },
+  { id: "home", label: "Cleaning" },
+  { id: "hero-shield", label: "Responsibility" },
+  { id: "heart", label: "Wellbeing" },
+  { id: "family", label: "Family" },
+  { id: "world", label: "World" },
+  { id: "celebration", label: "Celebration" },
+  { id: "progress", label: "Progress" },
+  { id: "gift", label: "Bonus" },
+];
+
 export default function ChallengesAdmin() {
   const { profile } = useWorld();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -52,6 +97,7 @@ export default function ChallengesAdmin() {
     ends_at: "",
     mode: "competitive" as "competitive" | "cooperative",
     goal_target: "",
+    icon: METRIC_ICON.tasks,
   });
   const [libChallengeId, setLibChallengeId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,6 +119,7 @@ export default function ChallengesAdmin() {
       ends_at: durationEndsAt(c.duration),
       mode: c.mode,
       goal_target: c.goalTarget ? String(c.goalTarget) : "",
+      icon: METRIC_ICON[c.metric] ?? "sword",
     });
   }
 
@@ -112,6 +159,7 @@ export default function ChallengesAdmin() {
       created_by: profile.id,
       mode: form.mode,
       goal_target: form.mode === "cooperative" ? parseInt(form.goal_target, 10) : null,
+      icon: form.icon,
     });
     setBusy(false);
     setForm((f) => ({ ...f, title: "", description: "", ends_at: "" }));
@@ -202,7 +250,13 @@ export default function ChallengesAdmin() {
           <Select
             label="Kind"
             value={form.metric}
-            onChange={(e) => setForm((f) => ({ ...f, metric: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                metric: e.target.value,
+                icon: METRIC_ICON[e.target.value] ?? "sword",
+              }))
+            }
           >
             {METRICS.map((m) => (
               <option key={m.id} value={m.id}>
@@ -217,6 +271,14 @@ export default function ChallengesAdmin() {
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Whoever finishes the most reading quests this week wins"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <IconPicker
+              label="Challenge icon"
+              options={CHALLENGE_ICON_OPTIONS}
+              value={form.icon}
+              onChange={(icon) => setForm((f) => ({ ...f, icon }))}
             />
           </div>
           {form.mode === "cooperative" && (
@@ -274,7 +336,7 @@ export default function ChallengesAdmin() {
           <div className="flex flex-col gap-2">
             {challenges.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                <Icon name="lightning" size={20} art muted className="shrink-0" />
+                <Icon name={c.icon ?? "lightning"} size={20} art muted className="shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-display truncate text-sm font-bold">{c.title}</p>
                   <p className="text-xs text-[var(--text-dim)]">

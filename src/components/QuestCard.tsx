@@ -3,27 +3,18 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Icon } from "./Icon";
-import { DIFFICULTY, Task } from "@/lib/game";
+import { DIFFICULTY, Task, TASK_TYPE_ICON } from "@/lib/game";
 import { iconArt } from "@/lib/assets";
 import { enter, stagger } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { useWorld } from "./ThemeProvider";
 
-/* task type → delivered rendered icon art (public/ui/icons/<slug>.png) */
-const TYPE_ART: Record<string, string> = {
-  chore: "home",
-  homework: "multiplication",
-  reading: "book",
-  prayer: "prayer",
-  quran: "quraan",
-  habit: "energy",
-  other: "star",
-};
-
-/* a bed-making chore gets the glowing-bed icon */
+/* Parent-chosen icon wins; otherwise the same auto-derivation as always
+   (a bed-making chore gets the glowing-bed icon, else task_type default). */
 function questArt(task: Task): string {
+  if (task.icon) return task.icon;
   if (task.task_type === "chore" && task.title.toLowerCase().includes("bed")) return "make-bed";
-  return TYPE_ART[task.task_type] ?? "star";
+  return TASK_TYPE_ICON[task.task_type] ?? "star";
 }
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {

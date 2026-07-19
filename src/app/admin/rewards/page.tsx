@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
+import { IconPicker } from "@/components/admin/IconPicker";
 import { REWARD_ICONS } from "@/components/RewardCard";
 import { Reward } from "@/lib/game";
 import { REWARD_LIBRARY, REWARD_CATEGORIES } from "@/lib/rewardLibrary";
@@ -234,17 +235,14 @@ export default function RewardsAdmin() {
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="Movie Night"
           />
-          <Select
-            label="Card art"
-            value={form.icon}
-            onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-          >
-            {ICON_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
+          <div className="sm:col-span-2">
+            <IconPicker
+              label="Card art"
+              options={ICON_OPTIONS.map((o) => ({ ...o, art: REWARD_ICONS[o.id] ?? "gift" }))}
+              value={form.icon}
+              onChange={(icon) => setForm((f) => ({ ...f, icon }))}
+            />
+          </div>
           <div className="sm:col-span-2">
             <TextArea
               label="Description"
