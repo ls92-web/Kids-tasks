@@ -250,10 +250,10 @@ export default function DailyQuests() {
           </h1>
           <div className="relative mt-2 flex flex-wrap items-center justify-center gap-2">
             <span className="text-display inline-flex items-center gap-1.5 rounded-full bg-[var(--glow-soft)] px-3 py-1 text-xs font-bold text-[var(--gold)]">
-              <Icon art name={event.icon} size={13} /> {event.title}
+              <Icon art name={event.icon} size={16} /> {event.title}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1 text-xs font-bold text-[var(--text-dim)]">
-              <Icon art name="clock" size={13} className="text-[var(--accent-2)]" />
+              <Icon art name="clock" size={16} className="text-[var(--accent-2)]" />
               resets in {resetIn}
             </span>
           </div>
