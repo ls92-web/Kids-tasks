@@ -125,7 +125,7 @@ export function QuestCard({ task, index = 0 }: { task: Task; index?: number }) {
             >
               +{task.xp_reward}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/ui/icons/xp.png" alt="XP" className="h-3.5 w-3.5 shrink-0 object-contain" />
+              <img src="/ui/icons/xp.png" alt="XP" className="h-5 w-5 shrink-0 object-contain" />
             </span>
             <span className="text-display flex items-center gap-1 rounded-lg bg-black/25 px-2 py-0.5 text-[13px] font-black text-[var(--gold)]">
               +{task.coin_reward}

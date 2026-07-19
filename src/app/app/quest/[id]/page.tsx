@@ -328,7 +328,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
             }
           />
           <Fact icon="coin" label={theme.coinName} value={`+${task.coin_reward}`} gold />
-          <Fact icon="xp" label="XP" value={`+${task.xp_reward}`} accent />
+          <Fact icon="xp" label="XP" value={`+${task.xp_reward}`} accent iconSize={22} />
         </div>
       </motion.div>
 
@@ -505,17 +505,19 @@ function Fact({
   value,
   gold,
   accent,
+  iconSize = 16,
 }: {
   icon: string;
   label: string;
   value: string;
   gold?: boolean;
   accent?: boolean;
+  iconSize?: number;
 }) {
   return (
     <div className="rounded-xl bg-black/25 px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
-        <Icon art name={icon} size={16} /> {label}
+        <Icon art name={icon} size={iconSize} /> {label}
       </div>
       <div
         className="text-display mt-0.5 text-lg font-black"
