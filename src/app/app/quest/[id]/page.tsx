@@ -408,7 +408,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         </motion.div>
       )}
 
-      {canSubmit && (evidence === "none" || (evidence === "voice" && micError)) && (
+      {canSubmit && evidence === "none" && (
         <motion.div
           {...enter}
           transition={{ ...enter.transition, delay: 0.08 }}
@@ -419,9 +419,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
             Done with this {theme.questWord.toLowerCase()}?
           </h2>
           <p className="mx-auto max-w-sm text-sm text-[var(--text-dim)]">
-            {evidence === "voice"
-              ? "We couldn't reach your microphone — tell your grown-up in person instead!"
-              : "No photo needed — your word goes straight to your grown-up."}
+            No photo needed — your word goes straight to your grown-up.
           </p>
           <GameButton variant="gold" className="mt-4" onClick={submitWord}>
             I did it!
@@ -429,7 +427,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         </motion.div>
       )}
 
-      {canSubmit && evidence === "voice" && !micError && (
+      {canSubmit && evidence === "voice" && (
         <motion.div
           {...enter}
           transition={{ ...enter.transition, delay: 0.08 }}
@@ -443,10 +441,30 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
             Record a voice message for your grown-up — they love hearing it from you.
           </p>
 
+          {micError && (
+            <p className="mx-auto mt-3 max-w-sm rounded-lg bg-black/25 px-3 py-2 text-xs font-semibold text-[var(--gold)]">
+              We couldn&apos;t reach your microphone. Check that it&apos;s plugged in and allowed,
+              then try again!
+            </p>
+          )}
+
           {recState === "idle" && (
-            <GameButton variant="gold" className="mt-4" onClick={startRecording}>
-              Start recording
-            </GameButton>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <GameButton
+                variant="gold"
+                onClick={() => {
+                  setMicError(false);
+                  startRecording();
+                }}
+              >
+                {micError ? "Try again" : "Start recording"}
+              </GameButton>
+              {micError && (
+                <GameButton variant="ghost" className="text-sm" onClick={submitWord}>
+                  No mic? Just tell your grown-up — I did it!
+                </GameButton>
+              )}
+            </div>
           )}
 
           {recState === "recording" && (
