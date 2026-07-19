@@ -274,7 +274,7 @@ export default function DailyQuests() {
               </div>
               <div className={`relative ${progressPct >= 100 ? "animate-[chest-shake_1.2s_ease-in-out_infinite]" : ""}`}>
                 <Icon art
-                  name="chest"
+                  name="mystery-box"
                   size={26}
                   className={progressPct >= 100 ? "text-[var(--gold)]" : "text-[var(--text-dim)]"}
                 />
@@ -407,7 +407,7 @@ export default function DailyQuests() {
               Mystery Chest
             </p>
             <div className="animate-[chest-shake_1.4s_ease-in-out_infinite] mx-auto mt-2 w-fit">
-              <Icon name="chest" size={44} art />
+              <Icon name="mystery-box" size={44} art />
             </div>
             <p className="mt-1 text-xs text-[var(--text-dim)]">A surprise is waiting inside!</p>
             <GameButton variant="gold" className="mt-3 w-full text-sm" onClick={() => setChestActive(true)}>
