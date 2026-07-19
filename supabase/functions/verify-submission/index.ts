@@ -247,6 +247,13 @@ Deno.serve(async (req: Request) => {
           storedVerdict
         );
       }
+      // Privacy: award_submission already cleared the DB pointer — delete the
+      // actual Storage file using the path it hands back.
+      const purgedPath = (award as { purged_path?: string } | null)?.purged_path;
+      if (purgedPath) {
+        const { error: rmErr } = await admin.storage.from("proofs").remove([purgedPath]);
+        if (rmErr) console.warn(`media purge failed: ${rmErr.message}`);
+      }
       return json({
         outcome: "auto_approved",
         feedback: verdict.childMessage,

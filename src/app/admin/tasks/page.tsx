@@ -67,6 +67,10 @@ export default function TasksAdmin() {
   const [children, setChildren] = useState<Profile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [schedules, setSchedules] = useState<QuestSchedule[]>([]);
+  // text-only quest history (approved/not approved/expired), last 2 months —
+  // photos and voice recordings are purged as soon as a quest is approved
+  const [history, setHistory] = useState<Task[]>([]);
+  const [historyHero, setHistoryHero] = useState("");
   const [form, setForm] = useState({
     child_id: "",
     title: "",
@@ -110,7 +114,8 @@ export default function TasksAdmin() {
     const supabase = createClient();
     // materialize any routine occurrences due today (idempotent, family-scoped)
     await supabase.rpc("generate_due_quests");
-    const [{ data: kids }, { data: t }, { data: sc }] = await Promise.all([
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    const [{ data: kids }, { data: t }, { data: sc }, { data: hist }] = await Promise.all([
       supabase.from("profiles").select("*").eq("family_id", profile.family_id).eq("role", "child"),
       supabase
         .from("tasks")
@@ -123,10 +128,20 @@ export default function TasksAdmin() {
         .select("*")
         .eq("family_id", profile.family_id)
         .order("created_at", { ascending: false }),
+      // text-only history: quests that reached a final outcome, last 2 months
+      supabase
+        .from("tasks")
+        .select("*")
+        .eq("family_id", profile.family_id)
+        .in("status", ["completed", "rejected", "expired"])
+        .gte("created_at", sixtyDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(300),
     ]);
     setChildren((kids as Profile[]) ?? []);
     setTasks((t as Task[]) ?? []);
     setSchedules((sc as QuestSchedule[]) ?? []);
+    setHistory((hist as Task[]) ?? []);
     setForm((f) => ({ ...f, child_id: f.child_id || (kids?.[0]?.id ?? "") }));
   }, [profile]);
 
@@ -377,6 +392,13 @@ export default function TasksAdmin() {
 
   const childName = (id: string) => children.find((c) => c.id === id)?.nickname ?? "?";
   const primaryAction = repeat ? saveRoutine : createTask;
+
+  const HISTORY_OUTCOME: Record<string, { label: string; color: string; icon: string }> = {
+    completed: { label: "Approved", color: "var(--success)", icon: "check" },
+    rejected: { label: "Not approved", color: "var(--danger)", icon: "x" },
+    expired: { label: "Expired", color: "var(--text-dim)", icon: "clock" },
+  };
+  const filteredHistory = historyHero ? history.filter((t) => t.child_id === historyHero) : history;
 
   return (
     <div className="flex flex-col gap-5">
@@ -805,6 +827,56 @@ export default function TasksAdmin() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Quest History"
+        subtitle="What each hero has done over the last 2 months — photos and voice recordings are removed once a quest is approved"
+      >
+        {children.length > 1 && (
+          <div className="mb-3">
+            <Select
+              label="Hero"
+              value={historyHero}
+              onChange={(e) => setHistoryHero(e.target.value)}
+            >
+              <option value="">All heroes</option>
+              {children.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nickname}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+        {filteredHistory.length === 0 ? (
+          <EmptyNote>No quest history yet.</EmptyNote>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {filteredHistory.map((t) => {
+              const outcome = HISTORY_OUTCOME[t.status] ?? HISTORY_OUTCOME.expired;
+              return (
+                <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+                  <Icon name={outcome.icon} size={18} art muted className="shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-display truncate text-sm font-bold">{t.title}</p>
+                    <p className="text-xs text-[var(--text-dim)]">
+                      {childName(t.child_id)} —{" "}
+                      {new Date(t.completed_at ?? t.created_at).toLocaleDateString()}
+                      {t.status === "completed" && ` — +${t.coin_reward}c / +${t.xp_reward}xp`}
+                    </p>
+                  </div>
+                  <span
+                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+                    style={{ color: outcome.color, background: "rgba(0,0,0,0.3)" }}
+                  >
+                    {outcome.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </SectionCard>

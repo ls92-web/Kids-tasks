@@ -94,7 +94,14 @@ export default function ReviewPage() {
     setSubs((list) => list.filter((x) => x.id !== sub.id));
     const supabase = createClient();
     if (action === "approve") {
-      await supabase.rpc("award_submission", { p_submission_id: sub.id });
+      const { data: award } = await supabase.rpc("award_submission", { p_submission_id: sub.id });
+      // Privacy: the proof photo/voice recording is no longer needed once
+      // approved — award_submission already cleared the DB pointer; delete
+      // the actual Storage file using the path it hands back.
+      const purgedPath = (award as { purged_path?: string } | null)?.purged_path;
+      if (purgedPath) {
+        await supabase.storage.from("proofs").remove([purgedPath]);
+      }
     } else if (action === "redo") {
       await supabase.rpc("reject_submission", {
         p_submission_id: sub.id,
