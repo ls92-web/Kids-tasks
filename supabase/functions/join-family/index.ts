@@ -1,11 +1,15 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-/* A hero joins their family with the Family Code — no parent action needed.
+/* A hero joins their family with the Family Code.
    The code IS the credential here (this endpoint is reachable without a JWT,
    because the child has no account yet), so:
      - the code must match an existing family exactly
      - username stays globally unique
-     - inputs are validated/cleaned exactly like create-child */
+     - inputs are validated/cleaned exactly like create-child
+   Heroes created this way start as status 'pending_approval' — a parent
+   must approve them from the dashboard before they can enter the world.
+   (Children a parent creates directly via create-child stay instantly
+   active, as before.) */
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +81,8 @@ Deno.serve(async (req: Request) => {
         username: cleanUsername,
         nickname: nickname || cleanUsername,
         pet: species,
+        // handle_new_user() honours this: the hero waits for parent approval
+        status: "pending_approval",
       },
     });
     if (createErr) return json({ error: createErr.message }, 400);

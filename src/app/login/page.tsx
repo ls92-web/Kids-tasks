@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { GameButton } from "@/components/GameButton";
 import { Callout } from "@/components/Callout";
+import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
+import { sfx } from "@/lib/sound";
 import { enter } from "@/lib/motion";
+import { FAMILY_CODE_KEY } from "@/lib/game";
 
 type Mode = "hero" | "parent";
+
+/** An active hero on this device's remembered family — display data only
+    (from the family_heroes lookup); entering still needs the hero's PIN. */
+interface FamilyHero {
+  username: string;
+  nickname: string;
+  pet: string;
+}
 
 export default function LoginPage() {
   return (
@@ -27,16 +38,40 @@ function LoginInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [waiting, setWaiting] = useState(false); // pending-approval message
   const [busy, setBusy] = useState(false);
 
-  async function signIn() {
+  // "Choose Your Hero": if this device remembers its family, show tappable
+  // hero portraits instead of a typed name. Falls back to the classic form.
+  const [heroes, setHeroes] = useState<FamilyHero[] | null>(null);
+  const [chosen, setChosen] = useState<FamilyHero | null>(null);
+  const [typeInstead, setTypeInstead] = useState(false);
+
+  useEffect(() => {
+    let storedCode: string | null = null;
+    try {
+      storedCode = localStorage.getItem(FAMILY_CODE_KEY);
+    } catch {}
+    if (!storedCode) return;
+    const supabase = createClient();
+    supabase.rpc("family_heroes", { p_code: storedCode }).then(({ data }) => {
+      const res = data as { found: boolean; heroes?: FamilyHero[] } | null;
+      if (res?.found && res.heroes && res.heroes.length > 0) setHeroes(res.heroes);
+    });
+  }, []);
+
+  const pickerActive = mode === "hero" && !!heroes && !typeInstead;
+  // shown under the typed form so a hero can hop back to the tap-to-pick list
+  const showBackToHeroes = mode === "hero" && typeInstead && !!heroes;
+
+  async function signIn(heroUsername?: string) {
     setBusy(true);
     setError("");
+    setWaiting(false);
     const supabase = createClient();
+    const name = heroUsername ?? username;
     const loginEmail =
-      mode === "hero"
-        ? `${username.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@kidsquest.app`
-        : email;
+      mode === "hero" ? `${name.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@kidsquest.app` : email;
     const loginPassword = mode === "hero" ? pin : password;
 
     const { data, error: err } = await supabase.auth.signInWithPassword({
@@ -46,7 +81,7 @@ function LoginInner() {
     if (err || !data.user) {
       setError(
         mode === "hero"
-          ? "That hero name or PIN is not right. Try again!"
+          ? "That secret PIN is not right. Try again!"
           : err?.message ?? "Sign in failed"
       );
       setBusy(false);
@@ -54,9 +89,37 @@ function LoginInner() {
     }
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, status, family_id")
       .eq("id", data.user.id)
       .single();
+
+    // heroes who joined with the Family Code wait for a parent's approval
+    if (profile?.role === "child" && profile.status === "pending_approval") {
+      await supabase.auth.signOut();
+      setWaiting(true);
+      setBusy(false);
+      return;
+    }
+    if (profile?.role === "child" && profile.status === "rejected") {
+      await supabase.auth.signOut();
+      setError("This hero can't enter right now — talk to your grown-up.");
+      setBusy(false);
+      return;
+    }
+
+    // remember the family on this device so next time is just a tap
+    if (profile?.role === "child" && profile.family_id) {
+      const { data: fam } = await supabase
+        .from("families")
+        .select("code")
+        .eq("id", profile.family_id)
+        .single();
+      if (fam?.code) {
+        try {
+          localStorage.setItem(FAMILY_CODE_KEY, fam.code);
+        } catch {}
+      }
+    }
     // hard navigation so the auth cookies are seen by the server proxy
     window.location.assign(profile?.role === "parent" ? "/admin" : "/app");
   }
@@ -99,6 +162,7 @@ function LoginInner() {
                 onClick={() => {
                   setMode(m);
                   setError("");
+                  setWaiting(false);
                 }}
                 className={`text-display relative flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-bold transition-colors ${
                   mode === m ? "text-white" : "text-[var(--text-dim)]"
@@ -124,61 +188,186 @@ function LoginInner() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.form
-              key={mode}
-              initial={{ opacity: 0, x: mode === "hero" ? -16 : 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: mode === "hero" ? 16 : -16 }}
-              transition={{ duration: 0.18 }}
-              className="flex flex-col gap-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!busy) signIn();
-              }}
-            >
-              {mode === "hero" ? (
-                <>
-                  <Field
-                    label="Hero name"
-                    value={username}
-                    onChange={setUsername}
-                    placeholder="shadowfox"
-                    autoCapitalize="none"
-                  />
-                  <Field
-                    label="Secret PIN"
-                    value={pin}
-                    onChange={setPin}
-                    placeholder="Your secret code"
-                    type="password"
-                    inputMode="numeric"
-                  />
-                </>
-              ) : (
-                <>
-                  <Field
-                    label="Email"
-                    value={email}
-                    onChange={setEmail}
-                    placeholder="you@example.com"
-                    type="email"
-                  />
-                  <Field
-                    label="Password"
-                    value={password}
-                    onChange={setPassword}
-                    placeholder="Your password"
-                    type="password"
-                  />
-                </>
-              )}
+            {/* ---- Choose Your Hero: tap your portrait, enter your PIN -------- */}
+            {pickerActive && !chosen && (
+              <motion.div
+                key="picker"
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ duration: 0.18 }}
+                className="flex flex-col gap-4"
+              >
+                <p className="text-display text-center text-sm font-bold text-[var(--text-dim)]">
+                  Choose your hero
+                </p>
+                <div className={`grid gap-3 ${heroes!.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  {heroes!.map((h) => (
+                    <motion.button
+                      key={h.username}
+                      whileHover={{ y: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        sfx.click();
+                        setError("");
+                        setWaiting(false);
+                        setChosen(h);
+                      }}
+                      className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl bg-black/25 p-4 transition-shadow hover:ring-2 hover:ring-[var(--accent)]"
+                    >
+                      <Portrait species={h.pet} size={64} />
+                      <span className="text-display max-w-full truncate text-sm font-black">
+                        {h.nickname}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+                {waiting && (
+                  <Callout tone="info">
+                    Your hero is ready! Ask your grown-up to approve your adventure.
+                  </Callout>
+                )}
+                {error && <Callout tone="error">{error}</Callout>}
+                <button
+                  onClick={() => {
+                    sfx.click();
+                    setTypeInstead(true);
+                  }}
+                  className="text-display cursor-pointer text-center text-xs font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                >
+                  My hero isn&apos;t here — type my hero name
+                </button>
+              </motion.div>
+            )}
 
-              {error && <Callout tone="error">{error}</Callout>}
+            {pickerActive && chosen && (
+              <motion.form
+                key="picker-pin"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.18 }}
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!busy && pin.length >= 4) signIn(chosen.username);
+                }}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <Portrait species={chosen.pet} size={72} />
+                  <p className="text-display text-lg font-black">{chosen.nickname}</p>
+                </div>
+                <Field
+                  label="Enter your secret PIN"
+                  value={pin}
+                  onChange={setPin}
+                  placeholder="Your secret code"
+                  type="password"
+                  inputMode="numeric"
+                  autoFocus
+                />
+                {waiting && (
+                  <Callout tone="info">
+                    Your hero is ready! Ask your grown-up to approve your adventure.
+                  </Callout>
+                )}
+                {error && <Callout tone="error">{error}</Callout>}
+                <GameButton type="submit" disabled={busy || pin.length < 4} className="w-full text-lg">
+                  {busy ? "Opening the gate…" : "Enter the World"}
+                </GameButton>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sfx.click();
+                    setChosen(null);
+                    setPin("");
+                    setError("");
+                    setWaiting(false);
+                  }}
+                  className="text-display cursor-pointer text-center text-xs font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                >
+                  Not you? Choose another hero
+                </button>
+              </motion.form>
+            )}
 
-              <GameButton type="submit" disabled={busy} className="mt-1 w-full text-lg">
-                {busy ? "Opening the gate…" : "Enter the World"}
-              </GameButton>
-            </motion.form>
+            {/* ---- classic typed sign-in (parents; heroes on new devices) ----- */}
+            {(mode === "parent" || !pickerActive) && (
+              <motion.form
+                key={mode}
+                initial={{ opacity: 0, x: mode === "hero" ? -16 : 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: mode === "hero" ? 16 : -16 }}
+                transition={{ duration: 0.18 }}
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!busy) signIn();
+                }}
+              >
+                {mode === "hero" ? (
+                  <>
+                    <Field
+                      label="Hero name"
+                      value={username}
+                      onChange={setUsername}
+                      placeholder="shadowfox"
+                      autoCapitalize="none"
+                    />
+                    <Field
+                      label="Secret PIN"
+                      value={pin}
+                      onChange={setPin}
+                      placeholder="Your secret code"
+                      type="password"
+                      inputMode="numeric"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Field
+                      label="Email"
+                      value={email}
+                      onChange={setEmail}
+                      placeholder="you@example.com"
+                      type="email"
+                    />
+                    <Field
+                      label="Password"
+                      value={password}
+                      onChange={setPassword}
+                      placeholder="Your password"
+                      type="password"
+                    />
+                  </>
+                )}
+
+                {waiting && (
+                  <Callout tone="info">
+                    Your hero is ready! Ask your grown-up to approve your adventure.
+                  </Callout>
+                )}
+                {error && <Callout tone="error">{error}</Callout>}
+
+                <GameButton type="submit" disabled={busy} className="mt-1 w-full text-lg">
+                  {busy ? "Opening the gate…" : "Enter the World"}
+                </GameButton>
+                {showBackToHeroes && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfx.click();
+                      setTypeInstead(false);
+                      setError("");
+                      setWaiting(false);
+                    }}
+                    className="text-display cursor-pointer text-center text-xs font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                  >
+                    Back to my heroes
+                  </button>
+                )}
+              </motion.form>
+            )}
           </AnimatePresence>
 
           {mode === "hero" ? (
@@ -210,6 +399,7 @@ function Field({
   type = "text",
   inputMode,
   autoCapitalize,
+  autoFocus,
 }: {
   label: string;
   value: string;
@@ -218,6 +408,7 @@ function Field({
   type?: string;
   inputMode?: "numeric";
   autoCapitalize?: string;
+  autoFocus?: boolean;
 }) {
   return (
     <label className="block">
@@ -231,6 +422,7 @@ function Field({
         type={type}
         inputMode={inputMode}
         autoCapitalize={autoCapitalize}
+        autoFocus={autoFocus}
         className="w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold text-[var(--text)] outline-none transition-shadow placeholder:text-[var(--text-dim)]/50 focus:[box-shadow:0_0_0_2px_var(--glow-soft),0_0_20px_-4px_var(--glow)]"
       />
     </label>

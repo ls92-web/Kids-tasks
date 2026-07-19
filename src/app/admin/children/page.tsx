@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { Companion } from "@/components/Companion";
-import { Input, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
+import { Input, SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { PETS, Profile, Family, levelFromXp } from "@/lib/game";
@@ -21,6 +21,7 @@ export default function ChildrenPage() {
   const [pet, setPet] = useState("dragon");
   const [charClass] = useState("shadow_warrior");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [reqMsg, setReqMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [adjust, setAdjust] = useState<Record<string, { coins: string; xp: string }>>({});
 
@@ -85,15 +86,74 @@ export default function ChildrenPage() {
     load();
   }
 
+  // ---- join requests: heroes who joined with the Family Code -----------------
+  async function decideRequest(child: Profile, approve: boolean) {
+    if (!approve && !window.confirm(`Turn away ${child.nickname}? They won't be able to enter WonderNest.`)) {
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.rpc(approve ? "approve_child" : "reject_child", {
+      p_child: child.id,
+    });
+    if (error) {
+      setReqMsg({ ok: false, text: "Something went wrong — refresh and try again." });
+      return;
+    }
+    setReqMsg(
+      approve
+        ? { ok: true, text: `${child.nickname} is in! They can now sign in and start their adventure.` }
+        : { ok: true, text: `${child.nickname}'s request was declined.` }
+    );
+    load();
+    pingAdminRefresh();
+  }
+
+  const pending = children.filter((c) => c.status === "pending_approval");
+  const active = children.filter((c) => !c.status || c.status === "active");
+
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-display text-2xl font-black">Heroes</h1>
+
+      {reqMsg && <Callout tone={reqMsg.ok ? "success" : "error"}>{reqMsg.text}</Callout>}
+
+      {/* heroes created with the Family Code wait here for your blessing */}
+      {pending.length > 0 && (
+        <SectionCard
+          title="Join Requests"
+          subtitle="These heroes created their own adventurer with your Family Code — approve to let them in"
+        >
+          <div className="flex flex-col gap-2">
+            {pending.map((c) => {
+              const petMeta = PETS.find((p) => p.id === c.pet);
+              return (
+                <div key={c.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+                  <Portrait species={c.pet} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-display font-bold">{c.nickname}</p>
+                    <p className="text-xs text-[var(--text-dim)]">
+                      @{c.username} — chose {petMeta?.name ?? c.pet} the {petMeta?.species ?? "companion"}
+                      {c.created_at && ` — asked ${new Date(c.created_at).toLocaleDateString()}`}
+                    </p>
+                  </div>
+                  <AdminButton size="sm" onClick={() => decideRequest(c, true)}>
+                    <Icon art muted name="check" size={14} /> Approve
+                  </AdminButton>
+                  <AdminButton size="sm" variant="danger" onClick={() => decideRequest(c, false)}>
+                    <Icon art muted name="close" size={14} /> Reject
+                  </AdminButton>
+                </div>
+              );
+            })}
+          </div>
+        </SectionCard>
+      )}
 
       {/* the family code IS the invitation */}
       {family && (
         <SectionCard
           title="Invite a hero"
-          subtitle="Your child opens the app, taps “Join with your Family Code”, and enters this code"
+          subtitle="Your child opens the app, taps “Join My Family”, enters this code and creates their own hero — you approve it here"
         >
           <div className="flex flex-wrap items-center gap-4">
             <button
@@ -190,11 +250,11 @@ export default function ChildrenPage() {
       </SectionCard>
 
       <SectionCard title="Your heroes" subtitle="Adjust coins or XP with + and - amounts">
-        {children.length === 0 ? (
-          <EmptyNote>No heroes yet — create one above.</EmptyNote>
+        {active.length === 0 ? (
+          <EmptyNote>No heroes yet — share your Family Code or create one above.</EmptyNote>
         ) : (
           <div className="flex flex-col gap-3">
-            {children.map((c) => {
+            {active.map((c) => {
               const { level } = levelFromXp(c.xp);
               const a = adjust[c.id] ?? { coins: "", xp: "" };
               return (

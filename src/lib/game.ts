@@ -235,6 +235,11 @@ export const TASK_TYPE_ICON: Record<string, string> = {
 };
 
 /* ---------- Families ---------- */
+/** localStorage key remembering the device's family join code — powers the
+    "Choose Your Hero" sign-in picker. Display data only; entering the world
+    still needs each hero's own PIN. */
+export const FAMILY_CODE_KEY = "qf_family_code";
+
 /* Crest choices for family creation (ids map to Icon names). */
 export const CRESTS = [
   { id: "shield", label: "Shield of Dawn" },
@@ -271,6 +276,11 @@ export interface Profile {
   total_coins_earned: number;
   last_chest_date: string | null;
   animation_intensity: "full" | "reduced" | "minimal";
+  /** Heroes who join with the Family Code wait for a parent's approval. */
+  status: "pending_approval" | "active" | "rejected";
+  approved_at?: string | null;
+  approved_by?: string | null;
+  created_at?: string;
 }
 
 /* ============================================================

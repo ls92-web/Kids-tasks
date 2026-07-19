@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -11,17 +11,20 @@ import { Companion } from "@/components/Companion";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
-import { PETS, ELEMENTS, COMPANION_UNLOCKS } from "@/lib/game";
+import { popSpring } from "@/lib/motion";
+import { PETS, ELEMENTS, COMPANION_UNLOCKS, FAMILY_CODE_KEY } from "@/lib/game";
 
-/* A hero joins the family adventure with the Family Code their parent shares.
-   Three tiny steps, then straight into the world:
-     code → hero name + PIN → meet the three starters and bond with ONE.
+/* A hero is born. The Family Code opens the gate, then the child creates
+   their own hero step by step:
 
-   The companion choice is the emotional heart of onboarding — a lifelong
-   partner, not a settings picker. Only the starters appear here; the other
-   nine sleep in the Hero Hall until they're earned. */
+     welcome → code → family found ✨ → hero name → companion → secret PIN
+             → HERO REVEAL (cinematic) → waiting for parent approval
 
-type Step = "code" | "identity" | "companion";
+   The companion choice stays the emotional heart — a lifelong partner, not a
+   settings picker. Heroes created here wait for a parent's approval before
+   the world opens (status 'pending_approval', set server-side). */
+
+type Step = "welcome" | "code" | "found" | "name" | "companion" | "pin" | "reveal" | "waiting";
 
 export default function JoinPage() {
   return (
@@ -32,8 +35,9 @@ export default function JoinPage() {
 }
 
 function JoinInner() {
-  const [step, setStep] = useState<Step>("code");
+  const [step, setStep] = useState<Step>("welcome");
   const [code, setCode] = useState("");
+  const [family, setFamily] = useState<{ name: string; crest: string } | null>(null);
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [species, setSpecies] = useState<string | null>(null);
@@ -45,6 +49,25 @@ function JoinInner() {
   const starters = PETS.filter((p) => COMPANION_UNLOCKS[p.id]?.kind === "starter").sort(
     (a, b) => STARTER_ORDER.indexOf(a.id) - STARTER_ORDER.indexOf(b.id)
   );
+
+  // the input steps get progress dots; the story beats don't
+  const DOT_STEPS: Step[] = ["code", "name", "companion", "pin"];
+
+  async function checkCode() {
+    setBusy(true);
+    setError("");
+    const supabase = createClient();
+    const { data, error: err } = await supabase.rpc("lookup_family_by_code", { p_code: code });
+    setBusy(false);
+    const found = data as { found: boolean; name?: string; crest?: string } | null;
+    if (err || !found?.found) {
+      setError("No family found with that code — check it with your grown-up.");
+      return;
+    }
+    setFamily({ name: found.name ?? "Your family", crest: found.crest ?? "shield" });
+    sfx.complete();
+    setStep("found");
+  }
 
   async function join() {
     if (!species) return;
@@ -64,19 +87,20 @@ function JoinInner() {
       setBusy(false);
       // code or name problems belong to earlier steps
       if (/family code|family found/i.test(text)) setStep("code");
-      else if (/hero name|PIN/i.test(text)) setStep("identity");
+      else if (/hero name/i.test(text)) setStep("name");
       return;
     }
-    // sign straight in — the adventure starts now
-    const email = `${username.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@kidsquest.app`;
-    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password: pin });
-    if (signErr) {
-      // account exists; let them sign in normally
-      window.location.assign("/login");
-      return;
-    }
-    window.location.assign("/app");
+    // remember the family on this device for the "Choose Your Hero" sign-in
+    try {
+      localStorage.setItem(FAMILY_CODE_KEY, code);
+    } catch {}
+    setBusy(false);
+    sfx.ceremony();
+    setStep("reveal");
   }
+
+  const pet = species ? PETS.find((x) => x.id === species) : null;
+  const el = pet ? ELEMENTS[pet.element] : null;
 
   return (
     <div className="relative min-h-screen">
@@ -94,38 +118,95 @@ function JoinInner() {
             "linear-gradient(180deg, rgba(6,10,24,0.55) 0%, rgba(6,10,24,0.78) 52%, rgba(6,10,24,0.93) 100%)",
         }}
       />
+
+      {/* the Hero Reveal takes the whole screen — everything else lives in the panel */}
+      {step === "reveal" && pet && el && (
+        <HeroReveal
+          nickname={username}
+          species={pet.id}
+          petName={pet.name}
+          petSpecies={pet.species}
+          elementColor={el.color}
+          onDone={() => setStep("waiting")}
+        />
+      )}
+
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className="panel panel-glow w-full max-w-lg p-8"
         >
-          <div className="mb-6 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/emblem.png"
-              alt="WonderNest"
-              className="mx-auto mb-3 h-auto w-14"
-            />
-            <h1 className="text-display text-glow text-3xl font-black">Join the Adventure</h1>
-            <div className="mx-auto mt-3 flex w-fit items-center gap-1.5">
-              {(["code", "identity", "companion"] as Step[]).map((s, i) => (
-                <div
-                  key={s}
-                  className="h-1.5 rounded-full transition-all"
-                  style={{
-                    width: step === s ? 28 : 14,
-                    background:
-                      (["code", "identity", "companion"] as Step[]).indexOf(step) >= i
-                        ? "var(--accent)"
-                        : "rgba(255,255,255,0.15)",
-                  }}
-                />
-              ))}
+          {step !== "waiting" && (
+            <div className="mb-6 text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/emblem.png"
+                alt="WonderNest"
+                className="mx-auto mb-3 h-auto w-14"
+              />
+              <h1 className="text-display text-glow text-3xl font-black">
+                {step === "welcome" ? "Welcome to WonderNest" : "Join the Adventure"}
+              </h1>
+              {DOT_STEPS.includes(step) && (
+                <div className="mx-auto mt-3 flex w-fit items-center gap-1.5">
+                  {DOT_STEPS.map((s, i) => (
+                    <div
+                      key={s}
+                      className="h-1.5 rounded-full transition-all"
+                      style={{
+                        width: step === s ? 28 : 14,
+                        background:
+                          DOT_STEPS.indexOf(step) >= i
+                            ? "var(--accent)"
+                            : "rgba(255,255,255,0.15)",
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           <AnimatePresence mode="wait">
+            {/* ---- welcome ---------------------------------------------------- */}
+            {step === "welcome" && (
+              <motion.div
+                key="welcome"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                className="flex flex-col items-center gap-5 text-center"
+              >
+                <p className="max-w-sm text-sm leading-relaxed text-[var(--text-dim)]">
+                  A world of quests, treasures and companions is waiting for you.
+                </p>
+                {/* the three starters peeking in — a taste of what's coming */}
+                <div className="flex items-end justify-center gap-1">
+                  {starters.map((p, i) => (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 + i * 0.15, ...popSpring }}
+                    >
+                      <Companion species={p.id} level={1} size={i === 1 ? 96 : 76} float={false} interactive />
+                    </motion.div>
+                  ))}
+                </div>
+                <GameButton
+                  onClick={() => {
+                    sfx.click();
+                    setStep("code");
+                  }}
+                  className="w-full text-lg"
+                >
+                  Join My Family <Icon name="arrowRight" size={16} className="ml-1 inline" />
+                </GameButton>
+              </motion.div>
+            )}
+
+            {/* ---- family code ------------------------------------------------ */}
             {step === "code" && (
               <motion.form
                 key="code"
@@ -135,14 +216,11 @@ function JoinInner() {
                 className="flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (code.replace(/[^a-zA-Z0-9]/g, "").length >= 4) {
-                    setError("");
-                    setStep("identity");
-                  }
+                  if (!busy && code.replace(/[^a-zA-Z0-9]/g, "").length >= 4) checkCode();
                 }}
               >
                 <p className="text-center text-sm text-[var(--text-dim)]">
-                  Ask your parent for the <b className="text-[var(--accent-2)]">Family Code</b>
+                  Ask your grown-up for the <b className="text-[var(--accent-2)]">Family Code</b>
                 </p>
                 <input
                   value={code}
@@ -152,27 +230,82 @@ function JoinInner() {
                   className="text-display w-full rounded-2xl border border-[var(--surface-border)] bg-black/30 px-4 py-4 text-center text-2xl font-black tracking-[0.25em] text-[var(--accent-2)] outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
                 />
                 {error && <Callout tone="error">{error}</Callout>}
-                <GameButton type="submit" className="w-full text-lg" disabled={code.replace(/[^a-zA-Z0-9]/g, "").length < 4}>
-                  Next <Icon name="arrowRight" size={16} className="ml-1 inline" />
+                <GameButton
+                  type="submit"
+                  className="w-full text-lg"
+                  disabled={busy || code.replace(/[^a-zA-Z0-9]/g, "").length < 4}
+                >
+                  {busy ? "Searching the realms…" : "Find My Family"}
                 </GameButton>
               </motion.form>
             )}
 
-            {step === "identity" && (
+            {/* ---- family found ✨ -------------------------------------------- */}
+            {step === "found" && family && (
+              <motion.div
+                key="found"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={popSpring}
+                className="flex flex-col items-center gap-4 text-center"
+              >
+                {/* the family crest, glowing — someone is waiting for you */}
+                <motion.div
+                  className="relative grid h-24 w-24 place-items-center rounded-full"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ ...popSpring, delay: 0.15 }}
+                  style={{
+                    background: "radial-gradient(circle at 35% 30%, var(--glow-soft), rgba(0,0,0,0.45))",
+                    boxShadow: "0 0 34px -6px var(--glow)",
+                  }}
+                >
+                  <div className="fx-light absolute inset-[-25%] animate-pulse-glow rounded-full"
+                    style={{ background: "radial-gradient(circle, var(--glow-soft), transparent 70%)" }}
+                  />
+                  <Icon name={family.crest} size={52} art className="relative" />
+                </motion.div>
+                <div>
+                  <p className="text-display text-glow text-2xl font-black">Family found! ✨</p>
+                  <p className="text-display mt-1 text-lg font-bold text-[var(--accent-2)]">
+                    {family.name}
+                  </p>
+                </div>
+                <p className="max-w-xs text-sm text-[var(--text-dim)]">
+                  Ready to create your WonderNest hero?
+                </p>
+                <GameButton
+                  onClick={() => {
+                    sfx.click();
+                    setStep("name");
+                  }}
+                  className="w-full text-lg"
+                >
+                  Create My Hero <Icon name="arrowRight" size={16} className="ml-1 inline" />
+                </GameButton>
+              </motion.div>
+            )}
+
+            {/* ---- hero name -------------------------------------------------- */}
+            {step === "name" && (
               <motion.form
-                key="identity"
+                key="name"
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
                 className="flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (username.trim().length >= 3 && pin.length >= 4) {
+                  if (username.trim().length >= 3) {
                     setError("");
                     setStep("companion");
                   }
                 }}
               >
+                <p className="text-center text-sm text-[var(--text-dim)]">
+                  Every legend starts with a <b className="text-[var(--accent-2)]">name</b>
+                </p>
                 <label className="block">
                   <span className="text-display mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
                     Choose your hero name
@@ -186,30 +319,14 @@ function JoinInner() {
                     className="w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
                   />
                 </label>
-                <label className="block">
-                  <span className="text-display mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
-                    Create your secret PIN
-                  </span>
-                  <input
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    placeholder="At least 4 digits"
-                    type="password"
-                    inputMode="numeric"
-                    className="w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
-                  />
-                </label>
                 {error && <Callout tone="error">{error}</Callout>}
-                <GameButton
-                  type="submit"
-                  className="w-full text-lg"
-                  disabled={username.trim().length < 3 || pin.length < 4}
-                >
+                <GameButton type="submit" className="w-full text-lg" disabled={username.trim().length < 3}>
                   Next <Icon name="arrowRight" size={16} className="ml-1 inline" />
                 </GameButton>
               </motion.form>
             )}
 
+            {/* ---- companion -------------------------------------------------- */}
             {step === "companion" && !confirming && (
               <motion.div
                 key="companion"
@@ -221,10 +338,10 @@ function JoinInner() {
                 <p className="text-center text-sm text-[var(--text-dim)]">
                   Three companions have come to meet you.
                   <br />
-                  <b className="text-[var(--accent-2)]">One</b> will share your whole adventure.
+                  <b className="text-[var(--accent-2)]">One</b> will grow with you from Baby to Legend.
                 </p>
                 {starters.map((p, i) => {
-                  const el = ELEMENTS[p.element];
+                  const elc = ELEMENTS[p.element];
                   return (
                     <motion.button
                       key={p.id}
@@ -239,7 +356,7 @@ function JoinInner() {
                         setConfirming(true);
                       }}
                       className="flex cursor-pointer items-center gap-4 rounded-2xl bg-black/25 p-4 text-left transition-shadow hover:ring-2 hover:ring-[var(--accent)]"
-                      style={{ boxShadow: `0 0 22px -12px ${el.color}` }}
+                      style={{ boxShadow: `0 0 22px -12px ${elc.color}` }}
                     >
                       <div className="shrink-0">
                         <Companion species={p.id} level={1} size={86} float={false} interactive />
@@ -249,9 +366,9 @@ function JoinInner() {
                           <span className="text-display text-lg font-black">{p.name}</span>
                           <span
                             className="text-display rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
-                            style={{ color: el.color, background: "rgba(0,0,0,0.35)" }}
+                            style={{ color: elc.color, background: "rgba(0,0,0,0.35)" }}
                           >
-                            {el.label}
+                            {elc.label}
                           </span>
                           <span className="text-display rounded-md bg-black/35 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--accent-2)]">
                             {p.personality}
@@ -268,7 +385,7 @@ function JoinInner() {
               </motion.div>
             )}
 
-            {step === "companion" && confirming && species && (
+            {step === "companion" && confirming && pet && el && (
               <motion.div
                 key="confirm"
                 initial={{ opacity: 0, scale: 0.94 }}
@@ -276,75 +393,334 @@ function JoinInner() {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center gap-3 text-center"
               >
-                {(() => {
-                  const p = PETS.find((x) => x.id === species)!;
-                  const el = ELEMENTS[p.element];
-                  return (
-                    <>
-                      {/* the chosen one, front and center */}
-                      <div className="relative">
-                        <div
-                          className="fx-light absolute inset-[-20%] animate-pulse-glow rounded-full"
-                          style={{ background: `radial-gradient(circle, ${el.color}44, transparent 70%)` }}
-                        />
-                        <div className="relative animate-floaty">
-                          <Companion species={p.id} level={1} size={150} float={false} selected />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Portrait species={p.id} size={44} />
-                        <div className="text-left">
-                          <p className="text-display text-xl font-black leading-tight">{p.name}</p>
-                          <p className="text-xs text-[var(--text-dim)]">
-                            {p.species} —{" "}
-                            <span className="font-bold" style={{ color: el.color }}>
-                              {el.label}
-                            </span>{" "}
-                            — {p.personality}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="max-w-xs text-sm leading-relaxed text-[var(--text)]">{p.blurb}</p>
+                {/* the chosen one, front and center */}
+                <div className="relative">
+                  <div
+                    className="fx-light absolute inset-[-20%] animate-pulse-glow rounded-full"
+                    style={{ background: `radial-gradient(circle, ${el.color}44, transparent 70%)` }}
+                  />
+                  <div className="relative animate-floaty">
+                    <Companion species={pet.id} level={1} size={150} float={false} selected />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Portrait species={pet.id} size={44} />
+                  <div className="text-left">
+                    <p className="text-display text-xl font-black leading-tight">{pet.name}</p>
+                    <p className="text-xs text-[var(--text-dim)]">
+                      {pet.species} —{" "}
+                      <span className="font-bold" style={{ color: el.color }}>
+                        {el.label}
+                      </span>{" "}
+                      — {pet.personality}
+                    </p>
+                  </div>
+                </div>
+                <p className="max-w-xs text-sm leading-relaxed text-[var(--text)]">{pet.blurb}</p>
 
-                      {/* this choice matters — say so */}
-                      <div className="w-full rounded-xl bg-black/30 px-4 py-3">
-                        <p className="text-display flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--gold)]">
-                          <Icon art name="sparkle" size={13} filled />
-                          Your companion will travel with you until it becomes Legendary.
-                          Choose carefully!
-                        </p>
-                      </div>
+                {/* this choice matters — say so */}
+                <div className="w-full rounded-xl bg-black/30 px-4 py-3">
+                  <p className="text-display flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--gold)]">
+                    <Icon art name="sparkle" size={13} filled />
+                    You and your companion will complete this adventure together.
+                    Choose carefully!
+                  </p>
+                </div>
 
-                      {error && (
-                        <Callout tone="error">{error}</Callout>
-                      )}
-                      <GameButton onClick={join} disabled={busy} className="w-full text-lg">
-                        {busy ? "Opening the gate…" : `I choose ${p.name}!`}
-                      </GameButton>
-                      <button
-                        onClick={() => {
-                          sfx.click();
-                          setConfirming(false);
-                          setSpecies(null);
-                        }}
-                        className="text-display cursor-pointer text-sm font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
-                      >
-                        Let me meet them again
-                      </button>
-                    </>
-                  );
-                })()}
+                <GameButton
+                  onClick={() => {
+                    sfx.click();
+                    setError("");
+                    setStep("pin");
+                  }}
+                  className="w-full text-lg"
+                >
+                  I choose {pet.name}!
+                </GameButton>
+                <button
+                  onClick={() => {
+                    sfx.click();
+                    setConfirming(false);
+                    setSpecies(null);
+                  }}
+                  className="text-display cursor-pointer text-sm font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                >
+                  Let me meet them again
+                </button>
+              </motion.div>
+            )}
+
+            {/* ---- secret PIN ------------------------------------------------- */}
+            {step === "pin" && (
+              <motion.form
+                key="pin"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!busy && pin.length >= 4) join();
+                }}
+              >
+                <p className="text-center text-sm text-[var(--text-dim)]">
+                  One last thing — a <b className="text-[var(--accent-2)]">secret PIN</b> only you know
+                </p>
+                <label className="block">
+                  <span className="text-display mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
+                    Create your secret PIN
+                  </span>
+                  <input
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    placeholder="At least 4 digits"
+                    type="password"
+                    inputMode="numeric"
+                    autoFocus
+                    className="w-full rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
+                  />
+                </label>
+                <p className="text-center text-xs text-[var(--text-dim)]">
+                  You&apos;ll use it every time you enter the world — keep it secret!
+                </p>
+                {error && <Callout tone="error">{error}</Callout>}
+                <GameButton type="submit" className="w-full text-lg" disabled={busy || pin.length < 4}>
+                  {busy ? "Creating your hero…" : "Create My Hero"}
+                </GameButton>
+              </motion.form>
+            )}
+
+            {/* ---- waiting for approval --------------------------------------- */}
+            {step === "waiting" && pet && (
+              <motion.div
+                key="waiting"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center gap-4 text-center"
+              >
+                <div className="relative">
+                  <Portrait species={pet.id} size={84} />
+                  <span className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)]/90 shadow-lg">
+                    <Icon name="clock" size={16} className="text-[#3d2a00]" />
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-display text-glow text-2xl font-black">Your hero is ready!</h2>
+                  <p className="text-display mt-1 text-sm font-bold text-[var(--accent-2)]">
+                    {username} &amp; {pet.name}
+                  </p>
+                </div>
+                <p className="max-w-sm text-sm leading-relaxed text-[var(--text-dim)]">
+                  Ask your grown-up to approve your adventure on their WonderNest dashboard.
+                  Once they do, tap your hero on the sign-in screen and enter your secret PIN.
+                </p>
+                <GameButton onClick={() => window.location.assign("/login")} className="w-full text-lg">
+                  To the gate
+                </GameButton>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <p className="mt-5 text-center text-sm text-[var(--text-dim)]">
-            Already a hero?{" "}
-            <Link href="/login" className="font-bold text-[var(--accent-2)] hover:underline">
-              Sign in
-            </Link>
-          </p>
+          {step !== "waiting" && step !== "reveal" && (
+            <p className="mt-5 text-center text-sm text-[var(--text-dim)]">
+              Already a hero?{" "}
+              <Link href="/login" className="font-bold text-[var(--accent-2)] hover:underline">
+                Sign in
+              </Link>
+            </p>
+          )}
         </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- The Hero Reveal — the biggest moment of onboarding --------------------
+   darkness → magic gathers around the companion → burst of light → the hero
+   card revealed under confetti: nickname, companion, Level 1 Baby form.
+   Same cinematic language as the Legend Ceremony, compressed for a beginning
+   rather than an ending. */
+function HeroReveal({
+  nickname,
+  species,
+  petName,
+  petSpecies,
+  elementColor,
+  onDone,
+}: {
+  nickname: string;
+  species: string;
+  petName: string;
+  petSpecies: string;
+  elementColor: string;
+  onDone: () => void;
+}) {
+  const [stage, setStage] = useState<"gather" | "burst" | "hero">("gather");
+
+  // Freeze the world behind the cinematic
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      setStage("burst");
+      sfx.whoosh();
+    }, 2400);
+    const t2 = setTimeout(() => {
+      setStage("hero");
+      sfx.levelUp();
+    }, 3500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hero Reveal"
+      className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/95 p-4"
+    >
+      {/* swelling aura */}
+      <motion.div
+        className="pointer-events-none absolute h-[75vmin] w-[75vmin] rounded-full"
+        style={{ background: `radial-gradient(circle, ${elementColor}66, transparent 65%)` }}
+        animate={{
+          scale: stage === "gather" ? [1, 1.3, 1.15, 1.5] : stage === "burst" ? 2.8 : 1.6,
+          opacity: stage === "hero" ? 0.35 : 0.9,
+        }}
+        transition={{ duration: stage === "gather" ? 2.2 : 0.9, ease: "easeInOut" }}
+      />
+
+      {/* rising magic while it gathers */}
+      {stage !== "hero" && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <motion.span
+              key={i}
+              className="absolute block h-1.5 w-1.5 rounded-full"
+              style={{
+                left: `${16 + ((i * 53) % 68)}%`,
+                bottom: "-2%",
+                background: i % 3 === 0 ? "#fff" : elementColor,
+                boxShadow: `0 0 8px ${elementColor}`,
+              }}
+              animate={{ y: [0, -560], opacity: [0, 1, 0] }}
+              transition={{
+                duration: 2.2 + (i % 4) * 0.5,
+                delay: (i % 7) * 0.25,
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* burst of light */}
+      <AnimatePresence>
+        {stage === "burst" && (
+          <motion.div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(circle, #fff, ${elementColor}88 45%, transparent 75%)`,
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.4, 1, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, times: [0, 0.25, 0.5, 0.7, 1] }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* confetti once the hero stands revealed */}
+      {stage === "hero" && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 28 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute block h-2.5 w-1.5 rounded-sm"
+              style={{
+                left: `${(i * 37) % 100}%`,
+                top: "-3%",
+                background: [elementColor, "#ffd76a", "#fff", "var(--accent)"][i % 4],
+                animation: `confetti-fall ${2.6 + (i % 5) * 0.5}s linear ${(i % 7) * 0.3}s both`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="relative z-10 w-full max-w-lg text-center">
+        <AnimatePresence mode="wait">
+          {stage !== "hero" && (
+            <motion.div
+              key="gathering"
+              initial={{ opacity: 0, scale: 0.7, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.15 }}
+              transition={{ duration: 1.0, ease: "easeOut" }}
+              className="flex flex-col items-center gap-5"
+            >
+              <motion.div
+                animate={{ scale: stage === "burst" ? [1, 1.12, 0.9, 1.2] : [1, 1.05, 1] }}
+                transition={
+                  stage === "burst"
+                    ? { duration: 1.1 }
+                    : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
+                }
+              >
+                <Companion species={species} level={1} size={200} float={false} />
+              </motion.div>
+              <motion.p
+                className="text-display text-xl font-black text-white"
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
+              >
+                A hero is being born…
+              </motion.p>
+            </motion.div>
+          )}
+
+          {stage === "hero" && (
+            <motion.div
+              key="hero"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={popSpring}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="animate-floaty">
+                <Companion species={species} level={1} size={220} float={false} selected />
+              </div>
+              <h2
+                className="text-display text-4xl font-black text-white"
+                style={{ textShadow: `0 0 30px ${elementColor}` }}
+              >
+                {nickname}!
+              </h2>
+              <p className="text-sm font-semibold text-white/80">
+                You and {petName} the {petSpecies} — a brand new legend begins.
+              </p>
+              <div className="text-display flex items-center gap-2 rounded-2xl bg-black/40 px-5 py-2.5 text-sm font-black">
+                <Icon name="star" size={16} art />
+                <span className="text-[var(--gold)]">LEVEL 1</span>
+                <span className="text-white/60">·</span>
+                <span className="text-[var(--accent-2)]">Baby Form</span>
+              </div>
+              <GameButton onClick={onDone} className="mt-2 text-lg">
+                Onward!
+              </GameButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -40,6 +40,12 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         router.replace("/admin");
         return;
       }
+      // heroes awaiting (or refused) approval can't enter the world yet
+      if (p.status && p.status !== "active") {
+        await supabase.auth.signOut();
+        router.replace("/login");
+        return;
+      }
       setProfile(p as Profile);
       setCompanion((bond as CompanionBond) ?? null);
       setReady(true);
