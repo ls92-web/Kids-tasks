@@ -297,7 +297,7 @@ export default function ReviewPage() {
                   </p>
                 </div>
                 <AdminButton size="sm" onClick={() => grant(r)}>
-                  <Icon art muted name="check" size={14} /> Mark granted
+                  <Icon art muted name="check" size={18} /> Mark granted
                 </AdminButton>
               </motion.div>
             ))}
