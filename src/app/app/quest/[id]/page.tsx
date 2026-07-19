@@ -154,10 +154,12 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
     }
   }
 
-  /* No-evidence quests (parent verification): the hero taps "I did it!" and
-     the quest goes straight to the parent review queue. If the microphone is
-     unavailable for a voice quest, this is also the graceful fallback. */
+  /* No-evidence quests ONLY (parent verification): the hero taps "I did it!"
+     and the quest goes straight to the parent review queue. Photo and voice
+     quests can never submit without their proof — the guard here plus a
+     database trigger both enforce it. */
   async function submitWord() {
+    if (evidence !== "none") return;
     if (!task || !profile) return;
     setMessage(null);
     const supabase = createClient();
@@ -444,27 +446,21 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           {micError && (
             <p className="mx-auto mt-3 max-w-sm rounded-lg bg-black/25 px-3 py-2 text-xs font-semibold text-[var(--gold)]">
               We couldn&apos;t reach your microphone. Check that it&apos;s plugged in and allowed,
-              then try again!
+              then try again — or ask your grown-up for help.
             </p>
           )}
 
           {recState === "idle" && (
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <GameButton
-                variant="gold"
-                onClick={() => {
-                  setMicError(false);
-                  startRecording();
-                }}
-              >
-                {micError ? "Try again" : "Start recording"}
-              </GameButton>
-              {micError && (
-                <GameButton variant="ghost" className="text-sm" onClick={submitWord}>
-                  No mic? Just tell your grown-up — I did it!
-                </GameButton>
-              )}
-            </div>
+            <GameButton
+              variant="gold"
+              className="mt-4"
+              onClick={() => {
+                setMicError(false);
+                startRecording();
+              }}
+            >
+              {micError ? "Try again" : "Start recording"}
+            </GameButton>
           )}
 
           {recState === "recording" && (
