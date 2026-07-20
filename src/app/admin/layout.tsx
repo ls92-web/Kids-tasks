@@ -11,10 +11,10 @@ import { Profile } from "@/lib/game";
 import { syncSeenTours } from "@/lib/tour";
 
 const NAV = [
-  { href: "/admin", icon: "home", label: "Overview", badge: "", tour: "" },
+  { href: "/admin", icon: "home", label: "Overview", badge: "", tour: "nav-overview" },
   { href: "/admin/review", icon: "eye", label: "Review", badge: "review", tour: "nav-review" },
   { href: "/admin/tasks", icon: "sword", label: "Quests", badge: "", tour: "nav-quests" },
-  { href: "/admin/challenges", icon: "challenges", label: "Challenges", badge: "", tour: "" },
+  { href: "/admin/challenges", icon: "challenges", label: "Challenges", badge: "", tour: "nav-challenges" },
   { href: "/admin/rewards", icon: "gift", label: "Rewards", badge: "wishes", tour: "nav-rewards" },
   { href: "/admin/children", icon: "heroes", label: "Heroes", badge: "", tour: "nav-heroes" },
 ];
@@ -109,7 +109,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="mx-auto block h-auto w-[196px]"
               />
             </div>
-            <nav className="flex gap-1 overflow-x-auto">
+            {/* tabs center themselves once the row fits (laptop and up) */}
+            <nav className="flex gap-1 overflow-x-auto lg:justify-center">
               {NAV.map((item) => {
                 const active =
                   item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);

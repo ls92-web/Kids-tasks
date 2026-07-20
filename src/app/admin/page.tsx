@@ -34,29 +34,40 @@ interface ChildInsights {
   summary: string;
 }
 
+/* One stop per tab, in nav order — first tab to last. */
 const PARENT_STEPS: TourStep[] = [
   {
     text: "Welcome to WonderNest. This is where your child's real-life adventures begin — you create quests, they complete them.",
   },
   {
-    anchor: "attention",
-    title: "What needs you",
-    text: "At a glance: proofs to review, reward wishes, and rewards to grant.",
+    anchor: "nav-overview",
+    title: "Overview",
+    text: "Your family at a glance — proofs waiting for review, reward wishes, and each hero's progress.",
   },
   {
     anchor: "nav-review",
-    title: "Approvals",
-    text: "When a hero submits a photo proof, you approve it here. Nothing is awarded until you do.",
+    title: "Review",
+    text: "When a hero submits a photo or voice proof, you approve it here. Nothing is awarded until you do.",
   },
   {
     anchor: "nav-quests",
-    title: "Create a quest",
-    text: "Assign your child's first real-life quest here — difficulty fills in fair coins, XP and time.",
+    title: "Quests",
+    text: "Assign real-life quests — difficulty fills in fair coins, XP and time, and routines repeat automatically.",
+  },
+  {
+    anchor: "nav-challenges",
+    title: "Challenges",
+    text: "Start friendly family challenges — heroes race for the top or team up toward one shared goal.",
+  },
+  {
+    anchor: "nav-rewards",
+    title: "Rewards",
+    text: "Stock real-life rewards that coins can buy. When a hero claims one, you make it real.",
   },
   {
     anchor: "nav-heroes",
-    title: "Your heroes",
-    text: "Create heroes and share your Family Code so your children can join — all on the Heroes page.",
+    title: "Heroes",
+    text: "Share your Family Code so your children can create their own hero — you approve join requests here.",
   },
   { text: "Your family adventure is ready to begin." },
 ];
