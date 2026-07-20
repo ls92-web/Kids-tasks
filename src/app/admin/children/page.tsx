@@ -87,10 +87,14 @@ export default function ChildrenPage() {
   }
 
   // ---- join requests: heroes who joined with the Family Code -----------------
+  // Rejecting asks for an inline second tap (no native dialogs in WonderNest).
+  const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   async function decideRequest(child: Profile, approve: boolean) {
-    if (!approve && !window.confirm(`Turn away ${child.nickname}? They won't be able to enter WonderNest.`)) {
+    if (!approve && confirmRejectId !== child.id) {
+      setConfirmRejectId(child.id);
       return;
     }
+    setConfirmRejectId(null);
     const supabase = createClient();
     const { error } = await supabase.rpc(approve ? "approve_child" : "reject_child", {
       p_child: child.id,
@@ -136,12 +140,28 @@ export default function ChildrenPage() {
                       {c.created_at && ` — asked ${new Date(c.created_at).toLocaleDateString()}`}
                     </p>
                   </div>
-                  <AdminButton size="sm" onClick={() => decideRequest(c, true)}>
-                    <Icon art muted name="check" size={14} /> Approve
-                  </AdminButton>
-                  <AdminButton size="sm" variant="danger" onClick={() => decideRequest(c, false)}>
-                    <Icon art muted name="close" size={14} /> Reject
-                  </AdminButton>
+                  {confirmRejectId === c.id ? (
+                    <>
+                      <span className="text-xs font-bold text-[var(--danger)]">
+                        Turn away {c.nickname}? They won&apos;t be able to enter.
+                      </span>
+                      <AdminButton size="sm" variant="danger" onClick={() => decideRequest(c, false)}>
+                        Yes, reject
+                      </AdminButton>
+                      <AdminButton size="sm" variant="ghost" onClick={() => setConfirmRejectId(null)}>
+                        Cancel
+                      </AdminButton>
+                    </>
+                  ) : (
+                    <>
+                      <AdminButton size="sm" onClick={() => decideRequest(c, true)}>
+                        <Icon art muted name="check" size={14} /> Approve
+                      </AdminButton>
+                      <AdminButton size="sm" variant="danger" onClick={() => decideRequest(c, false)}>
+                        <Icon art muted name="close" size={14} /> Reject
+                      </AdminButton>
+                    </>
+                  )}
                 </div>
               );
             })}
