@@ -40,6 +40,9 @@ function LoginInner() {
   const [error, setError] = useState("");
   const [waiting, setWaiting] = useState(false); // pending-approval message
   const [busy, setBusy] = useState(false);
+  // parent "forgot password" mini-flow: form → email sent confirmation
+  const [forgot, setForgot] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // "Choose Your Hero": if this device remembers its family, show tappable
   // hero portraits instead of a typed name. Falls back to the classic form.
@@ -63,6 +66,21 @@ function LoginInner() {
   const pickerActive = mode === "hero" && !!heroes && !typeInstead;
   // shown under the typed form so a hero can hop back to the tap-to-pick list
   const showBackToHeroes = mode === "hero" && typeInstead && !!heroes;
+
+  // Parents reset by email; heroes have no real inbox (name + PIN accounts),
+  // so their reset path is the parent's "Reset PIN" on the Heroes page.
+  async function sendReset() {
+    if (busy || !email.trim()) return;
+    setBusy(true);
+    setError("");
+    const supabase = createClient();
+    await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    // Always confirm — never reveal whether an email has an account
+    setBusy(false);
+    setResetSent(true);
+  }
 
   async function signIn(heroUsername?: string) {
     setBusy(true);
@@ -288,11 +306,82 @@ function LoginInner() {
                 >
                   Not you? Choose another hero
                 </button>
+                <p className="text-center text-xs text-[var(--text-dim)]">
+                  Forgot your secret PIN? Ask your grown-up — they can set a new one from
+                  their dashboard.
+                </p>
+              </motion.form>
+            )}
+
+            {/* ---- parent forgot-password: send a reset link ------------------ */}
+            {mode === "parent" && forgot && (
+              <motion.form
+                key="forgot"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.18 }}
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendReset();
+                }}
+              >
+                {resetSent ? (
+                  <>
+                    <Callout tone="success">
+                      If that email has a WonderNest family, a reset link is on its way. Check
+                      your inbox!
+                    </Callout>
+                    <GameButton
+                      type="button"
+                      onClick={() => {
+                        setForgot(false);
+                        setResetSent(false);
+                      }}
+                      className="w-full text-lg"
+                    >
+                      Back to sign in
+                    </GameButton>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-center text-sm text-[var(--text-dim)]">
+                      Enter your email and we&apos;ll send you a link to set a new password.
+                    </p>
+                    <Field
+                      label="Email"
+                      value={email}
+                      onChange={setEmail}
+                      placeholder="you@example.com"
+                      type="email"
+                      autoFocus
+                    />
+                    <GameButton
+                      type="submit"
+                      disabled={busy || !email.trim()}
+                      className="w-full text-lg"
+                    >
+                      {busy ? "Sending…" : "Send reset link"}
+                    </GameButton>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setForgot(false);
+                        setError("");
+                      }}
+                      className="text-display cursor-pointer text-center text-xs font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                    >
+                      Back to sign in
+                    </button>
+                  </>
+                )}
               </motion.form>
             )}
 
             {/* ---- classic typed sign-in (parents; heroes on new devices) ----- */}
-            {(mode === "parent" || !pickerActive) && (
+            {(mode === "parent" ? !forgot : !pickerActive) && (
               <motion.form
                 key={mode}
                 initial={{ opacity: 0, x: mode === "hero" ? -16 : 16 }}
@@ -352,6 +441,26 @@ function LoginInner() {
                 <GameButton type="submit" disabled={busy} className="mt-1 w-full text-lg">
                   {busy ? "Opening the gate…" : "Enter the World"}
                 </GameButton>
+                {mode === "parent" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfx.click();
+                      setForgot(true);
+                      setResetSent(false);
+                      setError("");
+                    }}
+                    className="text-display cursor-pointer text-center text-xs font-bold text-[var(--text-dim)] transition-colors hover:text-[var(--text)]"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
+                {mode === "hero" && (
+                  <p className="text-center text-xs text-[var(--text-dim)]">
+                    Forgot your secret PIN? Ask your grown-up — they can set a new one from
+                    their dashboard.
+                  </p>
+                )}
                 {showBackToHeroes && (
                   <button
                     type="button"

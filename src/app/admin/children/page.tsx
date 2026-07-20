@@ -24,6 +24,11 @@ export default function ChildrenPage() {
   const [reqMsg, setReqMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [adjust, setAdjust] = useState<Record<string, { coins: string; xp: string }>>({});
+  // per-hero "Reset PIN": which hero's inline input is open + its value/result
+  const [pinFor, setPinFor] = useState<string | null>(null);
+  const [newPin, setNewPin] = useState("");
+  const [pinMsg, setPinMsg] = useState<{ childId: string; ok: boolean; text: string } | null>(null);
+  const [pinBusy, setPinBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -114,6 +119,37 @@ export default function ChildrenPage() {
 
   const pending = children.filter((c) => c.status === "pending_approval");
   const active = children.filter((c) => !c.status || c.status === "active");
+
+  // ---- forgotten-PIN recovery: parent sets a new secret PIN -------------------
+  // NOTE: Supabase enforces its minimum password length (6) on password
+  // UPDATES, so reset PINs need 6+ characters even though original PINs
+  // could be 4. Lowering the project's Auth minimum to 4 would relax this.
+  async function resetPin(child: Profile) {
+    if (pinBusy || newPin.length < 6) return;
+    setPinBusy(true);
+    setPinMsg(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.functions.invoke("reset-child-pin", {
+      body: { child_id: child.id, pin: newPin },
+    });
+    setPinBusy(false);
+    if (error || data?.error) {
+      let text = data?.error ?? "Could not reset the PIN — try again.";
+      try {
+        const body = await (error as { context?: Response })?.context?.json();
+        if (body?.error) text = body.error;
+      } catch {}
+      setPinMsg({ childId: child.id, ok: false, text });
+      return;
+    }
+    setPinMsg({
+      childId: child.id,
+      ok: true,
+      text: `${child.nickname}'s new PIN is set — they can sign in with it now.`,
+    });
+    setNewPin("");
+    setPinFor(null);
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -312,7 +348,47 @@ export default function ChildrenPage() {
                     <AdminButton variant="ghost" onClick={() => applyAdjust(c.id)}>
                       Apply
                     </AdminButton>
+                    <AdminButton
+                      variant="ghost"
+                      onClick={() => {
+                        setPinFor(pinFor === c.id ? null : c.id);
+                        setNewPin("");
+                        setPinMsg(null);
+                      }}
+                    >
+                      Reset PIN
+                    </AdminButton>
                   </div>
+                  {pinFor === c.id && (
+                    <div className="mt-3 flex flex-wrap items-end gap-2 rounded-xl bg-black/20 p-3">
+                      <div className="w-44">
+                        <Input
+                          label={`New PIN for ${c.nickname}`}
+                          value={newPin}
+                          onChange={(e) => setNewPin(e.target.value)}
+                          placeholder="At least 6 digits"
+                          type="password"
+                        />
+                      </div>
+                      <AdminButton onClick={() => resetPin(c)} disabled={pinBusy || newPin.length < 6}>
+                        {pinBusy ? "Saving…" : "Set new PIN"}
+                      </AdminButton>
+                      <AdminButton
+                        variant="ghost"
+                        onClick={() => {
+                          setPinFor(null);
+                          setNewPin("");
+                        }}
+                      >
+                        Cancel
+                      </AdminButton>
+                    </div>
+                  )}
+                  {pinMsg && pinMsg.childId === c.id && (
+                    <Callout tone={pinMsg.ok ? "success" : "error"} className="mt-3">
+                      {pinMsg.text}
+                    </Callout>
+                  )}
                 </div>
               );
             })}
