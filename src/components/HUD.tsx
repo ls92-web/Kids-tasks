@@ -37,6 +37,7 @@ export function HUD() {
       </Link>
 
       <div className="flex shrink-0 items-center gap-2">
+        <XpStat xp={profile.xp} />
         <CoinStat coins={profile.coins} />
         <Link
           href="/app/settings"
@@ -49,6 +50,52 @@ export function HUD() {
           </span>
         </Link>
       </div>
+    </div>
+  );
+}
+
+/* Total XP beside the coins — same treatment: crystal icon that pops and
+   glows when the number grows, value slides in. */
+export function XpStat({ xp }: { xp: number }) {
+  const prev = useRef(xp);
+  const [gained, setGained] = useState(false);
+
+  useEffect(() => {
+    if (xp > prev.current) {
+      setGained(true);
+      const t = setTimeout(() => setGained(false), 600);
+      prev.current = xp;
+      return () => clearTimeout(t);
+    }
+    prev.current = xp;
+  }, [xp]);
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl bg-black/25 px-3 py-1.5">
+      <motion.span
+        animate={gained ? { scale: [1, 1.4, 1], rotate: [0, -12, 12, 0] } : {}}
+        transition={{ duration: 0.5 }}
+        className="grid h-6 w-6 shrink-0 place-items-center"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ui/icons/xp.png"
+          alt="XP"
+          className="h-full w-full object-contain"
+          style={{ filter: gained ? "drop-shadow(0 0 8px rgba(143,208,255,0.95))" : undefined }}
+        />
+      </motion.span>
+      <AnimatePresence mode="popLayout">
+        <motion.span
+          key={xp}
+          initial={{ y: -12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 12, opacity: 0 }}
+          className="text-display text-sm font-bold tabular-nums text-[var(--accent-2)]"
+        >
+          {xp}
+        </motion.span>
+      </AnimatePresence>
     </div>
   );
 }

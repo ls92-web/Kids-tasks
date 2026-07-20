@@ -13,6 +13,7 @@ import { CompanionGuide } from "@/components/CompanionGuide";
 import { ChallengesPanel } from "@/components/ChallengesPanel";
 import { MagicLoader } from "@/components/MagicLoader";
 import { CelebrationOverlay, CelebrationData } from "@/components/CelebrationOverlay";
+import { MilestoneCelebration, useMilestones } from "@/components/Milestone";
 import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
 import { WorldMap } from "@/components/WorldMap";
@@ -42,6 +43,12 @@ export default function DailyQuests() {
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const [chestActive, setChestActive] = useState(false);
   const [resetIn, setResetIn] = useState(untilMidnight());
+  // milestone celebrations (challenge victories etc.) wait their turn —
+  // a quest celebration always plays first
+  const { milestone, dismiss: dismissMilestone } = useMilestones(
+    profile?.id,
+    !loading && !celebration
+  );
 
   const event = todaysEvent();
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -504,6 +511,7 @@ export default function DailyQuests() {
           setCelebration(null);
         }}
       />
+      <MilestoneCelebration milestone={milestone} onClose={dismissMilestone} />
       <ChapterComplete />
       {profile && (
         <>
