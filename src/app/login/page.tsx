@@ -88,8 +88,11 @@ function LoginInner() {
     setWaiting(false);
     const supabase = createClient();
     const name = heroUsername ?? username;
+    // trim the email — mobile keyboards add trailing spaces after autofill
     const loginEmail =
-      mode === "hero" ? `${name.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@kidsquest.app` : email;
+      mode === "hero"
+        ? `${name.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@kidsquest.app`
+        : email.trim();
     const loginPassword = mode === "hero" ? pin : password;
 
     const { data, error: err } = await supabase.auth.signInWithPassword({
