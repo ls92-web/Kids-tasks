@@ -281,6 +281,8 @@ export interface Profile {
   approved_at?: string | null;
   approved_by?: string | null;
   created_at?: string;
+  /** Guide tours this account has completed (durable, cross-device). */
+  tours_seen?: string[] | null;
 }
 
 /* ============================================================

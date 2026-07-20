@@ -7,9 +7,14 @@
    - one-shot "discovery" tips that appear the first time a feature
      becomes relevant (the shop, the Hero Hall, evolution, the finale)
 
-   Every tour is seen-once per profile (localStorage) and can be
-   replayed from Help. Steps point at [data-tour="…"] anchors.
+   Every tour is seen-once per ACCOUNT: profiles.tours_seen is the durable
+   record (so a new device or browser never replays a finished tour), and
+   localStorage is the synchronous read cache — seeded from the profile at
+   session load (syncSeenTours) and appended on completion. Steps point at
+   [data-tour="…"] anchors.
    ============================================================ */
+
+import { createClient } from "@/lib/supabase/client";
 
 export interface TourStep {
   /** matches a [data-tour="…"] element; omit for a centered card */
@@ -36,6 +41,20 @@ export function hasSeenTour(id: string, profileId: string): boolean {
 
 export function markTourSeen(id: string, profileId: string) {
   localStorage.setItem(key(id, profileId), "1");
+  // durable per-account record — a new device/browser won't replay it
+  // (supabase-js builders are lazy; .then() actually sends the request)
+  void createClient()
+    .rpc("mark_tour_seen", { p_tour: id })
+    .then(() => {});
+}
+
+/** Seed the localStorage cache from the account's durable record — call once
+    per session, right after the profile loads and before screens render. */
+export function syncSeenTours(profile: { id: string; tours_seen?: string[] | null }) {
+  if (typeof window === "undefined") return;
+  (profile.tours_seen ?? []).forEach((id) => {
+    localStorage.setItem(key(id, profile.id), "1");
+  });
 }
 
 /** every companion beat, for a full "Adventure Guide" replay reset */

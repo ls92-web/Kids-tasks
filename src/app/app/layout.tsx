@@ -9,6 +9,7 @@ import { HUD } from "@/components/HUD";
 import { ChildNav } from "@/components/ChildNav";
 import { MagicLoader } from "@/components/MagicLoader";
 import { Profile, CompanionBond } from "@/lib/game";
+import { syncSeenTours } from "@/lib/tour";
 
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -46,6 +47,8 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         router.replace("/login");
         return;
       }
+      // seed the seen-tours cache BEFORE any screen can decide to show one
+      syncSeenTours(p as Profile);
       setProfile(p as Profile);
       setCompanion((bond as CompanionBond) ?? null);
       setReady(true);
