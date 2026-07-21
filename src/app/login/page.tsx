@@ -11,7 +11,7 @@ import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { sfx } from "@/lib/sound";
 import { enter } from "@/lib/motion";
-import { FAMILY_CODE_KEY } from "@/lib/game";
+import { FAMILY_CODE_KEY, FAMILY_HEROES_CACHE_KEY } from "@/lib/game";
 
 type Mode = "hero" | "parent";
 
@@ -54,12 +54,38 @@ function LoginInner() {
     let storedCode: string | null = null;
     try {
       storedCode = localStorage.getItem(FAMILY_CODE_KEY);
+      // the picker shows INSTANTLY from the device cache — no flash of the
+      // typed form, and no vanishing when the network is slow or down
+      const cached = JSON.parse(localStorage.getItem(FAMILY_HEROES_CACHE_KEY) ?? "null");
+      if (Array.isArray(cached) && cached.length > 0) setHeroes(cached as FamilyHero[]);
     } catch {}
     if (!storedCode) return;
     const supabase = createClient();
-    supabase.rpc("family_heroes", { p_code: storedCode }).then(({ data }) => {
+    // then refresh from the live lookup in the background
+    supabase.rpc("family_heroes", { p_code: storedCode }).then(({ data, error }) => {
+      if (error) return; // network hiccup: keep whatever the cache showed
       const res = data as { found: boolean; heroes?: FamilyHero[] } | null;
-      if (res?.found && res.heroes && res.heroes.length > 0) setHeroes(res.heroes);
+      if (res?.found === false) {
+        // the family truly no longer exists — forget it
+        setHeroes(null);
+        try {
+          localStorage.removeItem(FAMILY_CODE_KEY);
+          localStorage.removeItem(FAMILY_HEROES_CACHE_KEY);
+        } catch {}
+        return;
+      }
+      if (res?.found && res.heroes && res.heroes.length > 0) {
+        setHeroes(res.heroes);
+        try {
+          localStorage.setItem(FAMILY_HEROES_CACHE_KEY, JSON.stringify(res.heroes));
+        } catch {}
+      } else if (res?.found) {
+        // family exists but has no active heroes yet
+        setHeroes(null);
+        try {
+          localStorage.removeItem(FAMILY_HEROES_CACHE_KEY);
+        } catch {}
+      }
     });
   }, []);
 
@@ -128,8 +154,11 @@ function LoginInner() {
       return;
     }
 
-    // remember the family on this device so next time is just a tap
-    if (profile?.role === "child" && profile.family_id) {
+    // Remember the family on this device so next time is just a tap — for
+    // ANY family member (a parent signing in on the shared iPad is enough
+    // for the kids to get their hero picker), and pre-warm the hero cache
+    // so the picker shows instantly on the next visit.
+    if (profile?.family_id) {
       const { data: fam } = await supabase
         .from("families")
         .select("code")
@@ -139,6 +168,13 @@ function LoginInner() {
         try {
           localStorage.setItem(FAMILY_CODE_KEY, fam.code);
         } catch {}
+        const { data: fh } = await supabase.rpc("family_heroes", { p_code: fam.code });
+        const res = fh as { found: boolean; heroes?: FamilyHero[] } | null;
+        if (res?.found && res.heroes && res.heroes.length > 0) {
+          try {
+            localStorage.setItem(FAMILY_HEROES_CACHE_KEY, JSON.stringify(res.heroes));
+          } catch {}
+        }
       }
     }
     // hard navigation so the auth cookies are seen by the server proxy

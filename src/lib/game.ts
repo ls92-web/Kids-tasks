@@ -240,6 +240,11 @@ export const TASK_TYPE_ICON: Record<string, string> = {
     still needs each hero's own PIN. */
 export const FAMILY_CODE_KEY = "qf_family_code";
 
+/** Cached hero list for the sign-in picker (display data only) — shown
+    instantly while the live lookup refreshes in the background, and kept
+    when the network is down so the picker never randomly disappears. */
+export const FAMILY_HEROES_CACHE_KEY = "qf_family_heroes";
+
 /* Crest choices for family creation (ids map to Icon names). */
 export const CRESTS = [
   { id: "shield", label: "Shield of Dawn" },
