@@ -69,9 +69,13 @@ export function GameButton({
       disabled={disabled}
       onClick={(e) => {
         if (disabled) return;
-        burst(e);
-        sfx.click();
+        // the real action ALWAYS runs first — sparkles and sound are
+        // decoration and must never be able to block navigation
         onClick?.();
+        try {
+          burst(e);
+          sfx.click();
+        } catch {}
       }}
       whileHover={disabled ? {} : { y: -2, scale: 1.02 }}
       whileTap={disabled ? {} : { scale: 0.94, scaleY: 0.88 }}

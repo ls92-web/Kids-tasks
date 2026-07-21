@@ -5,22 +5,36 @@ let ctx: AudioContext | null = null;
 
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (!ctx) {
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
+  try {
+    if (ctx && ctx.state === "closed") ctx = null;
+    if (!ctx) {
+      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  } catch {
+    // audio must never break the app — a silent world still works
+    return null;
   }
-  if (ctx.state === "suspended") ctx.resume();
-  return ctx;
 }
 
 export function soundsEnabled(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem("qf_sounds") !== "off";
+  try {
+    // localStorage itself THROWS on iOS with "Block All Cookies" enabled —
+    // sounds are a nice-to-have, never a reason for a dead button
+    return localStorage.getItem("qf_sounds") !== "off";
+  } catch {
+    return false;
+  }
 }
 
 export function setSoundsEnabled(on: boolean) {
-  localStorage.setItem("qf_sounds", on ? "on" : "off");
+  try {
+    localStorage.setItem("qf_sounds", on ? "on" : "off");
+  } catch {}
 }
 
 function tone(

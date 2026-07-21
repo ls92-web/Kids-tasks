@@ -34,13 +34,26 @@ export interface CoachStep {
 
 const key = (id: string, profileId: string) => `qf_tour_${id}_${profileId}`;
 
+/* localStorage itself THROWS on iOS with "Block All Cookies" enabled —
+   every access is guarded so a tour flag can never break a screen. The
+   in-memory fallback keeps the session sane when storage is unavailable. */
+const memorySeen = new Set<string>();
+
 export function hasSeenTour(id: string, profileId: string): boolean {
   if (typeof window === "undefined") return true;
-  return localStorage.getItem(key(id, profileId)) === "1";
+  if (memorySeen.has(key(id, profileId))) return true;
+  try {
+    return localStorage.getItem(key(id, profileId)) === "1";
+  } catch {
+    return false;
+  }
 }
 
 export function markTourSeen(id: string, profileId: string) {
-  localStorage.setItem(key(id, profileId), "1");
+  memorySeen.add(key(id, profileId));
+  try {
+    localStorage.setItem(key(id, profileId), "1");
+  } catch {}
   // durable per-account record — a new device/browser won't replay it
   // (supabase-js builders are lazy; .then() actually sends the request)
   void createClient()
@@ -48,12 +61,15 @@ export function markTourSeen(id: string, profileId: string) {
     .then(() => {});
 }
 
-/** Seed the localStorage cache from the account's durable record — call once
-    per session, right after the profile loads and before screens render. */
+/** Seed the seen cache from the account's durable record — call once per
+    session, right after the profile loads and before screens render. */
 export function syncSeenTours(profile: { id: string; tours_seen?: string[] | null }) {
   if (typeof window === "undefined") return;
   (profile.tours_seen ?? []).forEach((id) => {
-    localStorage.setItem(key(id, profile.id), "1");
+    memorySeen.add(key(id, profile.id));
+    try {
+      localStorage.setItem(key(id, profile.id), "1");
+    } catch {}
   });
 }
 
@@ -68,7 +84,12 @@ export const CHILD_TOURS = [
 export const PARENT_TOURS = ["parent", "parent-quest"];
 
 export function resetTours(profileId: string, ids: string[]) {
-  ids.forEach((id) => localStorage.removeItem(key(id, profileId)));
+  ids.forEach((id) => {
+    memorySeen.delete(key(id, profileId));
+    try {
+      localStorage.removeItem(key(id, profileId));
+    } catch {}
+  });
 }
 
 /* ---------- Help topics (kept to two short sentences each) ---------- */
