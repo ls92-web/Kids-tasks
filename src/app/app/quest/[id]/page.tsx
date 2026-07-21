@@ -160,7 +160,10 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
      database trigger both enforce it. */
   async function submitWord() {
     if (evidence !== "none") return;
-    if (!task || !profile) return;
+    if (!task || !profile || sending) return;
+    // lock BEFORE any await — rapid taps must never send twice (the DB
+    // enforces one pending submission per quest too, as the backstop)
+    setSending(true);
     setMessage(null);
     const supabase = createClient();
     try {
@@ -171,7 +174,9 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         image_path: null,
         status: "needs_review",
       });
-      if (subErr) throw subErr;
+      // "already sent" from the duplicate guard means a previous tap
+      // succeeded — treat it as the success it is
+      if (subErr && !/already sent/i.test(subErr.message)) throw subErr;
       await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
       setTask({ ...task, status: "needs_review" });
       setMessage({
@@ -181,11 +186,14 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
     } catch (e) {
       setMessage({ tone: "bad", text: "Something interrupted the magic. Please try again." });
       console.error(e);
+      setSending(false);
     }
   }
 
   async function submitProof() {
-    if (!file || !task || !profile) return;
+    if (!file || !task || !profile || sending) return;
+    // lock BEFORE any await — rapid taps must never upload/send twice
+    setSending(true);
     if (aiInvolved) setVerifying(true);
     setMessage(null);
     const supabase = createClient();
@@ -270,6 +278,8 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         text: "Something interrupted the magic. Please try again.",
       });
       console.error(e);
+    } finally {
+      setSending(false);
     }
   }
 
@@ -386,11 +396,15 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
                 <img src={previewUrl} alt="your proof" className="block w-full" />
               </div>
               <div className="flex gap-3">
-                <GameButton variant="ghost" onClick={() => fileRef.current?.click()}>
+                <GameButton variant="ghost" onClick={() => fileRef.current?.click()} disabled={sending}>
                   New photo
                 </GameButton>
-                <GameButton variant="gold" onClick={submitProof}>
-                  {aiInvolved ? `Send to the ${theme.verifyTitle}` : "Send to your grown-up"}
+                <GameButton variant="gold" onClick={submitProof} disabled={sending}>
+                  {sending
+                    ? "Sending…"
+                    : aiInvolved
+                      ? `Send to the ${theme.verifyTitle}`
+                      : "Send to your grown-up"}
                 </GameButton>
               </div>
             </div>
@@ -423,8 +437,8 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           <p className="mx-auto max-w-sm text-sm text-[var(--text-dim)]">
             No photo needed — your word goes straight to your grown-up.
           </p>
-          <GameButton variant="gold" className="mt-4" onClick={submitWord}>
-            I did it!
+          <GameButton variant="gold" className="mt-4" onClick={submitWord} disabled={sending}>
+            {sending ? "Sending…" : "I did it!"}
           </GameButton>
         </motion.div>
       )}

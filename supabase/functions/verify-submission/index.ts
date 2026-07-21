@@ -25,7 +25,13 @@ interface Verdict {
    - ai (AI-only, parent chose to delegate): 3-way verdict — a clear pass
      auto-completes through award_submission, a clear fail asks for a retry,
      and ANY uncertainty still goes to the parent queue. */
-const SHARED_RULES = `Other rules:
+const SHARED_RULES = `THE STANDARD IS A CHILD'S EFFORT, NOT ADULT PERFECTION:
+- These are children roughly 5-12 years old doing their own real-life tasks. Judge the way a warm, encouraging parent would judge a child's genuine attempt.
+- A made bed counts even if the blanket is wrinkled, corners are uneven, or a pillow sits crooked — pulled-up covers and pillows roughly in place IS a made bed for a child.
+- Tidied rooms may still have a few things out of place; handwriting may be messy; results may be imperfect. Visible genuine effort at the task satisfies the task.
+- Only treat a submission as unsatisfactory when the task clearly was NOT attempted (e.g. the bed is plainly unmade, the photo shows something unrelated) — never because the result falls short of an adult's standard.
+
+Other rules:
 - reason: written for the parent — say what you saw that supports your recommendation (e.g. "The visible worksheet shows all questions answered" or "The photo shows a bookshelf, not the bed described in the task"). Do not describe the image beyond task-relevant evidence and never identify any person.
 - childMessage: max 2 short sentences, warm, kind and kid-friendly, no emojis. For a redo, use gentle "give it another try" energy — never scold. For parent review, tell them a grown-up will take a look soon.
 - flags: short strings for anything a parent should know (e.g. "possibly_reused_photo", "image_unclear"), else [].`;
