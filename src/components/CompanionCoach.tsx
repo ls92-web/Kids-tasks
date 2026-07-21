@@ -84,15 +84,17 @@ export function CompanionCoach({
     onDone();
   }, [onDone]);
 
+  // Advancing NEVER dismisses: taps walk through the lines and stop at the
+  // last one. Only the explicit control below ("Skip" / "Got it!") — or its
+  // keyboard twin, Escape — ends the guide and records it as seen.
   const next = useCallback(() => {
     if (i >= steps.length - 1) {
-      sfx.chirp();
-      finish();
-    } else {
-      sfx.chirp();
-      setI((n) => n + 1);
+      sfx.chirp(); // a friendly nudge — the Got it! button ends the guide
+      return;
     }
-  }, [i, steps.length, finish]);
+    sfx.chirp();
+    setI((n) => n + 1);
+  }, [i, steps.length]);
 
   // measure the current beat's anchor (if any), tracking it every frame
   useEffect(() => {
@@ -241,12 +243,25 @@ export function CompanionCoach({
                 </motion.button>
               </AnimatePresence>
 
-              <button
-                onClick={finish}
-                className="pointer-events-auto mt-1 pl-1 text-[11px] font-bold text-white/50 transition-colors hover:text-white/80"
-              >
-                Skip
-              </button>
+              {i >= steps.length - 1 ? (
+                <button
+                  onClick={finish}
+                  className="text-display pointer-events-auto mt-1.5 cursor-pointer rounded-xl px-4 py-1.5 text-xs font-black text-white"
+                  style={{
+                    background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
+                    boxShadow: "0 0 14px -4px var(--glow)",
+                  }}
+                >
+                  Got it!
+                </button>
+              ) : (
+                <button
+                  onClick={finish}
+                  className="pointer-events-auto mt-1 pl-1 text-[11px] font-bold text-white/50 transition-colors hover:text-white/80"
+                >
+                  Skip
+                </button>
+              )}
             </div>
           </motion.div>
         )}
