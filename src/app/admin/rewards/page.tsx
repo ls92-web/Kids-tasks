@@ -21,6 +21,16 @@ interface Wish {
   profiles?: { nickname: string };
 }
 
+/* One purchase by one hero — pending until marked granted on Review. */
+interface Purchase {
+  id: string;
+  reward_name: string;
+  coins_spent: number;
+  status: string;
+  created_at: string;
+  profiles?: { nickname: string };
+}
+
 const ICON_OPTIONS = [
   { id: "gift", label: "Parent Reward" },
   { id: "clothing", label: "Avatar Clothing" },
@@ -45,6 +55,7 @@ export default function RewardsAdmin() {
   const { profile } = useWorld();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -60,7 +71,7 @@ export default function RewardsAdmin() {
   const load = useCallback(async () => {
     if (!profile) return;
     const supabase = createClient();
-    const [{ data: r }, { data: w }] = await Promise.all([
+    const [{ data: r }, { data: w }, { data: p }] = await Promise.all([
       supabase
         .from("rewards")
         .select("*")
@@ -70,8 +81,17 @@ export default function RewardsAdmin() {
         .from("reward_requests")
         .select("*, profiles!reward_requests_child_id_fkey(nickname)")
         .eq("status", "pending"),
+      // every purchase, newest first — who claimed what, and whether it's
+      // been made real yet
+      supabase
+        .from("redemptions")
+        .select("id, reward_name, coins_spent, status, created_at, profiles!redemptions_child_id_fkey(nickname)")
+        .eq("family_id", profile.family_id)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
     setRewards((r as Reward[]) ?? []);
+    setPurchases((p as unknown as Purchase[]) ?? []);
     // sign any attached wish photos so the parent can view them
     const wishesWithUrls = await Promise.all(
       ((w as Wish[]) ?? []).map(async (wish) => {
@@ -309,6 +329,48 @@ export default function RewardsAdmin() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Purchased rewards"
+        subtitle="Everything your heroes have claimed with their coins — grant pending ones from the Review page"
+      >
+        {purchases.length === 0 ? (
+          <EmptyNote>No treasures claimed yet.</EmptyNote>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {purchases.map((p) => {
+              const granted = p.status === "granted";
+              return (
+                <div key={p.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+                  <Icon
+                    name={granted ? "check" : "wrapped-gift"}
+                    size={24}
+                    art
+                    muted
+                    className="shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-display truncate text-sm font-bold">{p.reward_name}</p>
+                    <p className="text-xs text-[var(--text-dim)]">
+                      {p.profiles?.nickname ?? "A hero"} — {p.coins_spent} coins —{" "}
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span
+                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+                    style={{
+                      color: granted ? "var(--success)" : "var(--gold)",
+                      background: "rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {granted ? "Granted" : "To grant"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </SectionCard>

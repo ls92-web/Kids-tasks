@@ -15,6 +15,16 @@ import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
 import { CoachStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
 
+/* A treasure the hero already claimed — pending until the parent makes it
+   real, then granted. */
+interface Redemption {
+  id: string;
+  reward_name: string;
+  coins_spent: number;
+  status: string;
+  created_at: string;
+}
+
 const CATEGORIES = [
   { id: "all", label: "All" },
   { id: "treats", label: "Treats" },
@@ -50,6 +60,7 @@ const CATEGORY_OF: Record<string, string> = {
 export default function ShopPage() {
   const { theme, profile, setProfile } = useWorld();
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [treasures, setTreasures] = useState<Redemption[]>([]);
   const [category, setCategory] = useState("all");
   const [bought, setBought] = useState<Reward | null>(null);
   const [chestOpen, setChestOpen] = useState(false);
@@ -83,6 +94,19 @@ export default function ShopPage() {
       .then(({ data }) => setRewards((data as Reward[]) ?? []));
   }, []);
 
+  // the hero's own claimed treasures (RLS: children read only their own)
+  useEffect(() => {
+    if (!profile) return;
+    const supabase = createClient();
+    supabase
+      .from("redemptions")
+      .select("id, reward_name, coins_spent, status, created_at")
+      .eq("child_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => setTreasures((data as Redemption[]) ?? []));
+  }, [profile]);
+
   const visible = useMemo(
     () =>
       category === "all"
@@ -105,6 +129,14 @@ export default function ShopPage() {
     setRewards((rs) =>
       rs.map((x) => (x.id === r.id && x.quantity !== null ? { ...x, quantity: x.quantity - 1 } : x))
     );
+    // the new treasure appears in "My Treasures" right away
+    supabase
+      .from("redemptions")
+      .select("id, reward_name, coins_spent, status, created_at")
+      .eq("child_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data: rd }) => setTreasures((rd as Redemption[]) ?? []));
     // chest ceremony
     setBought(r);
     setChestOpen(false);
@@ -250,6 +282,44 @@ export default function ShopPage() {
             <RewardCard key={r.id} reward={r} coins={profile?.coins ?? 0} onBuy={buy} index={i} />
           ))}
         </div>
+      )}
+
+      {/* the hero's claimed treasures — pride of ownership, and a clear
+          "on its way" vs "received" state for each one */}
+      {treasures.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Icon name="chest" size={22} art />
+            <h2 className="text-display text-lg font-black">My Treasures</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {treasures.map((t) => {
+              const granted = t.status === "granted";
+              return (
+                <div key={t.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+                  <Icon name={granted ? "check" : "wrapped-gift"} size={26} art className="shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-display truncate text-sm font-bold">{t.reward_name}</p>
+                    <p className="text-xs text-[var(--text-dim)]">
+                      {t.coins_spent} {theme.coinName.toLowerCase()} —{" "}
+                      {new Date(t.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span
+                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+                    style={{
+                      color: granted ? "var(--success)" : "var(--gold)",
+                      background: "rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {granted ? "Received!" : "On its way!"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* chest-opening purchase ceremony */}
