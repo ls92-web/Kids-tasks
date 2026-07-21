@@ -97,6 +97,15 @@ function newSlotKey(): string {
   return `s_${rnd}`;
 }
 
+/* Safari reports a dead network request as "TypeError: Load failed" and
+   Chrome as "Failed to fetch" — translate both into something a parent can
+   act on. Real server-side errors pass through untouched. */
+function friendlyError(message: string): string {
+  return /load failed|failed to fetch|network|fetch/i.test(message)
+    ? "Couldn't reach WonderNest — check your internet connection and try again."
+    : message;
+}
+
 function weekdaySummary(days: number[]): string {
   const sorted = [...days].sort((a, b) => a - b);
   const key = sorted.join(",");
@@ -395,7 +404,7 @@ export default function TasksAdmin() {
       icon: form.icon,
     });
     setBusy(false);
-    if (error) return setMsg({ ok: false, text: error.message });
+    if (error) return setMsg({ ok: false, text: friendlyError(error.message) });
     resetForm();
     setMsg({ ok: true, text: "Quest assigned." });
     load();
@@ -440,7 +449,7 @@ export default function TasksAdmin() {
       : await supabase.from("quest_schedules").insert({ ...payload, created_by: profile.id });
     if (error) {
       setBusy(false);
-      return setMsg({ ok: false, text: error.message });
+      return setMsg({ ok: false, text: friendlyError(error.message) });
     }
     // surface today's occurrences immediately
     await supabase.rpc("generate_due_quests");
