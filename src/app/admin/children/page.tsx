@@ -120,6 +120,36 @@ export default function ChildrenPage() {
   const pending = children.filter((c) => c.status === "pending_approval");
   const active = children.filter((c) => !c.status || c.status === "active");
 
+  // ---- permanent hero deletion ------------------------------------------------
+  // Two explicit confirms — this erases the account, all progress, and every
+  // companion. There is no undo.
+  async function deleteHero(child: Profile) {
+    if (
+      !window.confirm(
+        `Delete ${child.nickname} forever?\n\nTheir quests, coins, XP, companions, badges and history will all be erased. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    if (!window.confirm(`Really delete ${child.nickname}? This is permanent.`)) return;
+    const supabase = createClient();
+    const { data, error } = await supabase.functions.invoke("delete-child", {
+      body: { child_id: child.id },
+    });
+    if (error || data?.error) {
+      let text = data?.error ?? "Could not delete the hero — try again.";
+      try {
+        const body = await (error as { context?: Response })?.context?.json();
+        if (body?.error) text = body.error;
+      } catch {}
+      setReqMsg({ ok: false, text });
+      return;
+    }
+    setReqMsg({ ok: true, text: `${child.nickname} has been deleted.` });
+    load();
+    pingAdminRefresh();
+  }
+
   // ---- forgotten-PIN recovery: parent sets a new secret PIN -------------------
   // NOTE: Supabase enforces its minimum password length (6) on password
   // UPDATES, so reset PINs need 6+ characters even though original PINs
@@ -357,6 +387,13 @@ export default function ChildrenPage() {
                       }}
                     >
                       Reset PIN
+                    </AdminButton>
+                    <AdminButton
+                      variant="danger"
+                      onClick={() => deleteHero(c)}
+                      title="Permanently delete this hero and all their progress"
+                    >
+                      <Icon art muted name="close" size={14} /> Delete
                     </AdminButton>
                   </div>
                   {pinFor === c.id && (
