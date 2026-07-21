@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { Icon } from "./Icon";
 
-/* A small painted-world preview for cards and lists: the world's map art,
-   dimmed to grayscale while locked, with an optional number badge and lock.
-   Worlds without delivered art wear their accent gradient + trial icon. */
+/* A small painted-world preview for cards and lists. A LOCKED world never
+   renders its map art at all — the painting is the reward for unlocking it,
+   and an <img> in the DOM can be long-pressed and saved. Locked worlds (and
+   worlds without delivered art) wear their accent gradient + icon instead. */
 export function WorldThumbnail({
   map,
   name,
@@ -30,15 +31,8 @@ export function WorldThumbnail({
 }) {
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {map ? (
-        <Image
-          src={map}
-          alt={name}
-          fill
-          sizes={sizes}
-          className="object-cover"
-          style={locked ? { filter: "grayscale(0.85) brightness(0.5)" } : undefined}
-        />
+      {map && !locked ? (
+        <Image src={map} alt={name} fill sizes={sizes} className="object-cover" />
       ) : (
         <div
           className="absolute inset-0"

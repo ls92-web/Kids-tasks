@@ -112,15 +112,19 @@ export default function SettingsPage() {
                   filter: unlocked ? "none" : "grayscale(0.7) brightness(0.6)",
                 }}
               >
-                {/* the world's own painted map, dimmed to a thrilling backdrop */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={w.world.map}
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-                  style={{ opacity: unlocked ? 0.42 : 0.3 }}
-                />
+                {/* the world's own painted map, dimmed to a thrilling backdrop —
+                    NEVER rendered while locked (the art is the unlock reward,
+                    and any <img> can be long-pressed and saved) */}
+                {unlocked && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={w.world.map}
+                    alt=""
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                    style={{ opacity: 0.42 }}
+                  />
+                )}
                 {/* scrim so the label stays crisp over the art */}
                 <div
                   className="pointer-events-none absolute inset-0"

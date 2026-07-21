@@ -90,8 +90,32 @@ export default function WorldPage() {
         </p>
       </motion.div>
 
-      {/* the world itself — fully in view; the page does the scrolling */}
-      <WorldMap world={world} campaignStep={cs.step} species={isHere ? cs.species : undefined} />
+      {/* The world itself — fully in view; the page does the scrolling.
+          A LOCKED world stays a mystery: its painting is the reward for
+          reaching it, so nothing of the art is rendered until then. */}
+      {entry.state === "locked" ? (
+        <div
+          className="panel grid place-items-center overflow-hidden"
+          style={{
+            aspectRatio: "1280 / 960",
+            background: `radial-gradient(80% 80% at 50% 30%, ${world.accent}22, transparent), linear-gradient(170deg, rgba(10,14,30,0.95), rgba(4,6,16,0.98))`,
+          }}
+        >
+          <div className="flex flex-col items-center gap-3 px-6 text-center">
+            <span className="grid h-16 w-16 place-items-center rounded-full bg-black/40">
+              <Icon name="lock" size={34} art />
+            </span>
+            <p className="text-display text-lg font-black" style={{ color: world.accent }}>
+              This world is still hidden
+            </p>
+            <p className="max-w-xs text-sm text-[var(--text-dim)]">
+              Keep adventuring — its map is revealed the moment you unlock it.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <WorldMap world={world} campaignStep={cs.step} species={isHere ? cs.species : undefined} />
+      )}
     </div>
   );
 }
