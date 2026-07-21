@@ -87,6 +87,33 @@ const QUEST_ROW_META: Record<string, { label: string; color: string; icon: strin
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 const DEFAULT_SLOTS: QuestSlot[] = [{ key: "default", label: "", time: null }];
 
+/* datetime-local inputs want local (not UTC) "YYYY-MM-DDTHH:mm". */
+function toLocalDatetimeValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* A sensible starting deadline for a brand-new one-off quest — tomorrow, same
+   time. The parent can freely change it, but every quest now leaves this
+   form with a real deadline set. */
+function defaultDeadlineValue(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setSeconds(0, 0);
+  return toLocalDatetimeValue(d);
+}
+
+/* The next upcoming calendar date that falls on weekday `d` (0=Sun…6=Sat,
+   today counts) — shown under each day toggle so "Sun" reads as an exact
+   date, not an ambiguous recurring label. */
+function nextDateForWeekday(d: number): string {
+  const now = new Date();
+  const delta = (d - now.getDay() + 7) % 7;
+  const target = new Date(now);
+  target.setDate(now.getDate() + delta);
+  return target.toLocaleDateString(undefined, { month: "numeric", day: "numeric" });
+}
+
 /* A short, stable key for a newly-added slot. Existing slots keep their keys
    forever (they anchor de-duplication); only fresh slots get a new one. */
 function newSlotKey(): string {
@@ -186,13 +213,15 @@ export default function TasksAdmin() {
     est_minutes: "15",
     coin_reward: "10",
     xp_reward: "20",
-    deadline: "",
+    deadline: defaultDeadlineValue(),
     icon: TASK_TYPE_ICON.chore,
   });
   // recurring-quest (routine) state — only used when `repeat` is on
   const [repeat, setRepeat] = useState(false);
   const [weekdays, setWeekdays] = useState<number[]>(EVERY_DAY);
   const [slots, setSlots] = useState<QuestSlot[]>(DEFAULT_SLOTS);
+  // optional auto-end date for the routine — blank = runs until manually ended
+  const [scheduleEndsAt, setScheduleEndsAt] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [libProfileId, setLibProfileId] = useState("");
   // hidden development-pillar metadata: from the library profile when one is
@@ -292,11 +321,12 @@ export default function TasksAdmin() {
     setRepeat(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
+    setScheduleEndsAt("");
     setForm((f) => ({
       ...f,
       title: "",
       description: "",
-      deadline: "",
+      deadline: defaultDeadlineValue(),
       icon: TASK_TYPE_ICON[f.task_type] ?? "star",
     }));
   }
@@ -331,7 +361,7 @@ export default function TasksAdmin() {
       coin_reward: String(DIFF_DEFAULTS[diff].coins),
       xp_reward: String(DIFF_DEFAULTS[diff].xp),
       est_minutes: String(DIFF_DEFAULTS[diff].minutes),
-      deadline: "",
+      deadline: defaultDeadlineValue(),
       icon: TASK_TYPE_ICON[p.taskType] ?? "star",
     }));
     setRepeat(routine.repeat);
@@ -383,6 +413,7 @@ export default function TasksAdmin() {
   // ---- one-off quest ---------------------------------------------------------
   async function createTask() {
     if (!profile || !form.child_id || form.title.trim().length < 2) return;
+    if (!form.deadline) return setMsg({ ok: false, text: "Every quest needs a deadline." });
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
@@ -396,7 +427,7 @@ export default function TasksAdmin() {
       est_minutes: parseInt(form.est_minutes, 10) || 15,
       coin_reward: parseInt(form.coin_reward, 10) || 10,
       xp_reward: parseInt(form.xp_reward, 10) || 20,
-      deadline: form.deadline ? new Date(form.deadline).toISOString() : null,
+      deadline: new Date(form.deadline).toISOString(),
       created_by: profile.id,
       pillar: libPillar ?? defaultPillar(form.task_type),
       evidence,
@@ -443,6 +474,7 @@ export default function TasksAdmin() {
       evidence,
       verifier,
       icon: form.icon,
+      expires_at: scheduleEndsAt ? new Date(scheduleEndsAt).toISOString() : null,
     };
     const { error } = editingId
       ? await supabase.from("quest_schedules").update(payload).eq("id", editingId)
@@ -470,6 +502,7 @@ export default function TasksAdmin() {
     setRepeat(true);
     setWeekdays(s.weekdays?.length ? s.weekdays : EVERY_DAY);
     setSlots(s.slots?.length ? s.slots : DEFAULT_SLOTS);
+    setScheduleEndsAt(s.expires_at ? toLocalDatetimeValue(new Date(s.expires_at)) : "");
     setForm({
       child_id: s.child_id,
       title: s.title,
@@ -479,7 +512,7 @@ export default function TasksAdmin() {
       est_minutes: String(s.est_minutes),
       coin_reward: String(s.coin_reward),
       xp_reward: String(s.xp_reward),
-      deadline: "",
+      deadline: defaultDeadlineValue(),
       icon: s.icon ?? TASK_TYPE_ICON[s.task_type] ?? "star",
     });
     setMsg(null);
@@ -725,7 +758,7 @@ export default function TasksAdmin() {
               />
               {!repeat && (
                 <Input
-                  label="Deadline"
+                  label="Deadline (required)"
                   type="datetime-local"
                   value={form.deadline}
                   onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))}
@@ -774,16 +807,40 @@ export default function TasksAdmin() {
                         key={d}
                         aria-pressed={weekdays.includes(d)}
                         onClick={() => toggleWeekday(d)}
-                        className={`text-display min-h-[36px] w-11 cursor-pointer rounded-lg text-xs font-bold transition-colors ${
+                        title={`Next ${lbl}: ${nextDateForWeekday(d)}`}
+                        className={`text-display flex min-h-[36px] w-14 cursor-pointer flex-col items-center justify-center rounded-lg text-xs font-bold leading-tight transition-colors ${
                           weekdays.includes(d)
                             ? "bg-[var(--accent)] text-white"
                             : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
                         }`}
                       >
-                        {lbl}
+                        <span>{lbl}</span>
+                        <span
+                          className={`text-[9px] font-semibold normal-case ${
+                            weekdays.includes(d) ? "text-white/70" : "text-[var(--text-dim)]/70"
+                          }`}
+                        >
+                          {nextDateForWeekday(d)}
+                        </span>
                       </button>
                     ))}
                   </div>
+                  <p className="mt-1.5 text-[11px] text-[var(--text-dim)]">
+                    Dates shown are the next upcoming occurrence of each day.
+                  </p>
+                </div>
+
+                {/* optional auto-end date */}
+                <div>
+                  <Input
+                    label="Ends on (optional)"
+                    type="datetime-local"
+                    value={scheduleEndsAt}
+                    onChange={(e) => setScheduleEndsAt(e.target.value)}
+                  />
+                  <p className="mt-1.5 text-[11px] text-[var(--text-dim)]">
+                    Leave blank to repeat indefinitely — you can always pause or end it later.
+                  </p>
                 </div>
 
                 {/* slots */}
@@ -852,7 +909,10 @@ export default function TasksAdmin() {
               </Callout>
             )}
             <div className="mt-4 flex gap-2">
-              <AdminButton onClick={primaryAction} disabled={busy || !form.title.trim()}>
+              <AdminButton
+                onClick={primaryAction}
+                disabled={busy || !form.title.trim() || (!repeat && !form.deadline)}
+              >
                 {busy
                   ? "Saving…"
                   : editingId
@@ -891,6 +951,8 @@ export default function TasksAdmin() {
                     <p className="text-xs text-[var(--text-dim)]">
                       {childName(s.child_id)} — {weekdaySummary(s.weekdays)} —{" "}
                       {s.slots.length}×/day — +{s.coin_reward}c / +{s.xp_reward}xp
+                      {!ended && s.expires_at &&
+                        ` — ends ${new Date(s.expires_at).toLocaleDateString()}`}
                     </p>
                   </div>
                   <span

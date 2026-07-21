@@ -51,7 +51,6 @@ export default function RewardsAdmin() {
     icon: "gift",
     coin_cost: "100",
     quantity: "",
-    expires_at: "",
   });
   const [libRewardId, setLibRewardId] = useState("");
   // official category metadata, persisted with the reward (null for custom)
@@ -125,11 +124,10 @@ export default function RewardsAdmin() {
       icon: form.icon,
       coin_cost: parseInt(form.coin_cost, 10) || 100,
       quantity: form.quantity ? parseInt(form.quantity, 10) : null,
-      expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
       category: prefill ? null : libRewardCategory,
     });
     setBusy(false);
-    setForm((f) => ({ ...f, name: "", description: "", quantity: "", expires_at: "" }));
+    setForm((f) => ({ ...f, name: "", description: "", quantity: "" }));
     setLibRewardId("");
     setLibRewardCategory(null);
     load();
@@ -263,12 +261,6 @@ export default function RewardsAdmin() {
             onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
             placeholder="3"
           />
-          <Input
-            label="Expires (optional)"
-            type="datetime-local"
-            value={form.expires_at}
-            onChange={(e) => setForm((f) => ({ ...f, expires_at: e.target.value }))}
-          />
         </div>
         <div className="mt-4">
           <AdminButton
@@ -295,9 +287,6 @@ export default function RewardsAdmin() {
                   </p>
                   <p className="text-xs text-[var(--text-dim)]">
                     {r.quantity === null ? "unlimited" : `${r.quantity} left`}
-                    {r.expires_at
-                      ? ` — expires ${new Date(r.expires_at).toLocaleDateString()}`
-                      : ""}
                   </p>
                 </div>
                 <button

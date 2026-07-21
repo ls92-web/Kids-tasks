@@ -708,6 +708,9 @@ export interface QuestSchedule {
   verifier?: QuestVerifier | null;
   /** Parent-chosen icon slug, carried into every generated occurrence. */
   icon?: string | null;
+  /** Optional auto-end date — generate_due_quests() stops the routine (same
+      as a manual End) once this passes. Null = runs until manually ended. */
+  expires_at?: string | null;
 }
 
 /** Short weekday labels indexed by Postgres dow (0=Sun … 6=Sat). */

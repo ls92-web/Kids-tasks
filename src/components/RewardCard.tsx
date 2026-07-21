@@ -46,8 +46,7 @@ export function RewardCard({
   const rarity = rewardRarity(reward.coin_cost);
   const affordable = coins >= reward.coin_cost;
   const soldOut = reward.quantity !== null && reward.quantity <= 0;
-  const expired = reward.expires_at ? new Date(reward.expires_at) < new Date() : false;
-  const buyable = affordable && !soldOut && !expired && reward.available;
+  const buyable = affordable && !soldOut && reward.available;
 
   return (
     <motion.div
@@ -122,10 +121,10 @@ export function RewardCard({
                 : {}
             }
           >
-            {soldOut ? "All gone" : expired ? "Too late" : affordable ? "It\u2019s ours!" : "Not yet"}
+            {soldOut ? "All gone" : affordable ? "It\u2019s ours!" : "Not yet"}
           </motion.button>
         </div>
-        {!affordable && !soldOut && !expired && (
+        {!affordable && !soldOut && (
           <p className="mt-2 text-center text-[11px] font-semibold text-[var(--text-dim)]">
             {reward.coin_cost - coins} more {theme.coinName.toLowerCase()} to go
           </p>

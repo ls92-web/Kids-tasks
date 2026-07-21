@@ -144,10 +144,18 @@ export default function DailyQuests() {
     })();
   }, [profile, theme.questWord]);
 
-  const active = useMemo(
-    () => tasks.filter((t) => t.status === "active" || t.status === "rejected"),
-    [tasks]
-  );
+  // "Next Quest" is whichever active quest is due soonest — not whichever
+  // was created most recently. Quests without a deadline sort to the end
+  // (newest-first among themselves, matching the old fallback order).
+  const active = useMemo(() => {
+    const list = tasks.filter((t) => t.status === "active" || t.status === "rejected");
+    return [...list].sort((a, b) => {
+      const ad = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bd = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      if (ad !== bd) return ad - bd;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [tasks]);
   const waiting = useMemo(
     () => tasks.filter((t) => t.status === "submitted" || t.status === "needs_review"),
     [tasks]
