@@ -61,16 +61,33 @@ export function markTourSeen(id: string, profileId: string) {
     .then(() => {});
 }
 
-/** Seed the seen cache from the account's durable record — call once per
-    session, right after the profile loads and before screens render. */
+/** Mirror the account's durable record into the device cache — call once per
+    session, right after the profile loads and before screens render. The
+    account is the source of truth in BOTH directions: flags it lists are
+    seeded, and stale device flags it does NOT list are removed (so resetting
+    an account's guides makes them replay on every device). */
 export function syncSeenTours(profile: { id: string; tours_seen?: string[] | null }) {
   if (typeof window === "undefined") return;
-  (profile.tours_seen ?? []).forEach((id) => {
-    memorySeen.add(key(id, profile.id));
+  const seen = new Set((profile.tours_seen ?? []).map((id) => key(id, profile.id)));
+  seen.forEach((k) => {
+    memorySeen.add(k);
     try {
-      localStorage.setItem(key(id, profile.id), "1");
+      localStorage.setItem(k, "1");
     } catch {}
   });
+  // drop this profile's cached flags that the account no longer vouches for
+  const suffix = `_${profile.id}`;
+  memorySeen.forEach((k) => {
+    if (k.startsWith("qf_tour_") && k.endsWith(suffix) && !seen.has(k)) memorySeen.delete(k);
+  });
+  try {
+    const stale: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("qf_tour_") && k.endsWith(suffix) && !seen.has(k)) stale.push(k);
+    }
+    stale.forEach((k) => localStorage.removeItem(k));
+  } catch {}
 }
 
 /** every companion beat, for a full "Adventure Guide" replay reset */

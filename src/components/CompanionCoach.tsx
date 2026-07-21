@@ -57,13 +57,11 @@ export function CompanionCoach({
   active,
   onDone,
   species,
-  autoAdvanceMs = 4200,
 }: {
   steps: CoachStep[];
   active: boolean;
   onDone: () => void;
   species: string;
-  autoAdvanceMs?: number;
 }) {
   const [mounted, setMounted] = useState(false);
   const [i, setI] = useState(0);
@@ -119,12 +117,10 @@ export function CompanionCoach({
     return () => cancelAnimationFrame(raf);
   }, [active, step]);
 
-  // auto-advance each line, but the child can always tap sooner
-  useEffect(() => {
-    if (!active || !step) return;
-    const t = setTimeout(next, autoAdvanceMs);
-    return () => clearTimeout(t);
-  }, [active, step, i, next, autoAdvanceMs]);
+  // The companion WAITS for the child — no auto-advance. A guide that plays
+  // itself to an empty room and marks itself "seen" forever is no guide at
+  // all (this happened: brand-new heroes "never saw" their welcome). Only a
+  // real tap (next) or Skip completes the beat and records it.
 
   // keyboard: → / Enter / Space advance, Esc skips
   useEffect(() => {
