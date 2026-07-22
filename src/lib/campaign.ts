@@ -8,15 +8,18 @@
    The engine is a PURE SELECTOR over persisted state — it computes the whole
    campaign picture from two database rows and never stores anything itself:
 
-     companions (the bond)   quests_done  → current world / node / completions
-                             xp           → companion level + evolution form
+     companions (the bond)   steps_done   → current world / node / completions
+                                            (difficulty-weighted: 1/1/2/3)
+                             xp           → companion level (growth bar)
                              status       → active | legend
                              legend_at    → when the ceremony sealed it
      profiles (the hero)     coins, xp    → hero economy riding along
 
-   Server-side rules keep it honest: award_submission advances quests_done +
+   Evolution form follows the CAMPAIGN STEP (campaignForm), so the champion
+   grows up exactly as the maps are conquered. Server-side rules keep it
+   honest: award_submission advances steps_done (weighted) + quests_done +
    xp on every approval, and complete_legend refuses to seal a Legend before
-   quests_done >= campaign_total() (144). One call — getCampaign(profile,
+   steps_done >= campaign_total() (144). One call — getCampaign(profile,
    bond) — hands any screen everything it needs, for any companion. */
 
 import {
@@ -24,7 +27,7 @@ import {
   CompanionBond,
   PETS,
   PetDef,
-  petForm,
+  campaignForm,
   companionLevel,
   companionProgress,
 } from "./game";
@@ -66,7 +69,7 @@ export interface CampaignState {
   bond: CompanionBond | null;
   finaleWorld: FinaleWorldDef | null;
 
-  /* campaign position — all derived from the persisted quests_done */
+  /* campaign position — all derived from the persisted steps_done */
   step: number; // completed nodes across the whole campaign (0..144)
   totalSteps: number; // CAMPAIGN_TOTAL
   worlds: CampaignWorldState[]; // always 4, in order
@@ -155,7 +158,9 @@ export function getCampaign(profile: Profile, bond: CompanionBond | null): Campa
 
     xp: bond?.xp ?? 0,
     level,
-    evolution: petForm(level),
+    // evolution is a STORY milestone: form follows the campaign step, so the
+    // champion grows up exactly as the maps are conquered (Legend at 144)
+    evolution: campaignForm(step),
     levelProgress: { into: prog.into, needed: prog.needed, pct: prog.pct },
 
     coins: profile.coins,

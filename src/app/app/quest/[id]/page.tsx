@@ -11,7 +11,7 @@ import { VerifyOverlay } from "@/components/VerifyOverlay";
 import { MagicLoader } from "@/components/MagicLoader";
 import { Callout } from "@/components/Callout";
 import { enter } from "@/lib/motion";
-import { DIFFICULTY, Task } from "@/lib/game";
+import { DIFFICULTY, STEP_WEIGHT, Task } from "@/lib/game";
 
 export default function QuestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -339,6 +339,11 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           />
           <Fact icon="coin" label={theme.coinName} value={`+${task.coin_reward}`} gold />
           <Fact icon="xp" label="XP" value={`+${task.xp_reward}`} accent iconSize={22} />
+          <Fact
+            icon="map"
+            label="Map steps"
+            value={`+${STEP_WEIGHT[task.difficulty] ?? 1}`}
+          />
         </div>
       </motion.div>
 

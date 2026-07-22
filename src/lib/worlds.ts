@@ -718,14 +718,18 @@ export function worldProgress(world: WorldMapDef, tasksCompleted: number) {
 }
 
 /* ---------- Campaign progression ----------
-   All functions below take the CAMPAIGN STEP: the active bond's quests_done.
-   Every new companion campaign starts at step 0 and runs to CAMPAIGN_TOTAL.
-   Node `requires` values (1..108) are campaign steps, so the maps read the
-   step directly. The finale world occupies steps 109..144. */
+   All functions below take the CAMPAIGN STEP: the active bond's steps_done —
+   difficulty-weighted (easy/medium 1, hard 2, epic 3) so real effort moves
+   the map faster. Every new companion campaign starts at step 0 and runs to
+   CAMPAIGN_TOTAL. Node `requires` values (1..108) are campaign steps, so the
+   maps read the step directly. The finale world occupies steps 109..144. */
 
-/** The active campaign's progress — quests approved during this bond. */
-export function campaignStep(bond: Pick<CompanionBond, "quests_done"> | null): number {
-  return bond?.quests_done ?? 0;
+/** The active campaign's progress — weighted steps earned during this bond
+    (older cached rows without steps_done fall back to the quest count). */
+export function campaignStep(
+  bond: Pick<CompanionBond, "quests_done" | "steps_done"> | null
+): number {
+  return Math.min(bond?.steps_done ?? bond?.quests_done ?? 0, CAMPAIGN_TOTAL);
 }
 
 /** Which of the 4 campaign worlds the hero is in right now (0-3). */
@@ -793,11 +797,17 @@ export function campaignWorld(species: string, theme: ThemeId, step: number): Wo
    world has been cleared in any campaign it stays cleared for unlock
    purposes. Mirrors the thresholds in the bond_companion SQL function. */
 
-export function lifetimeWorldsCleared(tasksCompleted: number): number {
+export function lifetimeWorldsCleared(lifetimeSteps: number): number {
   let n = 0;
   for (let i = 0; i < SHARED_WORLDS.length; i++) {
-    if (tasksCompleted >= (i + 1) * CHAPTER_SPAN) n += 1;
+    if (lifetimeSteps >= (i + 1) * CHAPTER_SPAN) n += 1;
     else break;
   }
   return n;
+}
+
+/** Lifetime weighted steps across every bond — the input for
+    lifetimeWorldsCleared (mirrors the sum in bond_companion SQL). */
+export function lifetimeSteps(bonds: Pick<CompanionBond, "quests_done" | "steps_done">[]): number {
+  return bonds.reduce((sum, b) => sum + (b.steps_done ?? b.quests_done ?? 0), 0);
 }

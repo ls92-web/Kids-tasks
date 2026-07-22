@@ -8,7 +8,8 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
-import { companionLevel } from "@/lib/game";
+import { companionLevel, campaignForm } from "@/lib/game";
+import { campaignStep } from "@/lib/worlds";
 import { hasSeenTour, markTourSeen } from "@/lib/tour";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
@@ -209,6 +210,7 @@ export function MilestoneCelebration({
                 <Companion
                   species={profile.pet}
                   level={companion ? companionLevel(companion.xp) : 1}
+                  form={campaignForm(campaignStep(companion)).index}
                   celebrate
                   size={110}
                   float={false}

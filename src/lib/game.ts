@@ -368,8 +368,11 @@ export interface CompanionBond {
   child_id: string;
   species: string;
   xp: number;
-  /** Campaign progress: quests approved during this bond (0..CAMPAIGN_TOTAL). */
+  /** Quests approved during this bond — a pure count (achievement math). */
   quests_done: number;
+  /** Campaign progress: difficulty-weighted map steps (0..CAMPAIGN_TOTAL).
+      Easy/medium quests advance 1 step, hard 2, epic 3 — capped at 144. */
+  steps_done: number;
   status: "active" | "legend";
   bonded_at: string;
   legend_at: string | null;
@@ -480,6 +483,53 @@ export function petForm(level: number): { index: number; name: string; level: nu
   let form = PET_FORMS[0] as { index: number; name: string; level: number };
   for (const f of PET_FORMS) if (level >= f.level) form = f;
   return form;
+}
+
+/* ---------- Campaign-paced evolution ----------
+   Evolution is a STORY milestone, not an XP grind: the companion grows up
+   exactly as its campaign advances, so the champion and the maps always
+   finish together (Legend lands at the finale, never years after it).
+
+     Baby      steps 0..35    (World 1 in progress)
+     Explorer  step  36+      (World 1 conquered)
+     Hero      step 108+      (World 3 conquered — enters its finale evolved)
+     Legend    step 144       (campaign complete → Legend Ceremony)
+
+   XP/level stays as the day-to-day growth bar; art + form names key off the
+   campaign step. Thresholds mirror CHAPTER_SPAN boundaries in worlds.ts. */
+export const FORM_STEP_GATES = [0, 36, 108, 144] as const;
+
+/** How many map steps one approved quest advances, by difficulty. */
+export const STEP_WEIGHT: Record<Difficulty, number> = {
+  easy: 1,
+  medium: 1,
+  hard: 2,
+  epic: 3,
+};
+
+/** Evolution form for a campaign step (see FORM_STEP_GATES). */
+export function campaignForm(step: number): { index: number; name: string; level: number } {
+  let form = PET_FORMS[0] as { index: number; name: string; level: number };
+  PET_FORMS.forEach((f, i) => {
+    if (step >= FORM_STEP_GATES[i]) form = f;
+  });
+  return form;
+}
+
+/** Progress toward the next campaign evolution (for the growth bar). */
+export function campaignFormProgress(step: number): {
+  pct: number;
+  next: { index: number; name: string; level: number } | null;
+  stepsToGo: number;
+} {
+  const current = campaignForm(step);
+  const nextIdx = current.index + 1;
+  if (nextIdx >= PET_FORMS.length) return { pct: 100, next: null, stepsToGo: 0 };
+  const from = FORM_STEP_GATES[current.index];
+  const to = FORM_STEP_GATES[nextIdx];
+  const next = PET_FORMS[nextIdx] as { index: number; name: string; level: number };
+  const pct = Math.max(0, Math.min(100, ((step - from) / (to - from)) * 100));
+  return { pct, next, stepsToGo: Math.max(0, to - step) };
 }
 
 /* Progress toward the next form (for the growth bar). */

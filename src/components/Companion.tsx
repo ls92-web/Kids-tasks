@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { petForm, petElement, ELEMENTS, ElementId } from "@/lib/game";
-import { companionArt, companionFormArt } from "@/lib/assets";
+import { petForm, petElement, PET_FORMS, ELEMENTS, ElementId } from "@/lib/game";
+import { companionFormArt, FormLevel } from "@/lib/assets";
 import { COMPANION_SAY_EVENT, CompanionEvent } from "@/lib/companion";
 import { sfx } from "@/lib/sound";
 
@@ -36,6 +36,7 @@ type Reaction = "cheer" | "burst" | null;
 export function Companion({
   species,
   level,
+  form: formOverride,
   size = 96,
   className = "",
   float = true,
@@ -47,6 +48,9 @@ export function Companion({
 }: {
   species: string;
   level: number;
+  /** Evolution form 0-3. Campaign screens pass the step-derived form
+      (cs.evolution.index); without it the form falls back to the level. */
+  form?: number;
   size?: number;
   className?: string;
   float?: boolean;
@@ -60,13 +64,16 @@ export function Companion({
   /** Play the happy jump + sparkles once on mount. */
   celebrate?: boolean;
 }) {
-  const form = Math.max(0, Math.min(3, petForm(level).index));
+  const form = Math.max(0, Math.min(3, formOverride ?? petForm(level).index));
   const isLegend = form >= 3;
   const elColor = element ? ELEMENTS[element].color : petElement(species).color;
   const glowColor = isLegend ? GOLD : elColor;
 
   const [fails, setFails] = useState(0);
-  const src = fails === 0 ? companionArt(species, level) : companionFormArt(species, 1);
+  const src =
+    fails === 0
+      ? companionFormArt(species, PET_FORMS[form].level as FormLevel)
+      : companionFormArt(species, 1);
 
   /* ---- reactions (one-shot, keyed so sparkles re-render) ---- */
   const [reaction, setReaction] = useState<Reaction>(celebrate ? "cheer" : null);

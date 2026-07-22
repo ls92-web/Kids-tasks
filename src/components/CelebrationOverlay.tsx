@@ -7,7 +7,8 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { GameButton } from "./GameButton";
 import { sfx } from "@/lib/sound";
-import { rankName, levelFromXp, companionLevel, BADGES } from "@/lib/game";
+import { rankName, levelFromXp, companionLevel, campaignForm, BADGES } from "@/lib/game";
+import { campaignStep } from "@/lib/worlds";
 import { badgeArt } from "@/lib/assets";
 import { EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
@@ -169,6 +170,7 @@ export function CelebrationOverlay({
                 <Companion
                   species={profile.pet}
                   level={companion ? companionLevel(companion.xp) : 1}
+                  form={campaignForm(campaignStep(companion)).index}
                   celebrate
                   size={110}
                   float={false}

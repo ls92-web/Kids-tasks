@@ -21,8 +21,9 @@ import {
   ELEMENTS,
   computeCounts,
   levelFromXp,
-  petForm,
-  petFormProgress,
+  PET_FORMS,
+  campaignForm,
+  campaignFormProgress,
   petElement,
   companionLevel,
   companionProgress,
@@ -39,6 +40,7 @@ import {
   FINALE_WORLDS,
   worldProgress,
   lifetimeWorldsCleared,
+  lifetimeSteps,
   campaignStep,
   campaignCompleted,
 } from "@/lib/worlds";
@@ -106,20 +108,23 @@ export default function HeroHub() {
   const restingLegend =
     !companion && bonds.some((b) => b.species === profile.pet && b.status === "legend");
   const cLevel = companion ? companionLevel(companion.xp) : restingLegend ? 100 : 1;
-  const pForm = petForm(cLevel);
-  const pProg = petFormProgress(cLevel);
   const pElement = petElement(profile.pet);
   const pMood = petMood(profile, tasks);
   // the campaign engine: one snapshot drives the journey section + ceremony
   const cs = getCampaign(profile, companion);
   const step = cs.step;
+  // evolution follows the CAMPAIGN, not XP — a resting Legend keeps its form
+  const pForm = restingLegend ? PET_FORMS[3] : cs.evolution;
+  const pProg = restingLegend
+    ? { pct: 100, next: null, stepsToGo: 0 }
+    : campaignFormProgress(step);
   const world = cs.mapWorld;
   const wProg = worldProgress(world, step);
   const worldNo = cs.currentWorldIndex + 1;
   const finaleWorld = cs.finaleWorld;
   // species unlocks stay keyed to LIFETIME progress (a world cleared in any
   // campaign stays cleared for unlock purposes — mirrors bond_companion SQL)
-  const lifetimeCleared = lifetimeWorldsCleared(profile.tasks_completed);
+  const lifetimeCleared = lifetimeWorldsCleared(lifetimeSteps(bonds));
   const legendReady = cs.legendReady;
   // refresh-safe resume: Legend sealed but no successor chosen yet
   const hasPickable = PETS.some(
@@ -186,7 +191,7 @@ export default function HeroHub() {
         className="panel flex items-center gap-4 p-5"
       >
         <div className="shrink-0">
-          <Companion species={profile.pet} level={cLevel} size={104} />
+          <Companion species={profile.pet} level={cLevel} form={pForm.index} size={104} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -216,7 +221,7 @@ export default function HeroHub() {
           </div>
           <p className="mt-1 text-[11px] font-semibold text-[var(--text-dim)]">
             {pProg.next
-              ? `Reach level ${pProg.next.level} to evolve into ${pProg.next.name} Form`
+              ? `${pProg.stepsToGo} map ${pProg.stepsToGo === 1 ? "step" : "steps"} until ${petMeta.name} evolves into ${pProg.next.name} Form`
               : `Fully evolved — ${petMeta.name} is a true Legend!`}
           </p>
         </div>
@@ -340,6 +345,7 @@ export default function HeroHub() {
                   <Companion
                     species={p.id}
                     level={bond ? companionLevel(bond.xp) : 1}
+                    form={bond ? (bond.status === "legend" ? 3 : campaignForm(campaignStep(bond)).index) : 0}
                     size={62}
                     float={isActive}
                     interactive
@@ -623,7 +629,11 @@ function HallDetail({
           : "var(--text-dim)";
 
   const prog = bond ? companionProgress(bond.xp) : null;
-  const form = bond ? petForm(prog!.level) : null;
+  const form = bond
+    ? bond.status === "legend"
+      ? PET_FORMS[3]
+      : campaignForm(campaignStep(bond))
+    : null;
 
   // the campaign counter IS "quests conquered together"
   const questsTogether = bond?.quests_done ?? 0;
@@ -680,6 +690,7 @@ function HallDetail({
           <Companion
             species={species}
             level={prog?.level ?? 1}
+            form={form?.index ?? 0}
             size={120}
             float={status === "Active"}
           />

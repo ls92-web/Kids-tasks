@@ -17,7 +17,6 @@ import {
   ThemeId,
   Profile,
   companionLevel,
-  petForm,
   petElement,
 } from "@/lib/game";
 import { FINALE_WORLDS } from "@/lib/worlds";
@@ -193,12 +192,12 @@ export default function SettingsPage() {
       <section className="panel p-5">
         <h2 className="text-display mb-1 text-lg font-black">Your companion</h2>
         <div className="flex items-center gap-4">
-          <Companion species={profile.pet} level={cLevel} size={72} element={petMeta.element} />
+          <Companion species={profile.pet} level={cLevel} form={cs.evolution.index} size={72} element={petMeta.element} />
           <div className="min-w-0 flex-1">
             <p className="text-display font-black">
               {petMeta.name}{" "}
               <span className="text-xs font-bold" style={{ color: petElement(profile.pet).color }}>
-                LV {cLevel} — {petForm(cLevel).name} Form
+                LV {cLevel} — {cs.evolution.name} Form
               </span>
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">

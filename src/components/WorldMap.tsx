@@ -7,7 +7,7 @@ import { Icon } from "./Icon";
 import { Companion } from "./Companion";
 import { useWorld } from "./ThemeProvider";
 import { sfx } from "@/lib/sound";
-import { companionLevel } from "@/lib/game";
+import { companionLevel, campaignForm } from "@/lib/game";
 import { companionLine } from "@/lib/companion";
 import { WorldMapDef, nodeStates, MapNode, NodeState } from "@/lib/worlds";
 import { glide, EASE_OUT } from "@/lib/motion";
@@ -35,7 +35,7 @@ export function WorldMap({
 }: {
   /** The campaign world to render — shared or finale (see campaignWorld()). */
   world: WorldMapDef;
-  /** The active campaign's progress — the bond's quests_done. */
+  /** The active campaign's progress — the bond's weighted steps_done. */
   campaignStep: number;
   species?: string;
   /** Keep the pre-approval state on screen (e.g. while a celebration overlay
@@ -224,6 +224,7 @@ export function WorldMap({
               <Companion
                 species={species}
                 level={bond ? companionLevel(bond.xp) : 1}
+                form={campaignForm(campaignStep).index}
                 size={58}
                 float={false}
               />

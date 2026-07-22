@@ -54,7 +54,7 @@ export default function CampaignPage() {
       {/* the partnership, front and center */}
       <motion.div {...enter} className="panel panel-glow relative overflow-hidden p-6 text-center">
         <div className="relative mx-auto w-fit">
-          <Companion species={cs.species} level={cs.level} size={150} />
+          <Companion species={cs.species} level={cs.level} form={cs.evolution.index} size={150} />
         </div>
         <h1 className="text-display mt-2 text-3xl font-black">
           {cs.companion.name}&apos;s Adventure

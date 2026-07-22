@@ -22,8 +22,9 @@ import { enter, pop, barFill } from "@/lib/motion";
 import { sfx } from "@/lib/sound";
 import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
 import { CoachStep, hasSeenTour } from "@/lib/tour";
-import { Task, Reward, Profile, PETS, levelFromXp, companionLevel, petForm, todaysEvent } from "@/lib/game";
+import { Task, Reward, Profile, PETS, levelFromXp, companionLevel, campaignForm, todaysEvent } from "@/lib/game";
 import { getCampaign } from "@/lib/campaign";
+import { campaignStep, campaignCompleted } from "@/lib/worlds";
 
 function untilMidnight(): string {
   const now = new Date();
@@ -215,7 +216,7 @@ export default function DailyQuests() {
     if (!profile || !companion) return;
     // the campaign's final step: one proud line, once per bond
     const campKey = `qf_said_campaign_${companion.id}`;
-    if (companion.quests_done >= 144 && !localStorage.getItem(campKey)) {
+    if (campaignCompleted(campaignStep(companion)) && !localStorage.getItem(campKey)) {
       localStorage.setItem(campKey, "1");
       const t = setTimeout(() => sayFromCompanion("campaignComplete"), 1200);
       return () => clearTimeout(t);
@@ -225,7 +226,7 @@ export default function DailyQuests() {
       const t = setTimeout(() => sayFromCompanion("legendary"), 1500);
       return () => clearTimeout(t);
     }
-    const formIdx = petForm(companionLevel(companion.xp)).index;
+    const formIdx = campaignForm(campaignStep(companion)).index;
     const formKey = `qf_form_seen_${profile.id}`;
     const prev = parseInt(localStorage.getItem(formKey) ?? "", 10);
     localStorage.setItem(formKey, String(formIdx));
@@ -365,7 +366,13 @@ export default function DailyQuests() {
           <motion.div {...pop} className="panel relative overflow-hidden p-8 text-center">
             {profile && (
               <div className="relative mx-auto w-fit">
-                <Companion species={profile.pet} level={companion ? companionLevel(companion.xp) : 1} size={96} reactive />
+                <Companion
+                  species={profile.pet}
+                  level={companion ? companionLevel(companion.xp) : 1}
+                  form={campaignForm(campaignStep(companion)).index}
+                  size={96}
+                  reactive
+                />
               </div>
             )}
             <h2 className="text-display relative mt-2 text-2xl font-black">
