@@ -67,6 +67,9 @@ export default function RewardsAdmin() {
   // official category metadata, persisted with the reward (null for custom)
   const [libRewardCategory, setLibRewardCategory] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // outcome of the last create attempt — a silent failure looked exactly like
+  // success (form cleared, nothing in the store), so the parent must SEE both
+  const [createMsg, setCreateMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -136,17 +139,35 @@ export default function RewardsAdmin() {
     const name = prefill?.name ?? form.name;
     if (name.trim().length < 2) return;
     setBusy(true);
+    setCreateMsg(null);
     const supabase = createClient();
-    await supabase.from("rewards").insert({
-      family_id: profile.family_id,
-      name: name.trim(),
-      description: (prefill?.description ?? form.description).trim(),
-      icon: form.icon,
-      coin_cost: parseInt(form.coin_cost, 10) || 100,
-      quantity: form.quantity ? parseInt(form.quantity, 10) : null,
-      category: prefill ? null : libRewardCategory,
-    });
+    let error: { message: string } | null = null;
+    try {
+      ({ error } = await supabase.from("rewards").insert({
+        family_id: profile.family_id,
+        name: name.trim(),
+        description: (prefill?.description ?? form.description).trim(),
+        icon: form.icon,
+        coin_cost: parseInt(form.coin_cost, 10) || 100,
+        quantity: form.quantity ? parseInt(form.quantity, 10) : null,
+        category: prefill ? null : libRewardCategory,
+      }));
+    } catch (e) {
+      // fetch itself can throw (Safari: "Load failed") before any response
+      error = { message: e instanceof Error ? e.message : String(e) };
+    }
     setBusy(false);
+    if (error) {
+      const network = /load failed|failed to fetch|network/i.test(error.message);
+      setCreateMsg({
+        ok: false,
+        text: network
+          ? "Couldn't reach the server — check your connection and press Add again."
+          : `Couldn't add the reward: ${error.message}`,
+      });
+      return; // keep everything the parent typed so one tap retries
+    }
+    setCreateMsg({ ok: true, text: `“${name.trim()}” is now in the reward store.` });
     setForm((f) => ({ ...f, name: "", description: "", quantity: "" }));
     setLibRewardId("");
     setLibRewardCategory(null);
@@ -282,13 +303,22 @@ export default function RewardsAdmin() {
             placeholder="3"
           />
         </div>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <AdminButton
             onClick={() => createReward()}
             disabled={busy || form.name.trim().length < 2 || !form.coin_cost.trim()}
           >
             {busy ? "Adding\u2026" : "Add reward"}
           </AdminButton>
+          {createMsg && (
+            <p
+              role="status"
+              className="text-sm font-semibold"
+              style={{ color: createMsg.ok ? "var(--success)" : "var(--danger)" }}
+            >
+              {createMsg.text}
+            </p>
+          )}
         </div>
       </SectionCard>
 

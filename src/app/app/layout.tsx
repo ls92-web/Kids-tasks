@@ -61,7 +61,15 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
   return (
     <ThemeProvider initialProfile={profile} initialCompanion={companion}>
-      <div className="relative min-h-screen">
+      <div
+        className="relative min-h-screen"
+        // no right-click "Save Image As…" on the artwork inside the child's
+        // world (long-press saving is already off via CSS touch-callout)
+        onContextMenu={(e) => {
+          const t = e.target as HTMLElement;
+          if (t.closest("img, svg, picture, video")) e.preventDefault();
+        }}
+      >
         <WorldBackground />
         <div className="relative z-10 pb-28">
           <HUD />

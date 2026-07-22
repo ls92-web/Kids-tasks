@@ -260,6 +260,16 @@ body {
   animation: shimmer 4s linear infinite;
 }
 
+/* The art is the game's treasure: no long-press "Save Image" sheet on iOS,
+   no drag-out, no accidental blue selection boxes around artwork. (Screenshots
+   can't be blocked — this stops the casual save/drag paths only.) */
+img, svg, picture, video {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Slim scrollbars that match the world */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
