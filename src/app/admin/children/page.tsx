@@ -29,6 +29,11 @@ export default function ChildrenPage() {
   const [newPin, setNewPin] = useState("");
   const [pinMsg, setPinMsg] = useState<{ childId: string; ok: boolean; text: string } | null>(null);
   const [pinBusy, setPinBusy] = useState(false);
+  // per-hero "Rename": heroes can't change their own name, so typo fixes
+  // live here with the other parent controls
+  const [nameFor, setNameFor] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [nameBusy, setNameBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -179,6 +184,23 @@ export default function ChildrenPage() {
     });
     setNewPin("");
     setPinFor(null);
+  }
+
+  async function renameHero(child: Profile) {
+    const name = newName.trim();
+    if (nameBusy || name.length < 2) return;
+    setNameBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ nickname: name }).eq("id", child.id);
+    setNameBusy(false);
+    if (error) {
+      setPinMsg({ childId: child.id, ok: false, text: `Couldn't rename: ${error.message}` });
+      return;
+    }
+    setPinMsg({ childId: child.id, ok: true, text: `Done — ${name} it is.` });
+    setNewName("");
+    setNameFor(null);
+    load();
   }
 
   return (
@@ -389,6 +411,17 @@ export default function ChildrenPage() {
                       Reset PIN
                     </AdminButton>
                     <AdminButton
+                      variant="ghost"
+                      onClick={() => {
+                        setNameFor(nameFor === c.id ? null : c.id);
+                        setNewName(c.nickname);
+                        setPinMsg(null);
+                      }}
+                      title="Heroes can't change their own name — fix it here"
+                    >
+                      Rename
+                    </AdminButton>
+                    <AdminButton
                       variant="danger"
                       onClick={() => deleteHero(c)}
                       title="Permanently delete this hero and all their progress"
@@ -415,6 +448,30 @@ export default function ChildrenPage() {
                         onClick={() => {
                           setPinFor(null);
                           setNewPin("");
+                        }}
+                      >
+                        Cancel
+                      </AdminButton>
+                    </div>
+                  )}
+                  {nameFor === c.id && (
+                    <div className="mt-3 flex flex-wrap items-end gap-2 rounded-xl bg-black/20 p-3">
+                      <div className="w-44">
+                        <Input
+                          label={`New name for @${c.username}`}
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          placeholder="Hero name"
+                        />
+                      </div>
+                      <AdminButton onClick={() => renameHero(c)} disabled={nameBusy || newName.trim().length < 2}>
+                        {nameBusy ? "Saving…" : "Save name"}
+                      </AdminButton>
+                      <AdminButton
+                        variant="ghost"
+                        onClick={() => {
+                          setNameFor(null);
+                          setNewName("");
                         }}
                       >
                         Cancel

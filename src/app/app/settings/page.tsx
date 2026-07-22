@@ -25,7 +25,6 @@ import { getCampaign } from "@/lib/campaign";
 export default function SettingsPage() {
   const router = useRouter();
   const { profile, setProfile, companion } = useWorld();
-  const [nickname, setNickname] = useState(profile?.nickname ?? "");
   const [saved, setSaved] = useState(false);
   const [sounds, setSounds] = useState(true);
 
@@ -165,27 +164,16 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* identity */}
+      {/* identity — a hero's name is chosen once, when the adventure begins */}
       <section className="panel p-5">
-        <h2 className="text-display mb-3 text-lg font-black">Your hero name</h2>
-        <label className="block">
-          <span className="text-display mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">
-            Nickname
-          </span>
-          <div className="flex gap-2">
-            <input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="flex-1 rounded-xl border border-[var(--surface-border)] bg-black/30 px-4 py-3 font-semibold outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
-            />
-            <GameButton
-              onClick={() => nickname.trim() && update({ nickname: nickname.trim() })}
-              className="text-sm"
-            >
-              Save
-            </GameButton>
-          </div>
-        </label>
+        <h2 className="text-display mb-1 text-lg font-black">Your hero name</h2>
+        <p className="text-display mt-2 text-2xl font-black text-[var(--accent-2)]">
+          {profile.nickname}
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-dim)]">
+          A hero&apos;s name is part of their legend — it was chosen when your adventure
+          began. If it ever needs fixing, ask your grown-up.
+        </p>
       </section>
 
       {/* companion bond — a lifelong partner, not a picker */}
