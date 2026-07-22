@@ -201,7 +201,7 @@ export default function AdminOverview() {
                   <div className="min-w-0 flex-1">
                     <p className="text-display truncate font-bold">{c.nickname}</p>
                     <p className="text-xs font-semibold text-[var(--accent-2)]">
-                      LV {level} — {rankName(c.theme, level)}
+                      Hero LV {level} — {rankName(c.theme, level)}
                     </p>
                   </div>
                   <div className="text-right">

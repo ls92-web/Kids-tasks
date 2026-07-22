@@ -197,7 +197,7 @@ export default function SettingsPage() {
             <p className="text-display font-black">
               {petMeta.name}{" "}
               <span className="text-xs font-bold" style={{ color: petElement(profile.pet).color }}>
-                LV {cLevel} — {cs.evolution.name} Form
+                CHAMPION LV {cLevel} — {cs.evolution.name} Form
               </span>
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">

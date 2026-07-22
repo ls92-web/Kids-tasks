@@ -350,7 +350,7 @@ export default function ChildrenPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-display font-bold">{c.nickname}</p>
                       <p className="text-xs text-[var(--text-dim)]">
-                        @{c.username} — LV {level} — {c.coins} coins — {c.xp} XP
+                        @{c.username} — Hero LV {level} — {c.coins} coins — {c.xp} XP
                       </p>
                     </div>
                   </div>

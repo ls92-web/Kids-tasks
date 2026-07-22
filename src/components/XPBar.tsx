@@ -10,7 +10,7 @@ export function XPBar({ xp, compact = false }: { xp: number; compact?: boolean }
     <div className="w-full">
       {!compact && (
         <div className="mb-1 flex items-baseline justify-between text-xs font-bold">
-          <span className="text-display text-[var(--accent-2)]">LV {level}</span>
+          <span className="text-display text-[var(--accent-2)]">HERO LV {level}</span>
           <span className="text-[var(--text-dim)]">
             {into} / {needed} XP
           </span>

@@ -214,7 +214,7 @@ export default function HeroHub() {
               {pElement.label}
             </span>
             <span className="text-display rounded-md bg-black/30 px-2 py-0.5 text-[10px] font-black text-[var(--accent-2)]">
-              LV {cLevel}
+              CHAMPION LV {cLevel}
             </span>
           </div>
           <p className="mt-0.5 text-sm text-[var(--text-dim)]">
@@ -563,7 +563,7 @@ export default function HeroHub() {
                           {isMe ? "You" : h.nickname}
                         </span>
                         <span className="text-display rounded-md bg-black/30 px-1.5 py-0.5 text-[10px] font-black text-[var(--accent-2)]">
-                          LV {hLevel}
+                          HERO LV {hLevel}
                         </span>
                         <span
                           className="text-display rounded-md bg-black/30 px-1.5 py-0.5 text-[10px] font-bold"
@@ -828,7 +828,7 @@ function HallDetail({
             <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-black/25 p-4 text-left">
               <div className="flex items-center justify-between">
                 <span className="text-display text-sm font-black">
-                  Level {prog.level}{" "}
+                  Champion LV {prog.level}{" "}
                   <span className="text-xs font-bold text-[var(--accent-2)]">— {form.name} Form</span>
                 </span>
                 <span className="text-display text-[10px] font-bold text-[var(--text-dim)]">
