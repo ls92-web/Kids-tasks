@@ -42,9 +42,11 @@ import {
   lifetimeWorldsCleared,
   lifetimeSteps,
   campaignStep,
+  campaignWorldIndex,
+  CHAPTER_SPAN,
   campaignCompleted,
 } from "@/lib/worlds";
-import { getCampaign } from "@/lib/campaign";
+import { getCampaign, campaignWorlds } from "@/lib/campaign";
 import { badgeArt } from "@/lib/assets";
 import { enter, stagger, EASE_OUT, overlayFade, popSpring } from "@/lib/motion";
 import { useEscape } from "@/lib/a11y";
@@ -62,13 +64,15 @@ export default function HeroHub() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [family, setFamily] = useState<Profile[]>([]);
   const [bonds, setBonds] = useState<CompanionBond[]>([]);
+  // every sibling's ACTIVE bond — powers the family progress cards
+  const [familyBonds, setFamilyBonds] = useState<(CompanionBond & { child_id: string })[]>([]);
   const [hallPick, setHallPick] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
     const supabase = createClient();
     (async () => {
-      const [{ data: a }, { data: t }, { data: fam }, { data: b }] = await Promise.all([
+      const [{ data: a }, { data: t }, { data: fam }, { data: b }, { data: fb }] = await Promise.all([
         supabase.from("achievements").select("key, unlocked_at").eq("child_id", profile.id),
         supabase.from("tasks").select("*").eq("child_id", profile.id),
         supabase
@@ -77,11 +81,18 @@ export default function HeroHub() {
           .eq("family_id", profile.family_id)
           .eq("role", "child"),
         supabase.from("companions").select("*").eq("child_id", profile.id).order("bonded_at"),
+        // siblings' active partners (RLS: family members read companions)
+        supabase
+          .from("companions")
+          .select("child_id, species, xp, quests_done, steps_done, status, bonded_at, legend_at, id")
+          .eq("family_id", profile.family_id)
+          .eq("status", "active"),
       ]);
       setAchievements((a as Ach[]) ?? []);
       setTasks((t as Task[]) ?? []);
       setFamily((fam as Profile[]) ?? []);
       setBonds((b as CompanionBond[]) ?? []);
+      setFamilyBonds((fb as (CompanionBond & { child_id: string })[]) ?? []);
     })();
   }, [profile]);
 
@@ -515,30 +526,68 @@ export default function HeroHub() {
         </div>
       </section>
 
-      {/* family — compact "who else is adventuring" strip */}
+      {/* family — every hero's journey, side by side. Friendly comparison:
+          hero level + where each champion stands on its campaign maps. */}
       {family.length > 1 && (
-        <section>
+        <section data-tour="family-heroes">
           <div className="mb-3 flex items-center gap-2">
             <Icon name="users" size={22} art className="text-[var(--accent-2)]" />
             <h2 className="text-display text-lg font-black">Your Family</h2>
             <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[...family]
               .sort((a, b) => b.xp - a.xp)
               .map((h) => {
-                const hLevel = levelFromXp(h.xp).level;
                 const isMe = h.id === profile.id;
+                const hLevel = levelFromXp(h.xp).level;
+                const fBond = familyBonds.find((fb) => fb.child_id === h.id) ?? null;
+                const species = fBond?.species ?? h.pet;
+                const fStep = campaignStep(fBond);
+                const fWorldIdx = campaignWorldIndex(fStep);
+                const fWorld = campaignWorlds(species)[fWorldIdx];
+                const inWorld = Math.max(0, Math.min(fStep - fWorldIdx * CHAPTER_SPAN, CHAPTER_SPAN));
+                const fForm = campaignForm(fStep);
+                const el = petElement(species);
                 return (
                   <div
                     key={h.id}
-                    className={`panel flex shrink-0 flex-col items-center gap-1 px-4 py-3 ${isMe ? "ring-1 ring-[var(--accent)]/50" : ""}`}
+                    className={`panel flex items-center gap-3 p-4 ${isMe ? "ring-1 ring-[var(--accent)]/50" : ""}`}
                   >
-                    <Portrait species={h.pet} size={44} />
-                    <span className="text-display max-w-[80px] truncate text-xs font-bold">
-                      {isMe ? "You" : h.nickname}
-                    </span>
-                    <span className="text-[10px] font-bold text-[var(--accent-2)]">LV {hLevel}</span>
+                    <div className="shrink-0">
+                      <Companion species={species} level={1} form={fForm.index} size={56} float={false} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-display truncate text-sm font-black">
+                          {isMe ? "You" : h.nickname}
+                        </span>
+                        <span className="text-display rounded-md bg-black/30 px-1.5 py-0.5 text-[10px] font-black text-[var(--accent-2)]">
+                          LV {hLevel}
+                        </span>
+                        <span
+                          className="text-display rounded-md bg-black/30 px-1.5 py-0.5 text-[10px] font-bold"
+                          style={{ color: el.color }}
+                        >
+                          {fForm.name}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--text-dim)]">
+                        World {fWorldIdx + 1} · {fWorld?.name ?? "The adventure begins"}
+                      </p>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/40">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${(inWorld / CHAPTER_SPAN) * 100}%`,
+                            background: `linear-gradient(90deg, var(--accent-deep), ${el.color})`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-0.5 text-[10px] font-bold text-[var(--text-dim)]">
+                        {inWorld}/{CHAPTER_SPAN} steps in this world
+                      </p>
+                    </div>
                   </div>
                 );
               })}
