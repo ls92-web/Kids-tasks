@@ -135,15 +135,17 @@ export const GEAR_UNLOCKS = [
   { level: 30, label: "Legend's Aura" },
 ] as const;
 
-/* Reward rarity by coin cost — drives card frame styling in the store */
+/* Reward rarity by coin cost — drives card frame styling in the store.
+   Thresholds mirror the saving tiers in rewardLibrary.ts (Economy v1.1):
+   Daily Treats / Weekly / Premium / Dream. */
 export function rewardRarity(cost: number): {
   id: "common" | "rare" | "epic" | "legendary";
   label: string;
   color: string;
 } {
-  if (cost >= 400) return { id: "legendary", label: "Legendary", color: "#ffb45e" };
-  if (cost >= 180) return { id: "epic", label: "Epic", color: "#c77dff" };
-  if (cost >= 80) return { id: "rare", label: "Rare", color: "#5ec8ff" };
+  if (cost >= 3200) return { id: "legendary", label: "Legendary", color: "#ffb45e" };
+  if (cost >= 1400) return { id: "epic", label: "Epic", color: "#c77dff" };
+  if (cost >= 600) return { id: "rare", label: "Rare", color: "#5ec8ff" };
   return { id: "common", label: "Common", color: "#8fdca0" };
 }
 
@@ -280,6 +282,9 @@ export interface Profile {
   tasks_completed: number;
   total_coins_earned: number;
   last_chest_date: string | null;
+  /** The one reward this hero is saving toward — pinned from the store,
+      shown as the Dream Reward card on the dashboard. */
+  dream_reward_id?: string | null;
   animation_intensity: "full" | "reduced" | "minimal";
   /** Heroes who join with the Family Code wait for a parent's approval. */
   status: "pending_approval" | "active" | "rejected";

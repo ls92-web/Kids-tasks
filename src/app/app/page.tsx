@@ -40,6 +40,7 @@ export default function DailyQuests() {
   const { theme, profile, setProfile, companion } = useWorld();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [nextReward, setNextReward] = useState<Reward | null>(null);
+  const [allRewards, setAllRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const [chestActive, setChestActive] = useState(false);
@@ -88,6 +89,7 @@ export default function DailyQuests() {
       setTasks(list);
       const affordableNext = ((r as Reward[]) ?? []).find((rw) => rw.coin_cost > (profile.coins ?? 0));
       setNextReward(affordableNext ?? ((r as Reward[]) ?? [])[0] ?? null);
+      setAllRewards((r as Reward[]) ?? []);
       setLoading(false);
 
       // Victories the parent approved while the hero was away → celebrate now.
@@ -236,6 +238,29 @@ export default function DailyQuests() {
     }
   }, [profile, companion]);
 
+  // a gentle dream-reward nudge from the companion — at most once per day,
+  // and only when a dream is pinned (never guilt, never pressure)
+  useEffect(() => {
+    if (!profile?.dream_reward_id) return;
+    const dream = allRewards.find((r) => r.id === profile.dream_reward_id);
+    if (!dream) return;
+    const key = `qf_dream_said_${profile.id}`;
+    const today = new Date().toDateString();
+    try {
+      if (localStorage.getItem(key) === today) return;
+      localStorage.setItem(key, today);
+    } catch {
+      return; // storage unavailable — skip quietly rather than repeat
+    }
+    const left = dream.coin_cost - profile.coins;
+    const line =
+      left <= 0
+        ? `We saved enough for ${dream.name}! It's waiting in the vault! ✨`
+        : `Only ${left} more coins until ${dream.name}!`;
+    const t = setTimeout(() => sayFromCompanion("coins", line), 2600);
+    return () => clearTimeout(t);
+  }, [profile?.dream_reward_id, profile?.coins, profile?.id, allRewards]);
+
   function grantChest(r: { kind: string; bonus: number }) {
     if (!profile) return;
     if (r.kind === "xp") {
@@ -303,6 +328,58 @@ export default function DailyQuests() {
             </p>
           )}
         </motion.div>
+
+        {/* 🌟 My Dream Reward — the ONE goal this hero is saving toward.
+            Every quest approval visibly moves this bar; saving IS the game. */}
+        {profile && (() => {
+          const dream = profile.dream_reward_id
+            ? allRewards.find((r) => r.id === profile.dream_reward_id)
+            : null;
+          if (!dream) return null;
+          const dPct = Math.min(100, (profile.coins / Math.max(1, dream.coin_cost)) * 100);
+          const dLeft = Math.max(0, dream.coin_cost - profile.coins);
+          return (
+            <motion.div
+              {...enter}
+              className="panel relative overflow-hidden p-5"
+              style={{ boxShadow: "0 0 0 1.5px rgba(255,215,106,0.35), 0 0 30px -8px rgba(255,215,106,0.55)" }}
+            >
+              <div className="flex items-center gap-4">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[var(--glow-soft)]">
+                  <Icon art name="star" size={34} className="drop-shadow-[0_0_10px_rgba(255,215,106,0.8)]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-display text-[10px] font-black uppercase tracking-wider text-[var(--gold)]">
+                    My Dream Reward
+                  </p>
+                  <p className="text-display truncate text-lg font-black">{dream.name}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-black/40 [box-shadow:inset_0_2px_4px_rgba(0,0,0,0.6)]">
+                      <motion.div
+                        className="h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${dPct}%` }}
+                        transition={{ duration: 0.9, ease: "easeOut" }}
+                        style={{
+                          background: "linear-gradient(90deg, #ffe9a8, var(--gold))",
+                          boxShadow: "0 0 12px rgba(255,215,106,0.7)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-display shrink-0 text-xs font-black text-[var(--gold)]">
+                      {Math.min(profile.coins, dream.coin_cost)} / {dream.coin_cost}
+                    </span>
+                  </div>
+                  <p className="text-display mt-1 text-[11px] font-bold text-[var(--text-dim)]">
+                    {dLeft === 0
+                      ? "You saved enough — claim it in the Treasure Vault! ✨"
+                      : `Only ${dLeft} ${theme.coinName.toLowerCase()} left!`}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* the active campaign — every approved quest moves it one step */}
         {profile && (() => {

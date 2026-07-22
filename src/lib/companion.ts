@@ -80,10 +80,12 @@ export function companionLine(event: CompanionEvent, species: string, name?: str
 
 export const COMPANION_SAY_EVENT = "qf-companion-say";
 
-/** Fire-and-forget: the CompanionGuide bubble shows a line for this moment. */
-export function sayFromCompanion(event: CompanionEvent) {
+/** Fire-and-forget: the CompanionGuide bubble shows a line for this moment.
+    Pass `text` to say something specific (e.g. dream-reward encouragement)
+    instead of the event's stock voice line. */
+export function sayFromCompanion(event: CompanionEvent, text?: string) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(COMPANION_SAY_EVENT, { detail: { event } }));
+  window.dispatchEvent(new CustomEvent(COMPANION_SAY_EVENT, { detail: { event, text } }));
 }
 
 export function companionMessages(ctx: CompanionContext, theme: ThemeId): string[] {

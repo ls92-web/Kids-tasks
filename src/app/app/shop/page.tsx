@@ -14,6 +14,7 @@ import { useEscape } from "@/lib/a11y";
 import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
 import { CoachStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
+import { REWARD_TIERS, tierForCost } from "@/lib/rewardLibrary";
 
 /* A treasure the hero already claimed — pending until the parent makes it
    real, then granted. */
@@ -25,43 +26,15 @@ interface Redemption {
   created_at: string;
 }
 
-const CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "treats", label: "Treats" },
-  { id: "fun", label: "Fun" },
-  { id: "toys", label: "Toys" },
-  { id: "pets", label: "Pets" },
-  { id: "adventures", label: "Adventures" },
-];
-
-const CATEGORY_OF: Record<string, string> = {
-  icecream: "treats",
-  dinner: "treats",
-  movie: "fun",
-  screen: "fun",
-  electronics: "fun",
-  animation: "fun",
-  book: "fun",
-  toy: "toys",
-  ball: "toys",
-  clothing: "toys",
-  weapon: "toys",
-  decor: "toys",
-  pet: "pets",
-  petacc: "pets",
-  trip: "adventures",
-  experience: "adventures",
-  outdoor: "adventures",
-  parent: "adventures",
-  gift: "adventures",
-  mystery: "adventures",
-};
+/* Rewards group by SAVING TIER (Economy v1.1): the store reads as a ladder of
+   goals — small treats first, dream goals last — so the question a hero asks
+   is "what am I saving for?", never "what can I buy today?". A reward's tier
+   comes from its price band, so parents' custom rewards slot in naturally. */
 
 export default function ShopPage() {
   const { theme, profile, setProfile } = useWorld();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [treasures, setTreasures] = useState<Redemption[]>([]);
-  const [category, setCategory] = useState("all");
   const [bought, setBought] = useState<Reward | null>(null);
   const [chestOpen, setChestOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -107,13 +80,25 @@ export default function ShopPage() {
       .then(({ data }) => setTreasures((data as Redemption[]) ?? []));
   }, [profile]);
 
-  const visible = useMemo(
+  // the store as a saving ladder: one section per tier, cheapest goals first
+  const tiers = useMemo(
     () =>
-      category === "all"
-        ? rewards
-        : rewards.filter((r) => (CATEGORY_OF[r.icon] ?? "special") === category),
-    [rewards, category]
+      REWARD_TIERS.map((t) => ({
+        tier: t,
+        rewards: rewards.filter((r) => tierForCost(r.coin_cost).id === t.id),
+      })).filter((g) => g.rewards.length > 0),
+    [rewards]
   );
+
+  // pin/unpin the ONE reward this hero is saving toward
+  async function pinDream(r: Reward) {
+    if (!profile) return;
+    const next = profile.dream_reward_id === r.id ? null : r.id;
+    setProfile({ ...profile, dream_reward_id: next } as Profile);
+    sfx.chirp();
+    const supabase = createClient();
+    await supabase.from("profiles").update({ dream_reward_id: next }).eq("id", profile.id);
+  }
 
   async function buy(r: Reward) {
     if (!profile) return;
@@ -217,7 +202,7 @@ export default function ShopPage() {
         <div data-tour="shop-intro">
           <h1 className="text-display text-3xl font-black">Treasure Vault</h1>
           <p className="mt-1 text-sm text-[var(--text-dim)]">
-            Spend your {theme.coinName.toLowerCase()} on real rewards
+            Every {theme.coinName.toLowerCase().replace(/s$/, "")} you save brings a goal closer
           </p>
         </div>
         <GameButton
@@ -232,36 +217,9 @@ export default function ShopPage() {
         </GameButton>
       </div>
 
-      {/* category shelf */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.id}
-            aria-pressed={category === c.id}
-            onClick={() => {
-              sfx.click();
-              setCategory(c.id);
-            }}
-            className={`text-display shrink-0 cursor-pointer rounded-xl px-4 py-2 text-sm font-bold transition-all ${
-              category === c.id ? "text-white" : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
-            }`}
-            style={
-              category === c.id
-                ? {
-                    background: "linear-gradient(160deg, var(--accent), var(--accent-deep))",
-                    boxShadow: "0 0 16px -4px var(--glow)",
-                  }
-                : {}
-            }
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
-
       {error && <Callout tone="error">{error}</Callout>}
 
-      {visible.length === 0 ? (
+      {tiers.length === 0 ? (
         <div className="panel overflow-hidden text-center">
           {/* Welcome Hero — fills the card width, shown whole, text below */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -271,17 +229,32 @@ export default function ShopPage() {
             className="block w-full"
           />
           <p className="text-display px-6 py-6 font-bold text-[var(--text-dim)]">
-            {rewards.length === 0
-              ? "The vault is being stocked. Check back soon!"
-              : "Nothing on this shelf yet — try another one."}
+            The vault is being stocked. Check back soon!
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((r, i) => (
-            <RewardCard key={r.id} reward={r} coins={profile?.coins ?? 0} onBuy={buy} index={i} />
-          ))}
-        </div>
+        tiers.map(({ tier, rewards: tierRewards }) => (
+          <section key={tier.id}>
+            <div className="mb-3 flex flex-wrap items-baseline gap-2">
+              <h2 className="text-display text-lg font-black">{tier.name}</h2>
+              <span className="text-xs font-semibold text-[var(--text-dim)]">{tier.blurb}</span>
+              <div className="h-px flex-1 self-center bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {tierRewards.map((r, i) => (
+                <RewardCard
+                  key={r.id}
+                  reward={r}
+                  coins={profile?.coins ?? 0}
+                  onBuy={buy}
+                  index={i}
+                  pinned={profile?.dream_reward_id === r.id}
+                  onPin={pinDream}
+                />
+              ))}
+            </div>
+          </section>
+        ))
       )}
 
       {/* the hero's claimed treasures — pride of ownership, and a clear

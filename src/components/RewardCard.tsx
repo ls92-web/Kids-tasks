@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Icon } from "./Icon";
 import { Reward, rewardRarity } from "@/lib/game";
 import { enter, stagger } from "@/lib/motion";
-import { useWorld } from "./ThemeProvider";
 
 export const REWARD_ICONS: Record<string, string> = {
   gift: "wrapped-gift",
@@ -29,24 +28,31 @@ export const REWARD_ICONS: Record<string, string> = {
   animation: "sparkle",
 };
 
-/* Collectible reward card: rarity frame, floating art, shimmer,
-   glowing claim button. */
+/* Collectible reward card — a SAVING GOAL, not an impulse buy: rarity frame,
+   floating art, a progress bar from the hero's coins toward the cost, and a
+   claim button that only lights up once the goal is truly reached. */
 export function RewardCard({
   reward,
   coins,
   onBuy,
   index = 0,
+  pinned = false,
+  onPin,
 }: {
   reward: Reward;
   coins: number;
   onBuy: (r: Reward) => void;
   index?: number;
+  /** This reward is the hero's pinned Dream Reward. */
+  pinned?: boolean;
+  /** Pin/unpin this reward as the hero's Dream Reward (star button). */
+  onPin?: (r: Reward) => void;
 }) {
-  const { theme } = useWorld();
   const rarity = rewardRarity(reward.coin_cost);
   const affordable = coins >= reward.coin_cost;
   const soldOut = reward.quantity !== null && reward.quantity <= 0;
   const buyable = affordable && !soldOut && reward.available;
+  const pct = Math.max(0, Math.min(100, (coins / Math.max(1, reward.coin_cost)) * 100));
 
   return (
     <motion.div
@@ -91,6 +97,27 @@ export function RewardCard({
             {soldOut ? "SOLD OUT" : `${reward.quantity} left`}
           </span>
         )}
+        {/* pin as my Dream Reward — the goal I'm saving toward */}
+        {onPin && (
+          <button
+            onClick={() => onPin(reward)}
+            aria-pressed={pinned}
+            aria-label={pinned ? "Unpin my dream reward" : "Make this my dream reward"}
+            title={pinned ? "This is my dream reward" : "Make this my dream reward"}
+            className="absolute bottom-2 right-2 grid h-9 w-9 cursor-pointer place-items-center rounded-full transition-all"
+            style={{
+              background: pinned ? "rgba(255,215,106,0.25)" : "rgba(0,0,0,0.45)",
+              boxShadow: pinned ? "0 0 14px -2px rgba(255,215,106,0.8)" : "none",
+            }}
+          >
+            <Icon
+              name="star"
+              size={20}
+              art
+              className={pinned ? "" : "opacity-40 grayscale"}
+            />
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-3.5">
@@ -98,12 +125,38 @@ export function RewardCard({
         {reward.description && (
           <p className="mt-1 line-clamp-2 text-xs text-[var(--text-dim)]">{reward.description}</p>
         )}
-        <div className="mt-auto flex items-center justify-between pt-3">
-          <span className="text-display flex items-center gap-1.5 text-lg font-black text-[var(--gold)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/ui/icons/coin.png" alt="" className="h-5 w-5 shrink-0 object-contain" />
-            {reward.coin_cost}
-          </span>
+        {/* the saving journey: my coins vs the goal, always visible */}
+        <div className="mt-3">
+          <div className="flex items-baseline justify-between text-xs font-bold">
+            <span className="text-display flex items-center gap-1 text-[var(--gold)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/ui/icons/coin.png" alt="" className="h-4 w-4 shrink-0 object-contain" />
+              {Math.min(coins, reward.coin_cost)} / {reward.coin_cost}
+            </span>
+            <span
+              className="text-display text-[11px]"
+              style={{ color: affordable ? "var(--success)" : "var(--text-dim)" }}
+            >
+              {affordable ? "Saved up! \u2728" : `Only ${reward.coin_cost - coins} left!`}
+            </span>
+          </div>
+          <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-black/40">
+            <motion.div
+              className="h-full rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              style={{
+                background: affordable
+                  ? "linear-gradient(90deg, #ffe9a8, var(--gold))"
+                  : `linear-gradient(90deg, var(--accent-deep), ${rarity.color})`,
+                boxShadow: affordable ? "0 0 10px rgba(255,215,106,0.7)" : "none",
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-end">
           <motion.button
             whileHover={buyable ? { scale: 1.04 } : {}}
             whileTap={buyable ? { scale: 0.94 } : {}}
@@ -121,14 +174,9 @@ export function RewardCard({
                 : {}
             }
           >
-            {soldOut ? "All gone" : affordable ? "It\u2019s ours!" : "Not yet"}
+            {soldOut ? "All gone" : affordable ? "It\u2019s ours!" : "Keep saving"}
           </motion.button>
         </div>
-        {!affordable && !soldOut && (
-          <p className="mt-2 text-center text-[11px] font-semibold text-[var(--text-dim)]">
-            {reward.coin_cost - coins} more {theme.coinName.toLowerCase()} to go
-          </p>
-        )}
       </div>
     </motion.div>
   );

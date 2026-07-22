@@ -36,9 +36,10 @@ export function CompanionGuide({ messages }: { messages: string[] }) {
   useEffect(() => {
     if (!profile) return;
     function onSay(e: Event) {
-      const ev = (e as CustomEvent<{ event: CompanionEvent }>).detail?.event;
+      const detail = (e as CustomEvent<{ event: CompanionEvent; text?: string }>).detail;
+      const ev = detail?.event;
       if (!ev || !profile) return;
-      setEventLine(companionLine(ev, profile.pet, profile.nickname));
+      setEventLine(detail.text ?? companionLine(ev, profile.pet, profile.nickname));
       if (eventTimer.current) clearTimeout(eventTimer.current);
       eventTimer.current = setTimeout(() => setEventLine(null), 6000);
     }

@@ -15,15 +15,45 @@
    ============================================================================ */
 
 /* ---------- Official Rewards (RW001–RW039) ----------
-   DOCUMENTATION CORRECTION (approved 2026-07-17): the source document's reward
-   table used three categories ("Screen Time", "Social", "Surprise") that are
-   not part of its own 9-category taxonomy. Normalized here — and to be fixed
-   in the source docx — as:
-     RW007 Extra Screen Time   → Free Privileges
-     RW027 Invite a Friend Over → Family Experiences
-     RW038 Treasure Box Surprise → Milestone Rewards
-   Artwork/icons unchanged; only category metadata. All category labels use the
-   documented list names (e.g. "Outdoor & Sports", "Milestone Rewards"). */
+   ECONOMY v1.1 (2026-07-22) — THE SAVING JOURNEY. The store teaches patience,
+   saving, and working toward meaningful goals — not daily spending. Rewards
+   are organized into four SAVING TIERS, each a promise about how long an
+   active hero saves for it (measured against real income of ~75 coins/day:
+   ~40 from quests at the 10/20/40/80 difficulty defaults, ~23 expected from
+   the daily chest, ~12 amortized from achievements/legends):
+
+     Daily Treats     250-450   ≈ 3-7 days of saving
+     Weekly Rewards   600-1000  ≈ 1-2 weeks
+     Premium Rewards  1400-2600 ≈ 3-6 weeks
+     Dream Rewards    3200-6500 ≈ 1.5-3 months
+
+   The old 9-category taxonomy (v1.0) is superseded by these tiers; the tier
+   is what the child's store groups by and what the pricing bands mean.
+   rewardRarity() in game.ts mirrors the tier boundaries for card styling. */
+
+export interface RewardTier {
+  id: string;
+  name: string;
+  /** What this tier teaches — shown under the tier header in the store. */
+  blurb: string;
+  /** Minimum suggested cost for this tier (bands meet at these edges). */
+  min: number;
+}
+
+/** The four saving tiers, cheapest first. Order matters for grouping. */
+export const REWARD_TIERS: RewardTier[] = [
+  { id: "daily", name: "Daily Treats", blurb: "Small joys — a few days of saving", min: 0 },
+  { id: "weekly", name: "Weekly Rewards", blurb: "Worth about a week or two of quests", min: 600 },
+  { id: "premium", name: "Premium Rewards", blurb: "Big goals — save for about a month", min: 1400 },
+  { id: "dream", name: "Dream Rewards", blurb: "Legendary goals worth months of effort", min: 3200 },
+];
+
+/** Which saving tier a coin cost falls into (custom rewards included). */
+export function tierForCost(cost: number): RewardTier {
+  let tier = REWARD_TIERS[0];
+  for (const t of REWARD_TIERS) if (cost >= t.min) tier = t;
+  return tier;
+}
 
 export interface RewardProfile {
   id: string; // official ID, e.g. "RW001"
@@ -46,45 +76,52 @@ const R = (
 ): RewardProfile => ({ id, name, category, cost, description, icon });
 
 export const REWARD_LIBRARY: RewardProfile[] = [
-  R("RW001", "Choose Dessert", "Free Privileges", 15, "Child chooses dessert after lunch.", "icecream"),
-  R("RW002", "Favorite Snack", "Free Privileges", 20, "Parent-approved favorite snack.", "icecream"),
-  R("RW003", "Juice or Smoothie", "Free Privileges", 20, "Healthy drink chosen by the child.", "icecream"),
-  R("RW004", "Extra Bedtime Story with Mom/Dad", "Free Privileges", 15, "One additional bedtime story by Mom/Dad.", "book"),
-  R("RW005", "Choose Dinner", "Free Privileges", 25, "Child chooses the family dinner.", "dinner"),
-  R("RW006", "Stay Up 30 Minutes Later", "Free Privileges", 30, "Parent-approved evenings only.", "gift"),
-  R("RW007", "Extra Screen Time (30 min)", "Free Privileges", 60, "Extra 30 minutes of screen time.", "screen"),
-  R("RW008", "Movie Night", "Family Experiences", 50, "Family movie with popcorn.", "movie"),
-  R("RW009", "Board Game Night with Mom/Dad", "Family Experiences", 40, "Child chooses the board game.", "toy"),
-  R("RW010", "Family Walk (Mom/Dad)", "Family Experiences", 35, "Child chooses the walking destination.", "outdoor"),
-  R("RW011", "Bake Together with Mom", "Family Experiences", 45, "Bake a favorite recipe together.", "dinner"),
-  R("RW012", "Park Visit", "Family Experiences", 50, "Family trip to the park.", "trip"),
-  R("RW013", "Picnic", "Family Experiences", 80, "Family picnic outdoors.", "trip"),
-  R("RW014", "Bike Ride", "Family Experiences", 40, "Family bike ride together.", "outdoor"),
-  R("RW015", "Cook Favorite Meal Together with Mom", "Family Experiences", 80, "Child helps cook dinner.", "dinner"),
-  R("RW016", "Family Breakfast Out", "Family Experiences", 200, "Weekend breakfast outing.", "dinner"),
-  R("RW017", "Visit the Library", "Educational Rewards", 60, "Visit the local library together.", "book"),
-  R("RW018", "New Story Book", "Educational Rewards", 100, "Choose a new book.", "book"),
-  R("RW019", "Private Date with Mom", "Family Experiences", 80, "Private date out with mom.", "trip"),
-  R("RW020", "Private Date with Dad", "Family Experiences", 80, "Private date out with Dad.", "trip"),
-  R("RW021", "New Craft Supplies", "Creative Rewards", 120, "Art and craft materials.", "toy"),
-  R("RW022", "Gardening Together", "Family Experiences", 70, "Plant flowers or vegetables together.", "outdoor"),
-  R("RW023", "Swimming Trip", "Outdoor & Sports", 120, "Pool or beach visit.", "outdoor"),
-  R("RW024", "New Football/Ball", "Outdoor & Sports", 180, "Encourages physical activity.", "ball"),
-  R("RW025", "Sports Equipment", "Outdoor & Sports", 300, "Parent-selected equipment.", "ball"),
-  R("RW026", "Ice Cream Treat", "Small Purchases", 35, "One ice cream.", "icecream"),
-  R("RW027", "Invite a Friend Over", "Family Experiences", 120, "Parent-approved playdate.", "gift"),
-  R("RW028", "Sleepover with Cousins", "Family Experiences", 180, "Family-approved sleepover.", "gift"),
-  R("RW029", "LEGO Set", "Milestone Rewards", 250, "Long-term goal reward.", "toy"),
-  R("RW030", "New Toy", "Milestone Rewards", 300, "Parent-selected toy.", "toy"),
-  R("RW031", "Magic Planet Visit", "Premium Rewards", 250, "Family visit to the Avenues – Magic Planet.", "trip"),
-  R("RW032", "Skating Visit", "Premium Rewards", 200, "Skating visit.", "trip"),
-  R("RW033", "Museum Visit", "Educational Rewards", 200, "Museum trip.", "trip"),
-  R("RW034", "Camping Night", "Premium Rewards", 180, "Indoor or outdoor camping.", "outdoor"),
-  R("RW035", "Theme Park Visit", "Premium Rewards", 500, "Major milestone reward.", "trip"),
-  R("RW036", "New Bicycle", "Premium Rewards", 800, "Long-term achievement reward.", "outdoor"),
-  R("RW037", "Choose Weekend Activity", "Family Experiences", 180, "Child plans the weekend.", "trip"),
-  R("RW038", "Treasure Box Surprise", "Milestone Rewards", 150, "Mystery reward chosen by parents.", "mystery"),
-  R("RW039", "Dream Reward", "Custom Rewards", null, "Flexible custom reward.", "gift"),
+  // ----- Daily Treats (250-450 · ≈3-7 days) -----
+  R("RW004", "Extra Bedtime Story with Mom/Dad", "Daily Treats", 250, "One additional bedtime story by Mom/Dad.", "book"),
+  R("RW003", "Juice or Smoothie", "Daily Treats", 280, "Healthy drink chosen by the child.", "icecream"),
+  R("RW001", "Choose Dessert", "Daily Treats", 300, "Child chooses dessert after lunch.", "icecream"),
+  R("RW002", "Favorite Snack", "Daily Treats", 300, "Parent-approved favorite snack.", "icecream"),
+  R("RW010", "Family Walk (Mom/Dad)", "Daily Treats", 320, "Child chooses the walking destination.", "outdoor"),
+  R("RW026", "Ice Cream Treat", "Daily Treats", 350, "One ice cream.", "icecream"),
+  R("RW005", "Choose Dinner", "Daily Treats", 350, "Child chooses the family dinner.", "dinner"),
+  R("RW014", "Bike Ride", "Daily Treats", 380, "Family bike ride together.", "outdoor"),
+  R("RW006", "Stay Up 30 Minutes Later", "Daily Treats", 400, "Parent-approved evenings only.", "gift"),
+  R("RW009", "Board Game Night with Mom/Dad", "Daily Treats", 400, "Child chooses the board game.", "toy"),
+
+  // ----- Weekly Rewards (600-1000 · ≈1-2 weeks) -----
+  R("RW007", "Extra Screen Time (30 min)", "Weekly Rewards", 600, "Extra 30 minutes of screen time.", "screen"),
+  R("RW017", "Visit the Library", "Weekly Rewards", 600, "Visit the local library together.", "book"),
+  R("RW011", "Bake Together with Mom", "Weekly Rewards", 650, "Bake a favorite recipe together.", "dinner"),
+  R("RW022", "Gardening Together", "Weekly Rewards", 650, "Plant flowers or vegetables together.", "outdoor"),
+  R("RW008", "Movie Night", "Weekly Rewards", 700, "Family movie with popcorn.", "movie"),
+  R("RW012", "Park Visit", "Weekly Rewards", 700, "Family trip to the park.", "trip"),
+  R("RW015", "Cook Favorite Meal Together with Mom", "Weekly Rewards", 750, "Child helps cook dinner.", "dinner"),
+  R("RW013", "Picnic", "Weekly Rewards", 800, "Family picnic outdoors.", "trip"),
+  R("RW018", "New Story Book", "Weekly Rewards", 800, "Choose a new book.", "book"),
+  R("RW037", "Choose Weekend Activity", "Weekly Rewards", 850, "Child plans the weekend.", "trip"),
+  R("RW019", "Private Date with Mom", "Weekly Rewards", 900, "Private date out with mom.", "trip"),
+  R("RW020", "Private Date with Dad", "Weekly Rewards", 900, "Private date out with Dad.", "trip"),
+  R("RW038", "Treasure Box Surprise", "Weekly Rewards", 950, "Mystery reward chosen by parents.", "mystery"),
+
+  // ----- Premium Rewards (1400-2600 · ≈3-6 weeks) -----
+  R("RW021", "New Craft Supplies", "Premium Rewards", 1400, "Art and craft materials.", "toy"),
+  R("RW027", "Invite a Friend Over", "Premium Rewards", 1400, "Parent-approved playdate.", "gift"),
+  R("RW016", "Family Breakfast Out", "Premium Rewards", 1500, "Weekend breakfast outing.", "dinner"),
+  R("RW023", "Swimming Trip", "Premium Rewards", 1500, "Pool or beach visit.", "outdoor"),
+  R("RW033", "Museum Visit", "Premium Rewards", 1500, "Museum trip.", "trip"),
+  R("RW024", "New Football/Ball", "Premium Rewards", 1600, "Encourages physical activity.", "ball"),
+  R("RW032", "Skating Visit", "Premium Rewards", 1600, "Skating visit.", "trip"),
+  R("RW030", "New Toy", "Premium Rewards", 1800, "Parent-selected toy.", "toy"),
+  R("RW028", "Sleepover with Cousins", "Premium Rewards", 1800, "Family-approved sleepover.", "gift"),
+  R("RW029", "LEGO Set", "Premium Rewards", 2000, "A LEGO set worth saving for.", "toy"),
+  R("RW034", "Camping Night", "Premium Rewards", 2000, "Indoor or outdoor camping.", "outdoor"),
+  R("RW031", "Magic Planet Visit", "Premium Rewards", 2600, "Family visit to the Avenues – Magic Planet.", "trip"),
+
+  // ----- Dream Rewards (3200-6500 · ≈1.5-3 months) -----
+  R("RW025", "Sports Equipment", "Dream Rewards", 3200, "Parent-selected equipment.", "ball"),
+  R("RW035", "Theme Park Visit", "Dream Rewards", 5000, "A major milestone adventure.", "trip"),
+  R("RW036", "New Bicycle", "Dream Rewards", 6000, "The long-term achievement reward.", "outdoor"),
+  R("RW039", "Dream Reward", "Dream Rewards", null, "The family's own dream goal — parent sets the price.", "gift"),
 ];
 
 /** Categories in catalogue order, for grouping the dropdown. */
