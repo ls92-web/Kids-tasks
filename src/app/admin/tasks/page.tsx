@@ -43,34 +43,50 @@ const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: nu
 };
 
 /* curated, quest-appropriate slice of the icon pool (public/ui/icons/) */
+/* Every option renders DISTINCT art — no two icons in this grid look alike.
+   (v1 shipped compass+adventure — two compasses — and heart+health — two
+   hearts; old quests storing those ids still render via ICON_ART.) */
 const QUEST_ICON_OPTIONS = [
   { id: "home", label: "Home & Chores" },
   { id: "make-bed", label: "Make Bed" },
-  { id: "multiplication", label: "Math" },
+  { id: "bed", label: "Bedtime" },
   { id: "homework", label: "Homework" },
+  { id: "multiplication", label: "Math" },
   { id: "book", label: "Reading" },
+  { id: "scroll", label: "Story" },
+  { id: "backpack", label: "School" },
   { id: "prayer", label: "Prayer" },
   { id: "quraan", label: "Qur'an" },
   { id: "energy", label: "Energy" },
-  { id: "health", label: "Health" },
+  { id: "potion", label: "Health" },
   { id: "heart", label: "Kindness" },
   { id: "star", label: "General" },
   { id: "sword", label: "Bravery" },
   { id: "hero", label: "Hero" },
   { id: "hero-shield", label: "Responsibility" },
-  { id: "backpack", label: "School" },
+  { id: "shadow", label: "Evening" },
+  { id: "fire", label: "Streak" },
   { id: "family", label: "Family" },
   { id: "friends", label: "Friends" },
+  { id: "mail", label: "Message" },
+  { id: "shop", label: "Shopping" },
   { id: "nature", label: "Outdoors" },
+  { id: "ice", label: "Winter" },
+  { id: "world", label: "World" },
+  { id: "compass", label: "Adventure" },
+  { id: "treasure-map", label: "Journey" },
   { id: "celebration", label: "Celebration" },
   { id: "quest-scroll", label: "Quest" },
   { id: "quest-target", label: "Goal" },
+  { id: "mission-complete", label: "Mission" },
+  { id: "checkpoint", label: "Checkpoint" },
+  { id: "destination", label: "Destination" },
   { id: "tasks", label: "Tasks" },
   { id: "calendar", label: "Schedule" },
   { id: "time", label: "Time" },
-  { id: "world", label: "World" },
-  { id: "compass", label: "Explore" },
-  { id: "adventure", label: "Adventure" },
+  { id: "camera", label: "Photo" },
+  { id: "magic", label: "Magic" },
+  { id: "crystal-ball", label: "Wonder" },
 ];
 
 /* one status → row-badge lookup shared by both the Current and History

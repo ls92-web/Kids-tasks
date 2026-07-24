@@ -60,18 +60,24 @@ const METRIC_ICON: Record<string, string> = {
   family: "family",
 };
 
-/* curated, challenge-appropriate slice of the icon pool */
+/* Curated, challenge-appropriate slice of the icon pool — every option is
+   visually distinct (v1 offered trophy AND leaderboard, two identical cups). */
 const CHALLENGE_ICON_OPTIONS = [
-  { id: "sword", label: "Quests" },
-  { id: "trophy", label: "Champion" },
-  { id: "champion", label: "Champion" },
+  { id: "trophy", label: "Trophy" },
+  { id: "champion", label: "Crown" },
   { id: "medal", label: "Medal" },
   { id: "legendary", label: "Legendary" },
-  { id: "leaderboard", label: "Leaderboard" },
   { id: "star", label: "General" },
+  { id: "sword", label: "Quests" },
   { id: "quest-target", label: "Goal" },
+  { id: "mission-complete", label: "Bullseye" },
+  { id: "checkpoint", label: "Race Flag" },
+  { id: "destination", label: "Finish Line" },
   { id: "flame", label: "Streak" },
   { id: "energy", label: "Habits" },
+  { id: "progress", label: "Progress" },
+  { id: "xp", label: "XP Boost" },
+  { id: "time", label: "Time Trial" },
   { id: "book", label: "Reading" },
   { id: "prayer", label: "Prayer" },
   { id: "quraan", label: "Qur'an" },
@@ -80,9 +86,12 @@ const CHALLENGE_ICON_OPTIONS = [
   { id: "hero-shield", label: "Responsibility" },
   { id: "heart", label: "Wellbeing" },
   { id: "family", label: "Family" },
+  { id: "friends", label: "Friends" },
+  { id: "nature", label: "Outdoors" },
+  { id: "ice", label: "Winter" },
+  { id: "shadow", label: "Night" },
   { id: "world", label: "World" },
   { id: "celebration", label: "Celebration" },
-  { id: "progress", label: "Progress" },
   { id: "gift", label: "Bonus" },
 ];
 

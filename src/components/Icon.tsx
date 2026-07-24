@@ -149,6 +149,10 @@ const ICON_ART: Record<string, string> = {
   "quest-target": "quest-target", tasks: "tasks", calendar: "calendar", time: "time",
   compass: "compass", champion: "champion", legendary: "legendary", leaderboard: "leaderboard",
   progress: "progress",
+  // expanded picker pool (2026-07-22): every slug renders its own distinct art
+  bed: "bed", shadow: "shadow", fire: "fire", ice: "ice", mail: "mail", shop: "shop",
+  magic: "magic", "crystal-ball": "crystal-ball", "treasure-map": "treasure-map",
+  "mission-complete": "mission-complete", checkpoint: "checkpoint", destination: "destination",
   // official WonderNest Rewards collection (public/ui/icons/<slug>.png)
   "gold-coins": "gold-coins", "gem-pile": "gem-pile", "treasure-chest": "treasure-chest",
   "magic-chest": "magic-chest", "golden-ticket": "golden-ticket", "mystery-box": "mystery-box",

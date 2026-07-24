@@ -49,6 +49,13 @@ const ICON_OPTIONS = [
   { id: "outdoor", label: "Outdoor Activity" },
   { id: "electronics", label: "Electronics" },
   { id: "mystery", label: "Mystery Box" },
+  { id: "ticket", label: "Event Ticket" },
+  { id: "voucher", label: "Voucher" },
+  { id: "treasure", label: "Treasure Box" },
+  { id: "magicchest", label: "Magic Chest" },
+  { id: "crystal", label: "Magic Crystal" },
+  { id: "key", label: "Golden Key" },
+  { id: "dream", label: "Dream Reward" },
 ];
 
 export default function RewardsAdmin() {

@@ -5,14 +5,17 @@ import { Icon } from "./Icon";
 import { Reward, rewardRarity } from "@/lib/game";
 import { enter, stagger } from "@/lib/motion";
 
+/* Reward icon id → Icon name. Every id renders DISTINCT art (v1 drew both
+   dinner+outdoor as a flame, weapon+ball as a sword, gift+parent as the same
+   gift box, and movie as a plain ticket instead of its movie-night art). */
 export const REWARD_ICONS: Record<string, string> = {
   gift: "wrapped-gift",
-  movie: "golden-ticket",
+  movie: "movie",
   icecream: "potion",
   screen: "screen",
   toy: "star",
   trip: "map",
-  ball: "sword",
+  ball: "medal",
   dinner: "flame",
   mystery: "mystery-box",
   book: "book",
@@ -22,10 +25,18 @@ export const REWARD_ICONS: Record<string, string> = {
   petacc: "gem-pile",
   decor: "home",
   experience: "reward-voucher",
-  outdoor: "flame",
+  outdoor: "nature",
   electronics: "lightning",
-  parent: "wrapped-gift",
+  parent: "parent",
   animation: "sparkle",
+  // expanded picker pool (2026-07-22)
+  ticket: "ticket",
+  voucher: "reward-voucher",
+  treasure: "treasure-chest",
+  magicchest: "magic-chest",
+  crystal: "magic-crystal",
+  key: "treasure-key",
+  dream: "wish-reward",
 };
 
 /* Collectible reward card — a SAVING GOAL, not an impulse buy: rarity frame,
