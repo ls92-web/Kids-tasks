@@ -15,6 +15,7 @@ import { CompanionCoach, useCoachBeat } from "@/components/CompanionCoach";
 import { CoachStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
 import { REWARD_TIERS, tierForCost } from "@/lib/rewardLibrary";
+import { microCelebrate } from "@/components/MicroCelebration";
 
 /* A treasure the hero already claimed — pending until the parent makes it
    real, then granted. */
@@ -67,7 +68,9 @@ export default function ShopPage() {
       .then(({ data }) => setRewards((data as Reward[]) ?? []));
   }, []);
 
-  // the hero's own claimed treasures (RLS: children read only their own)
+  // the hero's own claimed treasures (RLS: children read only their own).
+  // A treasure that turned "granted" since the last look gets a small
+  // celebration — the parent made it real!
   useEffect(() => {
     if (!profile) return;
     const supabase = createClient();
@@ -77,7 +80,22 @@ export default function ShopPage() {
       .eq("child_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(50)
-      .then(({ data }) => setTreasures((data as Redemption[]) ?? []));
+      .then(({ data }) => {
+        const list = (data as Redemption[]) ?? [];
+        setTreasures(list);
+        try {
+          const key = `qf_granted_seen_${profile.id}`;
+          const raw = localStorage.getItem(key);
+          const seen: string[] = JSON.parse(raw ?? "[]");
+          const granted = list.filter((t) => t.status === "granted");
+          const fresh = granted.find((t) => !seen.includes(t.id));
+          // first visit only seeds (no celebrating old history)
+          if (fresh && raw !== null) {
+            microCelebrate("rewardGranted", { subtitle: fresh.reward_name });
+          }
+          localStorage.setItem(key, JSON.stringify(granted.map((t) => t.id)));
+        } catch {}
+      });
   }, [profile]);
 
   // the store as a saving ladder: one section per tier, cheapest goals first

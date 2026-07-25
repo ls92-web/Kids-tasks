@@ -16,6 +16,7 @@ import { CelebrationOverlay, CelebrationData } from "@/components/CelebrationOve
 import { MilestoneCelebration, useMilestones } from "@/components/Milestone";
 import { ChapterComplete } from "@/components/ChapterComplete";
 import { MysteryChest } from "@/components/MysteryChest";
+import { microCelebrate } from "@/components/MicroCelebration";
 import { WorldMap } from "@/components/WorldMap";
 import { companionMessages, sayFromCompanion } from "@/lib/companion";
 import { enter, pop, barFill } from "@/lib/motion";
@@ -253,6 +254,17 @@ export default function DailyQuests() {
       return; // storage unavailable — skip quietly rather than repeat
     }
     const left = dream.coin_cost - profile.coins;
+    // the goal itself being REACHED is a real moment — one micro-celebration
+    // per dream, the first time the savings cross the line
+    if (left <= 0) {
+      try {
+        const reachedKey = `qf_dream_reached_${dream.id}`;
+        if (!localStorage.getItem(reachedKey)) {
+          localStorage.setItem(reachedKey, "1");
+          setTimeout(() => microCelebrate("dreamReached", { subtitle: dream.name }), 1200);
+        }
+      } catch {}
+    }
     const line =
       left <= 0
         ? `We saved enough for ${dream.name}! It's waiting in the vault! ✨`

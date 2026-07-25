@@ -12,6 +12,7 @@ import { MagicLoader } from "@/components/MagicLoader";
 import { Callout } from "@/components/Callout";
 import { enter } from "@/lib/motion";
 import { DIFFICULTY, STEP_WEIGHT, Task } from "@/lib/game";
+import { microCelebrate } from "@/components/MicroCelebration";
 
 export default function QuestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -179,6 +180,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       if (subErr && !/already sent/i.test(subErr.message)) throw subErr;
       await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
       setTask({ ...task, status: "needs_review" });
+      microCelebrate("questSent", { subtitle: task.title });
       setMessage({
         tone: "info",
         text: "Sent straight to your grown-up. Great work!",
@@ -220,6 +222,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       if (!aiInvolved) {
         await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
         setTask({ ...task, status: "needs_review" });
+        microCelebrate("questSent", { subtitle: task.title });
         setMessage({
           tone: "info",
           text: "Your photo flew straight to your grown-up. Great work!",
@@ -243,6 +246,11 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       // plays on the Adventure board (the fresh-victory celebration).
       if (result.outcome === "auto_approved") {
         setTask({ ...task, status: "completed" });
+        microCelebrate("questComplete", {
+          subtitle: task.title,
+          coins: task.coin_reward,
+          xp: task.xp_reward,
+        });
         setMessage({
           tone: "info",
           text:
@@ -264,6 +272,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         setPreviewUrl(null);
       } else {
         setTask({ ...task, status: "needs_review" });
+        microCelebrate("questSent", { subtitle: task.title });
         setMessage({
           tone: "info",
           text:

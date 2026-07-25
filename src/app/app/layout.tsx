@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { WorldBackground } from "@/components/WorldBackground";
 import { HUD } from "@/components/HUD";
 import { ChildNav } from "@/components/ChildNav";
+import { MicroCelebrationHost } from "@/components/MicroCelebration";
 import { MagicLoader } from "@/components/MagicLoader";
 import { Profile, CompanionBond } from "@/lib/game";
 import { syncSeenTours } from "@/lib/tour";
@@ -76,6 +77,8 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
           <main className="mx-auto mt-5 w-[min(96%,900px)]">{children}</main>
         </div>
         <ChildNav />
+        {/* the small-joys layer: microCelebrate() from any screen lands here */}
+        <MicroCelebrationHost />
       </div>
     </ThemeProvider>
   );
