@@ -232,6 +232,9 @@ export default function TasksAdmin() {
     deadline: defaultDeadlineValue(),
     icon: TASK_TYPE_ICON.chore,
   });
+  // a one-off quest's deadline is optional — unchecked = infinite quest,
+  // stays active until the parent completes/deletes it by hand
+  const [hasDeadline, setHasDeadline] = useState(true);
   // recurring-quest (routine) state — only used when `repeat` is on
   const [repeat, setRepeat] = useState(false);
   const [weekdays, setWeekdays] = useState<number[]>(EVERY_DAY);
@@ -335,6 +338,7 @@ export default function TasksAdmin() {
     setEvidence("none");
     setVerifier("parent");
     setRepeat(false);
+    setHasDeadline(true);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
     setScheduleEndsAt("");
@@ -429,7 +433,7 @@ export default function TasksAdmin() {
   // ---- one-off quest ---------------------------------------------------------
   async function createTask() {
     if (!profile || !form.child_id || form.title.trim().length < 2) return;
-    if (!form.deadline) return setMsg({ ok: false, text: "Every quest needs a deadline." });
+    if (hasDeadline && !form.deadline) return setMsg({ ok: false, text: "Pick an end date, or turn it off for an infinite quest." });
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
@@ -443,7 +447,9 @@ export default function TasksAdmin() {
       est_minutes: parseInt(form.est_minutes, 10) || 15,
       coin_reward: parseInt(form.coin_reward, 10) || 10,
       xp_reward: parseInt(form.xp_reward, 10) || 20,
-      deadline: new Date(form.deadline).toISOString(),
+      // unchecked "end date" → no deadline: the quest stays active until
+      // the parent completes/deletes it by hand, never auto-expires
+      deadline: hasDeadline ? new Date(form.deadline).toISOString() : null,
       created_by: profile.id,
       pillar: libPillar ?? defaultPillar(form.task_type),
       evidence,
@@ -772,15 +778,37 @@ export default function TasksAdmin() {
                 value={form.xp_reward}
                 onChange={(e) => setForm((f) => ({ ...f, xp_reward: e.target.value }))}
               />
-              {!repeat && (
+              {!repeat && hasDeadline && (
                 <Input
-                  label="Deadline (required)"
+                  label="Deadline"
                   type="datetime-local"
                   value={form.deadline}
                   onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))}
                 />
               )}
             </div>
+
+            {/* deadline is opt-in: unticked = an infinite quest that stays
+                active until the parent completes or deletes it by hand */}
+            {!repeat && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2.5 rounded-xl bg-black/20 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={hasDeadline}
+                  onChange={(e) => {
+                    setHasDeadline(e.target.checked);
+                    if (e.target.checked && !form.deadline) {
+                      setForm((f) => ({ ...f, deadline: defaultDeadlineValue() }));
+                    }
+                  }}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                <span className="text-display text-sm font-bold">Give this quest an end date</span>
+                <span className="text-xs text-[var(--text-dim)]">
+                  {hasDeadline ? "unchecked = no end date" : "stays active until you complete or delete it"}
+                </span>
+              </label>
+            )}
 
             {/* routine toggle */}
             <label className="mt-4 flex cursor-pointer items-center gap-2.5 rounded-xl bg-black/20 px-4 py-3">
@@ -927,7 +955,7 @@ export default function TasksAdmin() {
             <div className="mt-4 flex gap-2">
               <AdminButton
                 onClick={primaryAction}
-                disabled={busy || !form.title.trim() || (!repeat && !form.deadline)}
+                disabled={busy || !form.title.trim() || (!repeat && hasDeadline && !form.deadline)}
               >
                 {busy
                   ? "Saving…"
