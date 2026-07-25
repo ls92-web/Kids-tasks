@@ -168,25 +168,53 @@ export function RewardCard({
         </div>
 
         <div className="mt-3 flex items-center justify-end">
-          <motion.button
-            whileHover={buyable ? { scale: 1.04 } : {}}
-            whileTap={buyable ? { scale: 0.94 } : {}}
-            disabled={!buyable}
-            onClick={() => onBuy(reward)}
-            className={`text-display inline-flex min-h-[40px] items-center rounded-xl px-5 py-2 text-sm font-black ${
-              buyable ? "cursor-pointer text-[#3d2a00]" : "cursor-not-allowed bg-white/5 text-[var(--text-dim)]"
-            }`}
-            style={
-              buyable
-                ? {
-                    background: "linear-gradient(160deg, #ffe9a8, var(--gold) 55%, #d9a72e)",
-                    boxShadow: "0 0 18px -4px rgba(255,215,106,0.6)",
-                  }
-                : {}
-            }
-          >
-            {soldOut ? "All gone" : affordable ? "It\u2019s ours!" : "Keep saving"}
-          </motion.button>
+          {/* out of reach? then the action IS choosing it as the goal \u2014
+              a dead disabled button teaches nothing about saving */}
+          {!affordable && !soldOut && onPin ? (
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={() => onPin(reward)}
+              aria-pressed={pinned}
+              className="text-display inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-black"
+              style={
+                pinned
+                  ? {
+                      color: "#3d2a00",
+                      background: "linear-gradient(160deg, #ffe9a8, var(--gold) 55%, #d9a72e)",
+                      boxShadow: "0 0 18px -4px rgba(255,215,106,0.7)",
+                    }
+                  : {
+                      color: "var(--gold)",
+                      background: "rgba(255,215,106,0.12)",
+                      boxShadow: "inset 0 0 0 1.5px rgba(255,215,106,0.4)",
+                    }
+              }
+            >
+              <Icon art name="star" size={16} className={pinned ? "" : "opacity-60"} />
+              {pinned ? "My Dream Reward" : "Make it my dream"}
+            </motion.button>
+          ) : (
+            <motion.button
+              whileHover={buyable ? { scale: 1.04 } : {}}
+              whileTap={buyable ? { scale: 0.94 } : {}}
+              disabled={!buyable}
+              onClick={() => onBuy(reward)}
+              className={`text-display inline-flex min-h-[40px] items-center rounded-xl px-5 py-2 text-sm font-black ${
+                buyable ? "cursor-pointer text-[#3d2a00]" : "cursor-not-allowed bg-white/5 text-[var(--text-dim)]"
+              }`}
+              style={
+                buyable
+                  ? {
+                      background: "linear-gradient(160deg, #ffe9a8, var(--gold) 55%, #d9a72e)",
+                      boxShadow: "0 0 18px -4px rgba(255,215,106,0.6)",
+                    }
+                  : {}
+              }
+            >
+              {soldOut ? "All gone" : affordable ? "It\u2019s ours!" : "Keep saving"}
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>
