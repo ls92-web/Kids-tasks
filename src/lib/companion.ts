@@ -1,6 +1,7 @@
 /* The companion's brain: warm, personalized messages generated from the
-   child's real progress. Deterministic per day (seeded), so the guide says
-   something different every day without ever calling a network. It never
+   child's real progress. Fresh every visit — never network-dependent — and
+   deliberately avoids repeating the exact line (or even the same TOPIC) it
+   used last time, so reopening the app doesn't feel like a rerun. It never
    shames — only celebrates, encourages, and points at the next adventure. */
 
 import { voiceLine, VoiceContext } from "./voices";
@@ -24,16 +25,22 @@ export interface CompanionContext {
   coinsToReward?: number | null;
 }
 
-function seededPick<T>(pool: T[], seed: number): T {
-  return pool[Math.abs(seed) % pool.length];
-}
-
-function daySeed(profileId: string): number {
-  const now = new Date();
-  const day = Math.floor(now.getTime() / 86_400_000);
-  let h = day;
-  for (const ch of profileId.slice(0, 8)) h = (h * 31 + ch.charCodeAt(0)) | 0;
-  return h;
+/* Pick a random line from `pool`, but never the same one this key last gave
+   out — so reopening the app (or coming back an hour later) reliably reads
+   as something new, instead of a 1/N chance of feeling repetitive. Falls
+   back to plain random when storage is unavailable (SSR, iOS Block Cookies). */
+function pickFresh<T extends string>(pool: T[], key: string): T {
+  if (pool.length <= 1) return pool[0];
+  try {
+    const storeKey = `qf_said_${key}`;
+    const last = localStorage.getItem(storeKey);
+    const choices = last ? pool.filter((p) => p !== last) : pool;
+    const pick = choices[Math.floor(Math.random() * choices.length)];
+    localStorage.setItem(storeKey, pick);
+    return pick;
+  } catch {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 }
 
 export function companionGreeting(theme: ThemeId): string {
@@ -90,7 +97,7 @@ export function sayFromCompanion(event: CompanionEvent, text?: string) {
 
 export function companionMessages(ctx: CompanionContext, theme: ThemeId): string[] {
   const { profile, tasks } = ctx;
-  const seed = daySeed(profile.id);
+  const k = (topic: string) => `${profile.id}_${topic}`; // per-child memory key
   const quest = THEMES[theme].questWord.toLowerCase();
   const { level, pct } = levelFromXp(profile.xp);
   const rank = rankName(theme, level);
@@ -111,54 +118,64 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
   const timeContext: VoiceContext = hour < 12 ? "morning" : hour < 18 ? "daytime" : "evening";
   messages.push(voiceLine(profile.pet, timeContext, profile.nickname));
 
-  // 2) Memory: the badge the hero is closest to unlocking, if within reach
+  // 2) Memory: a true fact worth celebrating — WHICH fact varies visit to
+  // visit (never just the highest-priority one, forever), and the phrasing
+  // within it varies too. Every candidate here must currently be true.
   const counts = computeCounts(tasks);
   const nearBadge = BADGES.map((b) => ({ b, remaining: b.target - b.progress({ profile, counts }) }))
     .filter((x) => x.remaining > 0 && x.remaining <= 3 && x.b.target <= 260)
     .sort((a, z) => a.remaining - z.remaining)[0];
+
+  const memoryCandidates: { topic: string; lines: string[] }[] = [];
   if (nearBadge) {
-    messages.push(
-      seededPick(
-        [
-          `You're only ${nearBadge.remaining} away from the "${nearBadge.b.title}" badge!`,
-          `So close to "${nearBadge.b.title}" — just ${nearBadge.remaining} more to go!`,
-          `I can almost see the "${nearBadge.b.title}" badge glowing. ${nearBadge.remaining} left!`,
-        ],
-        seed + 5
-      )
-    );
-  } else if (profile.streak_days >= 3) {
-    messages.push(
-      seededPick(
-        [
-          `A ${profile.streak_days}-day streak! ${petName} does a happy little dance every time.`,
-          `${profile.streak_days} days in a row — ${petName} is bursting with pride.`,
-          `Your flame has burned for ${profile.streak_days} days straight. Guard it well today!`,
-        ],
-        seed + 1
-      )
-    );
-  } else if (profile.tasks_completed >= 10) {
-    messages.push(
-      seededPick(
-        [
-          `${profile.tasks_completed} ${quest}s conquered so far. I remember every single one.`,
-          `You've completed ${profile.tasks_completed} ${quest}s since we met. The realm remembers.`,
-          `A true ${rank} — ${profile.tasks_completed} victories and counting.`,
-        ],
-        seed + 1
-      )
-    );
-  } else if (pct >= 60) {
-    messages.push(
-      seededPick(
-        [
-          `You're so close to level ${level + 1} — I can almost see it glowing.`,
-          `Level ${level + 1} is just over the hill. One good push!`,
-        ],
-        seed + 1
-      )
-    );
+    memoryCandidates.push({
+      topic: "badge",
+      lines: [
+        `You're only ${nearBadge.remaining} away from the "${nearBadge.b.title}" badge!`,
+        `So close to "${nearBadge.b.title}" — just ${nearBadge.remaining} more to go!`,
+        `I can almost see the "${nearBadge.b.title}" badge glowing. ${nearBadge.remaining} left!`,
+        `${nearBadge.remaining} more and the "${nearBadge.b.title}" badge is officially yours!`,
+      ],
+    });
+  }
+  if (profile.streak_days >= 3) {
+    memoryCandidates.push({
+      topic: "streak",
+      lines: [
+        `A ${profile.streak_days}-day streak! ${petName} does a happy little dance every time.`,
+        `${profile.streak_days} days in a row — ${petName} is bursting with pride.`,
+        `Your flame has burned for ${profile.streak_days} days straight. Guard it well today!`,
+        `${profile.streak_days} days strong. You're unstoppable, ${profile.nickname}!`,
+      ],
+    });
+  }
+  if (profile.tasks_completed >= 10) {
+    memoryCandidates.push({
+      topic: "count",
+      lines: [
+        `${profile.tasks_completed} ${quest}s conquered so far. I remember every single one.`,
+        `You've completed ${profile.tasks_completed} ${quest}s since we met. The realm remembers.`,
+        `A true ${rank} — ${profile.tasks_completed} victories and counting.`,
+        `${profile.tasks_completed} ${quest}s down. Every single one made us stronger.`,
+      ],
+    });
+  }
+  if (pct >= 60) {
+    memoryCandidates.push({
+      topic: "level",
+      lines: [
+        `You're so close to level ${level + 1} — I can almost see it glowing.`,
+        `Level ${level + 1} is just over the hill. One good push!`,
+        `Almost level ${level + 1}! I can feel the magic building.`,
+      ],
+    });
+  }
+  if (memoryCandidates.length > 0) {
+    // rotate WHICH true fact is shared, not only the phrasing of one
+    const topics = memoryCandidates.map((c) => c.topic);
+    const chosenTopic = pickFresh(topics, k("memory_topic"));
+    const chosen = memoryCandidates.find((c) => c.topic === chosenTopic)!;
+    messages.push(pickFresh(chosen.lines, k(`memory_${chosen.topic}`)));
   }
 
   // 3) A gentle nudge toward what's next — never pressure
@@ -166,12 +183,13 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
     messages.push(voiceLine(profile.pet, "allDone", profile.nickname));
   } else if (waiting > 0 && active === 0) {
     messages.push(
-      seededPick(
+      pickFresh(
         [
           `Your proof is with the grown-ups now. I have a good feeling about it.`,
           `The council is looking at your work — fingers crossed, hero.`,
+          `Your work is being reviewed. I'll be right here waiting with you.`,
         ],
-        seed + 2
+        k("waiting")
       )
     );
   } else if (active > 0) {
@@ -180,13 +198,14 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
         ? `Only ${ctx.coinsToReward} coins until "${ctx.nextRewardName}" is yours!`
         : null;
     messages.push(
-      seededPick(
+      pickFresh(
         [
           `${active} ${quest}${active === 1 ? "" : "s"} await${active === 1 ? "s" : ""} today. Pick your favorite and begin!`,
           rewardLine ?? `The next ${quest} looks like an easy win for someone like you.`,
           `I believe in you, ${profile.nickname}. Start small, finish strong.`,
+          `Ready when you are! Let's make today count.`,
         ].filter(Boolean) as string[],
-        seed + 2
+        k("active")
       )
     );
   }
