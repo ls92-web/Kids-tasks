@@ -10,6 +10,7 @@ import { GameButton } from "@/components/GameButton";
 import { Icon } from "@/components/Icon";
 import { sfx, soundsEnabled, setSoundsEnabled } from "@/lib/sound";
 import { HelpPanel } from "@/components/HelpPanel";
+import { PushSettings } from "@/components/PushSettings";
 import { CHILD_HELP } from "@/lib/tour";
 import {
   PETS,
@@ -201,6 +202,9 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
+
+      {/* adventure reminders — push, strictly opt-in */}
+      <PushSettings role="child" />
 
       {/* sounds */}
       <section className="panel p-5">

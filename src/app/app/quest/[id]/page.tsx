@@ -13,6 +13,7 @@ import { Callout } from "@/components/Callout";
 import { enter } from "@/lib/motion";
 import { DIFFICULTY, STEP_WEIGHT, Task } from "@/lib/game";
 import { microCelebrate } from "@/components/MicroCelebration";
+import { pingPush } from "@/lib/push";
 
 export default function QuestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -146,6 +147,8 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       if (subErr) throw subErr;
       await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
       setTask({ ...task, status: "needs_review" });
+      microCelebrate("questSent", { subtitle: task.title });
+      pingPush();
       setMessage({ tone: "info", text: "Your voice message flew to your grown-up. Great work!" });
     } catch (e) {
       setMessage({ tone: "bad", text: "Something interrupted the magic. Please try again." });
@@ -181,6 +184,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
       setTask({ ...task, status: "needs_review" });
       microCelebrate("questSent", { subtitle: task.title });
+      pingPush();
       setMessage({
         tone: "info",
         text: "Sent straight to your grown-up. Great work!",
@@ -223,6 +227,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
         await supabase.from("tasks").update({ status: "needs_review" }).eq("id", task.id);
         setTask({ ...task, status: "needs_review" });
         microCelebrate("questSent", { subtitle: task.title });
+      pingPush();
         setMessage({
           tone: "info",
           text: "Your photo flew straight to your grown-up. Great work!",
@@ -251,6 +256,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
           coins: task.coin_reward,
           xp: task.xp_reward,
         });
+        pingPush();
         setMessage({
           tone: "info",
           text:
@@ -273,6 +279,7 @@ export default function QuestDetail({ params }: { params: Promise<{ id: string }
       } else {
         setTask({ ...task, status: "needs_review" });
         microCelebrate("questSent", { subtitle: task.title });
+      pingPush();
         setMessage({
           tone: "info",
           text:

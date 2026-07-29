@@ -16,6 +16,7 @@ import { CoachStep } from "@/lib/tour";
 import { Reward, Profile } from "@/lib/game";
 import { REWARD_TIERS, tierForCost } from "@/lib/rewardLibrary";
 import { microCelebrate } from "@/components/MicroCelebration";
+import { pingPush } from "@/lib/push";
 
 /* A treasure the hero already claimed — pending until the parent makes it
    real, then granted. */
@@ -140,6 +141,7 @@ export default function ShopPage() {
       .order("created_at", { ascending: false })
       .limit(50)
       .then(({ data: rd }) => setTreasures((rd as Redemption[]) ?? []));
+    pingPush(); // parents hear a reward is waiting to be granted
     // chest ceremony
     setBought(r);
     setChestOpen(false);
@@ -203,6 +205,7 @@ export default function ShopPage() {
       return;
     }
     sfx.complete();
+    pingPush();
     setReqSending(false);
     setReqSent(true);
     setReqName("");

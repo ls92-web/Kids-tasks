@@ -9,6 +9,7 @@ import { AdminLoader, ADMIN_REFRESH } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
 import { Profile } from "@/lib/game";
 import { syncSeenTours } from "@/lib/tour";
+import { refreshPushIfEnabled } from "@/lib/push";
 
 const NAV = [
   { href: "/admin", icon: "home", label: "Overview", badge: "", tour: "nav-overview" },
@@ -39,6 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       // seed the seen-tours cache BEFORE any screen can decide to show one
       syncSeenTours(p as Profile);
       setProfile(p as Profile);
+      // devices that already opted in re-register + refresh silently
+      refreshPushIfEnabled();
     });
   }, [router]);
 

@@ -9,6 +9,7 @@ import { Input, SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/
 import { Callout } from "@/components/Callout";
 import { Icon } from "@/components/Icon";
 import { PETS, Profile, Family, levelFromXp } from "@/lib/game";
+import { pingPush } from "@/lib/push";
 
 export default function ChildrenPage() {
   const { profile } = useWorld();
@@ -120,6 +121,7 @@ export default function ChildrenPage() {
     );
     load();
     pingAdminRefresh();
+    pingPush(); // best-effort welcome notification for the new hero's device
   }
 
   const pending = children.filter((c) => c.status === "pending_approval");

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { XPBar } from "@/components/XPBar";
+import { PushSettings } from "@/components/PushSettings";
 import { Icon } from "@/components/Icon";
 import { AdminButton, SectionCard } from "@/components/admin/ui";
 import { Tour, useOnboardingTour } from "@/components/Tour";
@@ -172,6 +173,9 @@ export default function AdminOverview() {
         <AttentionCard href="/admin/rewards" icon="star" count={pendingWishes} label="Reward wishes" />
         <AttentionCard href="/admin/review" icon="gift" count={pendingRedemptions} label="Rewards to grant" />
       </div>
+
+      {/* parent alerts — push, strictly opt-in */}
+      <PushSettings role="parent" />
 
       {/* children */}
       {children.length === 0 ? (

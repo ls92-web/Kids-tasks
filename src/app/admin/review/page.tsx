@@ -7,6 +7,7 @@ import { useWorld } from "@/components/ThemeProvider";
 import { Portrait } from "@/components/Portrait";
 import { Icon } from "@/components/Icon";
 import { SectionCard, EmptyNote, AdminButton, pingAdminRefresh } from "@/components/admin/ui";
+import { pingPush } from "@/lib/push";
 import { EASE_OUT } from "@/lib/motion";
 
 interface PendingSubmission {
@@ -116,6 +117,7 @@ export default function ReviewPage() {
     }
     setBusy(null);
     pingAdminRefresh();
+    pingPush(); // best-effort: the child's device hears about the verdict now
   }
 
   async function grant(r: PendingRedemption) {
@@ -123,6 +125,7 @@ export default function ReviewPage() {
     const supabase = createClient();
     await supabase.from("redemptions").update({ status: "granted" }).eq("id", r.id);
     pingAdminRefresh();
+    pingPush();
   }
 
   return (

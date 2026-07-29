@@ -11,6 +11,7 @@ import { MicroCelebrationHost } from "@/components/MicroCelebration";
 import { MagicLoader } from "@/components/MagicLoader";
 import { Profile, CompanionBond } from "@/lib/game";
 import { syncSeenTours } from "@/lib/tour";
+import { refreshPushIfEnabled } from "@/lib/push";
 
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -53,6 +54,8 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
       setProfile(p as Profile);
       setCompanion((bond as CompanionBond) ?? null);
       setReady(true);
+      // devices that already opted in re-register + refresh silently
+      refreshPushIfEnabled();
     });
   }, [router]);
 
