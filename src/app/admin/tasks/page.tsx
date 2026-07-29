@@ -50,6 +50,9 @@ const DIFF_DEFAULTS: Record<Difficulty, { coins: number; xp: number; minutes: nu
 const QUEST_ICON_OPTIONS = [
   { id: "home", label: "Home & Chores" },
   { id: "make-bed", label: "Make Bed" },
+  { id: "tidy-room", label: "Tidy Room" },
+  { id: "brush-teeth", label: "Brush Teeth" },
+  { id: "shower", label: "Shower" },
   { id: "bed", label: "Bedtime" },
   { id: "homework", label: "Homework" },
   { id: "multiplication", label: "Math" },

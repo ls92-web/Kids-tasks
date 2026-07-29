@@ -153,6 +153,8 @@ const ICON_ART: Record<string, string> = {
   bed: "bed", shadow: "shadow", fire: "fire", ice: "ice", mail: "mail", shop: "shop",
   magic: "magic", "crystal-ball": "crystal-ball", "treasure-map": "treasure-map",
   "mission-complete": "mission-complete", checkpoint: "checkpoint", destination: "destination",
+  // owner-supplied quest art (2026-07-29)
+  "brush-teeth": "brush-teeth", shower: "shower", "tidy-room": "tidy-room",
   // official WonderNest Rewards collection (public/ui/icons/<slug>.png)
   "gold-coins": "gold-coins", "gem-pile": "gem-pile", "treasure-chest": "treasure-chest",
   "magic-chest": "magic-chest", "golden-ticket": "golden-ticket", "mystery-box": "mystery-box",
