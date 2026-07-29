@@ -45,6 +45,9 @@ export default function DailyQuests() {
   const [loading, setLoading] = useState(true);
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const [chestActive, setChestActive] = useState(false);
+  // what today's chest contained — keeps the card visible (and honest) after
+  // opening, so a laggy reveal can never read as "I got nothing"
+  const [chestPrize, setChestPrize] = useState<{ kind: string; bonus: number } | null>(null);
   const [resetIn, setResetIn] = useState(untilMidnight());
   // milestone celebrations (challenge victories etc.) wait their turn —
   // a quest celebration always plays first
@@ -70,7 +73,7 @@ export default function DailyQuests() {
       // (idempotent + family-scoped; also expires yesterday's stale routines),
       // and settle any challenges whose end time has passed (bonus XP payout)
       await Promise.all([supabase.rpc("generate_due_quests"), supabase.rpc("settle_challenges")]);
-      const [{ data: t }, { data: r }, { data: ach }, { data: wins }] = await Promise.all([
+      const [{ data: t }, { data: r }, { data: ach }, { data: wins }, { data: chestEv }] = await Promise.all([
         supabase.from("tasks").select("*").eq("child_id", profile.id).order("created_at", { ascending: false }),
         supabase.from("rewards").select("*").eq("available", true).order("coin_cost", { ascending: true }),
         supabase
@@ -85,7 +88,18 @@ export default function DailyQuests() {
           .eq("type", "challenge_won")
           .order("created_at", { ascending: false })
           .limit(10),
+        // today's chest prize (if opened) — the card shows it all day
+        supabase
+          .from("events")
+          .select("payload")
+          .eq("child_id", profile.id)
+          .eq("type", "chest_opened")
+          .gte("created_at", `${todayISO}T00:00:00Z`)
+          .order("created_at", { ascending: false })
+          .limit(1),
       ]);
+      const prize = (chestEv?.[0]?.payload ?? null) as { kind: string; bonus: number } | null;
+      if (prize?.kind && prize?.bonus) setChestPrize(prize);
       const list = (t as Task[]) ?? [];
       setTasks(list);
       const affordableNext = ((r as Reward[]) ?? []).find((rw) => rw.coin_cost > (profile.coins ?? 0));
@@ -276,6 +290,7 @@ export default function DailyQuests() {
 
   function grantChest(r: { kind: string; bonus: number }) {
     if (!profile) return;
+    setChestPrize(r); // the card keeps telling today's story after opening
     if (r.kind === "xp") {
       setProfile({ ...profile, xp: profile.xp + r.bonus, last_chest_date: todayISO } as Profile);
     } else {
@@ -554,8 +569,10 @@ export default function DailyQuests() {
 
       {/* ============ side column ============ */}
       <div className="flex shrink-0 flex-col gap-4 lg:sticky lg:top-24 lg:w-60">
-        {/* mystery chest */}
-        {chestAvailable && (
+        {/* mystery chest — the card NEVER vanishes: before opening it invites,
+            after opening it proudly shows what today's chest contained (so a
+            laggy reveal can never feel like "I got nothing") */}
+        {chestAvailable ? (
           <motion.div {...enter} className="panel p-5 text-center">
             <p className="text-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">
               Mystery Chest
@@ -567,6 +584,23 @@ export default function DailyQuests() {
             <GameButton variant="gold" className="mt-3 w-full text-sm" onClick={() => setChestActive(true)}>
               Open
             </GameButton>
+          </motion.div>
+        ) : (
+          <motion.div {...enter} className="panel p-5 text-center">
+            <p className="text-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">
+              Mystery Chest
+            </p>
+            <div className="mx-auto mt-2 w-fit opacity-90">
+              <Icon name="chest" size={44} art />
+            </div>
+            {chestPrize ? (
+              <p className="text-display mt-1 text-sm font-black text-[var(--gold)]">
+                Today: +{chestPrize.bonus} {chestPrize.kind === "xp" ? "XP" : "Coins"} ✨
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-[var(--text-dim)]">Opened for today!</p>
+            )}
+            <p className="mt-1 text-[11px] text-[var(--text-dim)]">A new chest lands tomorrow</p>
           </motion.div>
         )}
 

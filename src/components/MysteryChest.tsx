@@ -48,16 +48,46 @@ export function MysteryChest({
     sfx.chest();
     (async () => {
       const supabase = createClient();
-      const { data, error: err } = await supabase.rpc("open_daily_chest");
+      // a flaky connection gets one quiet retry before we ever say "stuck" —
+      // the server is idempotent (one prize per day), so retrying is safe
+      let data: { opened?: boolean; already_opened?: boolean; kind?: string; bonus?: number } | null = null;
+      let err: unknown = null;
+      for (let attempt = 0; attempt < 2 && !cancelled; attempt++) {
+        try {
+          const res = await supabase.rpc("open_daily_chest");
+          data = res.data;
+          err = res.error;
+        } catch (e) {
+          err = e;
+        }
+        if (data && !err) break;
+        await new Promise((r) => setTimeout(r, 900));
+      }
       // let the shake play for a beat regardless
       await new Promise((r) => setTimeout(r, 1000));
       if (cancelled) return;
-      if (err || !data || data.already_opened) {
-        setError(data?.already_opened ? "You already opened today's chest!" : "The chest is stuck — try again later.");
+      if (err || !data) {
+        setError("The chest is stuck — try again in a moment. Your treasure is safe!");
         setPhase("done");
         return;
       }
-      const r: ChestReward = { kind: data.kind, bonus: data.bonus };
+      if (data.already_opened) {
+        // the prize was already granted (e.g. a laggy earlier tap) — REPLAY
+        // the reveal with what today's chest really contained, never a dead end
+        if (data.kind && data.bonus) {
+          const r: ChestReward = { kind: data.kind, bonus: data.bonus };
+          setReward(r);
+          setPhase("open");
+          sfx.coin();
+          // no onReward: the balance already includes this prize server-side
+          setTimeout(() => !cancelled && setPhase("done"), 700);
+        } else {
+          setError("You already opened today's chest!");
+          setPhase("done");
+        }
+        return;
+      }
+      const r: ChestReward = { kind: data.kind!, bonus: data.bonus! };
       setReward(r);
       setPhase("open");
       sfx.coin();

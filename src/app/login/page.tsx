@@ -150,24 +150,55 @@ function LoginInner() {
   }
 
   /** Picker path: resolve the chosen hero's login name (one hero, at PIN
-      time — the public lookup no longer lists usernames) then sign in. */
+      time — the public lookup no longer lists usernames) then sign in.
+      Flaky networks (VPNs, weak wifi) get a retry AND a device-local cache
+      of the mapping, so a hero who logged in here once can always log in. */
   async function signInChosen(hero: FamilyHero) {
     setBusy(true);
     setError("");
+    const cacheKey = `qf_hero_login_${hero.id}`;
+    let loginName: string | null = null;
     try {
       const code = localStorage.getItem(FAMILY_CODE_KEY);
       const supabase = createClient();
-      const { data } = await supabase.rpc("family_hero_login", {
-        p_code: code ?? "",
-        p_hero_id: hero.id,
-      });
-      const res = data as { found: boolean; username?: string } | null;
-      if (!res?.found || !res.username) {
+      let lastNetworkError = false;
+      for (let attempt = 0; attempt < 2 && !loginName; attempt++) {
+        try {
+          const { data, error: err } = await supabase.rpc("family_hero_login", {
+            p_code: code ?? "",
+            p_hero_id: hero.id,
+          });
+          lastNetworkError = !!err && /fetch|network|load failed|timeout/i.test(err.message ?? "");
+          const res = data as { found: boolean; username?: string } | null;
+          if (res?.found && res.username) loginName = res.username;
+          if (!lastNetworkError) break; // real answer (found or not) — done
+        } catch {
+          lastNetworkError = true;
+        }
+        if (!loginName) await new Promise((r) => setTimeout(r, 900));
+      }
+      if (!loginName && lastNetworkError) {
+        // offline fallback: this device has signed this hero in before
+        try {
+          loginName = localStorage.getItem(cacheKey);
+        } catch {}
+        if (!loginName) {
+          setBusy(false);
+          setError("We can't reach the castle — check the internet connection and try again.");
+          return;
+        }
+      }
+      if (!loginName) {
         setBusy(false);
         setError("That hero couldn't be found — ask your grown-up for help.");
         return;
       }
-      await signIn(res.username);
+      const ok = await signIn(loginName);
+      if (ok) {
+        try {
+          localStorage.setItem(cacheKey, loginName);
+        } catch {}
+      }
     } catch {
       setBusy(false);
       setError("Something interrupted the magic. Please try again.");
@@ -187,18 +218,36 @@ function LoginInner() {
         : email.trim();
     const loginPassword = mode === "hero" ? pin : password;
 
-    const { data, error: err } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    });
-    if (err || !data.user) {
+    // a flaky connection (VPN, weak wifi) gets one quiet retry; and a network
+    // failure must NEVER be reported as a wrong PIN — that gaslights the kid
+    let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>["data"] | null = null;
+    let err: { message?: string } | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password: loginPassword,
+        });
+        data = res.data;
+        err = res.error;
+      } catch (e) {
+        err = { message: e instanceof Error ? e.message : String(e) };
+      }
+      const isNetwork = err && /fetch|network|load failed|timeout/i.test(err.message ?? "");
+      if (!isNetwork) break;
+      await new Promise((r) => setTimeout(r, 900));
+    }
+    if (err || !data?.user) {
+      const isNetwork = /fetch|network|load failed|timeout/i.test(err?.message ?? "");
       setError(
-        mode === "hero"
-          ? "That secret PIN is not right. Try again!"
-          : err?.message ?? "Sign in failed"
+        isNetwork
+          ? "We can't reach the castle — check the internet connection and try again."
+          : mode === "hero"
+            ? "That secret PIN is not right. Try again!"
+            : err?.message ?? "Sign in failed"
       );
       setBusy(false);
-      return;
+      return false;
     }
     const { data: profile } = await supabase
       .from("profiles")
@@ -211,13 +260,13 @@ function LoginInner() {
       await supabase.auth.signOut();
       setWaiting(true);
       setBusy(false);
-      return;
+      return false;
     }
     if (profile?.role === "child" && profile.status === "rejected") {
       await supabase.auth.signOut();
       setError("This hero can't enter right now — talk to your grown-up.");
       setBusy(false);
-      return;
+      return false;
     }
 
     // Remember the family on this device so next time is just a tap — for
@@ -245,6 +294,7 @@ function LoginInner() {
     }
     // hard navigation so the auth cookies are seen by the server proxy
     window.location.assign(profile?.role === "parent" ? "/admin" : "/app");
+    return true;
   }
 
   return (
