@@ -186,7 +186,13 @@ function QuestRow({
         <p className="text-xs text-[var(--text-dim)]">
           {childName} — {task.task_type} —{" "}
           {new Date(task.completed_at ?? task.created_at).toLocaleDateString()}
-          {task.status === "completed" && ` — +${task.coin_reward}c / +${task.xp_reward}xp`}
+          {task.status === "completed" && (
+            <>
+              {" — "}
+              <b className="font-black text-[var(--gold)]">+{task.coin_reward}c</b>{" "}
+              <b className="font-black text-[var(--accent-2)]">+{task.xp_reward}xp</b>
+            </>
+          )}
         </p>
       </div>
       <span
@@ -1058,24 +1064,33 @@ export default function TasksAdmin() {
                   const open = openRoutine === s.id;
                   return (
                     <div key={s.id} className="rounded-xl bg-black/25 px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-3">
+                      {/* line 1: icon + title + meta — full width so the title
+                          never gets crushed to two letters on a phone */}
+                      <button
+                        onClick={() => setOpenRoutine(open ? null : s.id)}
+                        className="flex w-full cursor-pointer items-center gap-3 text-left"
+                        title={open ? "Hide today's quests" : "Show today's quests"}
+                      >
                         <Icon art name={s.icon ?? TASK_TYPE_ICON[s.task_type] ?? "star"} size={26} className="shrink-0" muted />
-                        <button
-                          onClick={() => setOpenRoutine(open ? null : s.id)}
-                          className="min-w-0 flex-1 cursor-pointer text-left"
-                          title={open ? "Hide today's quests" : "Show today's quests"}
-                        >
-                          <p className="text-display truncate text-sm font-bold">
+                        <span className="min-w-0 flex-1">
+                          <span className="text-display block truncate text-sm font-bold">
                             {s.title}
                             {!s.active && <span className="ml-2 text-[10px] font-black uppercase text-[var(--gold)]">Paused</span>}
-                          </p>
-                          <p className="text-xs text-[var(--text-dim)]">
-                            {weekdaySummary(s.weekdays)} — {s.slots.length}×/day — +{s.coin_reward}c / +{s.xp_reward}xp
-                            {s.expires_at && ` — ends ${new Date(s.expires_at).toLocaleDateString()}`}
-                          </p>
-                        </button>
+                          </span>
+                          {/* meta wraps as whole chunks, never letter-by-letter */}
+                          <span className="flex flex-wrap items-baseline gap-x-2 text-xs text-[var(--text-dim)]">
+                            <span>{weekdaySummary(s.weekdays)}</span>
+                            <span>{s.slots.length}×/day</span>
+                            <b className="font-black text-[var(--gold)]">+{s.coin_reward}c</b>
+                            <b className="font-black text-[var(--accent-2)]">+{s.xp_reward}xp</b>
+                            {s.expires_at && <span>ends {new Date(s.expires_at).toLocaleDateString()}</span>}
+                          </span>
+                        </span>
+                      </button>
+                      {/* line 2: today's progress + the routine controls */}
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
                         {runsToday && occurrences.length > 0 ? (
-                          <span className="flex shrink-0 items-center gap-2">
+                          <span className="flex items-center gap-2">
                             <span className="h-2 w-16 overflow-hidden rounded-full bg-black/40">
                               <span
                                 className="block h-full rounded-full"
@@ -1090,10 +1105,11 @@ export default function TasksAdmin() {
                             </span>
                           </span>
                         ) : (
-                          <span className="text-display shrink-0 text-[10px] font-bold uppercase text-[var(--text-dim)]">
+                          <span className="text-display text-[10px] font-bold uppercase text-[var(--text-dim)]">
                             {s.active ? "Rest day" : "Paused"}
                           </span>
                         )}
+                        <span className="flex-1" />
                         <AdminButton size="sm" variant="ghost" onClick={() => setRoutineActive(s, !s.active)}>
                           {s.active ? "Pause" : "Resume"}
                         </AdminButton>
