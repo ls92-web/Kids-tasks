@@ -54,6 +54,25 @@ function LoginInner() {
   // picker with the Family Code (one time; the code is remembered after)
   const [findCode, setFindCode] = useState("");
   const [findBusy, setFindBusy] = useState(false);
+  // Safari's "Block All Cookies" makes login SUCCEED then bounce right back
+  // (the session can't be stored) — detect it and say so, loudly and early
+  const [storageBlocked, setStorageBlocked] = useState(false);
+
+  useEffect(() => {
+    try {
+      const k = "qf_storage_probe";
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      document.cookie = "qf_cookie_probe=1; path=/; max-age=60";
+      if (!document.cookie.includes("qf_cookie_probe=1")) {
+        setStorageBlocked(true);
+      } else {
+        document.cookie = "qf_cookie_probe=; path=/; max-age=0";
+      }
+    } catch {
+      setStorageBlocked(true);
+    }
+  }, []);
 
   useEffect(() => {
     let storedCode: string | null = null;
@@ -326,6 +345,19 @@ function LoginInner() {
               Every day is an adventure waiting to begin
             </p>
           </div>
+
+          {/* Safari "Block All Cookies" makes every login bounce back here —
+              name the culprit instead of letting the form eat the blame */}
+          {storageBlocked && (
+            <div className="mt-5">
+              <Callout tone="error">
+                This device is blocking cookies, so WonderNest can&apos;t keep you signed
+                in — logging in will loop back to this page. Fix: open{" "}
+                <b>Settings → Safari → turn OFF &quot;Block All Cookies&quot;</b>, then come
+                back and try again.
+              </Callout>
+            </div>
+          )}
 
           {/* mode switch */}
           <div className="mb-6 mt-6 flex rounded-2xl bg-black/30 p-1">
