@@ -245,7 +245,8 @@ export const FAMILY_CODE_KEY = "qf_family_code";
 /** Cached hero list for the sign-in picker (display data only) — shown
     instantly while the live lookup refreshes in the background, and kept
     when the network is down so the picker never randomly disappears. */
-export const FAMILY_HEROES_CACHE_KEY = "qf_family_heroes";
+// v2: cached entries hold {id, nickname, pet} — usernames are never cached
+export const FAMILY_HEROES_CACHE_KEY = "qf_family_heroes_v2";
 
 /* Crest choices for family creation (ids map to Icon names). */
 export const CRESTS = [

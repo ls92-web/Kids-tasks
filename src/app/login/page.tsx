@@ -16,9 +16,10 @@ import { FAMILY_CODE_KEY, FAMILY_HEROES_CACHE_KEY } from "@/lib/game";
 type Mode = "hero" | "parent";
 
 /** An active hero on this device's remembered family — display data only
-    (from the family_heroes lookup); entering still needs the hero's PIN. */
+    (opaque id + nickname + companion from the family_heroes lookup); the
+    login username is resolved per-hero at PIN time, never listed. */
 interface FamilyHero {
-  username: string;
+  id: string;
   nickname: string;
   pet: string;
 }
@@ -106,6 +107,31 @@ function LoginInner() {
     // Always confirm — never reveal whether an email has an account
     setBusy(false);
     setResetSent(true);
+  }
+
+  /** Picker path: resolve the chosen hero's login name (one hero, at PIN
+      time — the public lookup no longer lists usernames) then sign in. */
+  async function signInChosen(hero: FamilyHero) {
+    setBusy(true);
+    setError("");
+    try {
+      const code = localStorage.getItem(FAMILY_CODE_KEY);
+      const supabase = createClient();
+      const { data } = await supabase.rpc("family_hero_login", {
+        p_code: code ?? "",
+        p_hero_id: hero.id,
+      });
+      const res = data as { found: boolean; username?: string } | null;
+      if (!res?.found || !res.username) {
+        setBusy(false);
+        setError("That hero couldn't be found — ask your grown-up for help.");
+        return;
+      }
+      await signIn(res.username);
+    } catch {
+      setBusy(false);
+      setError("Something interrupted the magic. Please try again.");
+    }
   }
 
   async function signIn(heroUsername?: string) {
@@ -261,7 +287,7 @@ function LoginInner() {
                 <div className={`grid gap-3 ${heroes!.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {heroes!.map((h) => (
                     <motion.button
-                      key={h.username}
+                      key={h.id}
                       whileHover={{ y: -3 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
@@ -307,7 +333,7 @@ function LoginInner() {
                 className="flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!busy && pin.length >= 4) signIn(chosen.username);
+                  if (!busy && pin.length >= 4) signInChosen(chosen);
                 }}
               >
                 <div className="flex flex-col items-center gap-2">
