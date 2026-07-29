@@ -55,6 +55,7 @@ import { CoachStep } from "@/lib/tour";
 
 interface Ach {
   key: string;
+  title: string | null;
   unlocked_at: string;
 }
 
@@ -73,7 +74,7 @@ export default function HeroHub() {
     const supabase = createClient();
     (async () => {
       const [{ data: a }, { data: t }, { data: fam }, { data: b }, { data: fb }] = await Promise.all([
-        supabase.from("achievements").select("key, unlocked_at").eq("child_id", profile.id),
+        supabase.from("achievements").select("key, title, unlocked_at").eq("child_id", profile.id),
         supabase.from("tasks").select("*").eq("child_id", profile.id),
         supabase
           .from("profiles")
@@ -113,6 +114,10 @@ export default function HeroHub() {
   const cls = CHARACTER_CLASSES.find((c) => c.id === profile.character_class);
   const earned = new Map(achievements.map((a) => [a.key, a.unlocked_at]));
   const earnedCount = BADGES.filter((b) => earned.has(b.key)).length;
+  // achievements the server awarded beyond the curated grid (the official
+  // library has ~39; the grid lists 12) — an earned badge must NEVER be
+  // invisible, so these render as golden Special tiles
+  const extraEarned = achievements.filter((a) => !BADGES.some((b) => b.key === a.key));
 
   const petMeta = PETS.find((p) => p.id === profile.pet) ?? PETS[0];
   // no active bond + this species completed = a Legend resting in the Hall
@@ -451,7 +456,7 @@ export default function HeroHub() {
           <Icon name="trophy" size={22} art className="text-[var(--gold)]" />
           <h2 className="text-display text-lg font-black">Trophy Room</h2>
           <span className="text-display text-xs font-bold text-[var(--text-dim)]">
-            {earnedCount}/{BADGES.length}
+            {earnedCount + extraEarned.length}/{BADGES.length + extraEarned.length}
           </span>
           <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
         </div>
@@ -523,6 +528,41 @@ export default function HeroHub() {
               </motion.div>
             );
           })}
+          {/* earned achievements beyond the curated grid — golden Special
+              tiles so nothing the server awards can ever look "locked" */}
+          {extraEarned.map((a, i) => (
+            <motion.div
+              key={a.key}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, ease: EASE_OUT, delay: stagger(BADGES.length + i) }}
+              whileHover={{ y: -3 }}
+              className="panel relative flex flex-col items-center p-3.5 text-center"
+              style={{
+                boxShadow:
+                  "0 0 0 1.5px rgba(255,215,106,0.4), 0 0 22px -8px var(--gold), 0 12px 30px -18px rgba(0,0,0,0.6)",
+              }}
+            >
+              <span
+                className="text-display absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
+                style={{ color: "var(--gold)", background: "rgba(0,0,0,0.4)" }}
+              >
+                Special
+              </span>
+              <div className="relative grid h-16 w-16 place-items-center">
+                <Icon
+                  art
+                  name="medal"
+                  size={52}
+                  className="drop-shadow-[0_0_10px_rgba(255,215,106,0.6)]"
+                />
+              </div>
+              <p className="text-display mt-2 text-sm font-bold">{a.title ?? "Special Badge"}</p>
+              <p className="mt-1.5 text-[10px] font-bold text-[var(--success)]">
+                Earned {new Date(a.unlocked_at).toLocaleDateString()}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </section>
 

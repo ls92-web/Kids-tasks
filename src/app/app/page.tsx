@@ -159,6 +159,29 @@ export default function DailyQuests() {
       localStorage.setItem(seenKey, JSON.stringify(completed.map((task) => task.id)));
       localStorage.setItem(xpKey, String(profile.xp));
       localStorage.setItem(visitKey, new Date().toISOString());
+
+      // safety net: a badge can unlock WITHOUT a fresh-victory ceremony (the
+      // hero already saw the quest approval, or was away) — it still deserves
+      // its moment. Celebrate anything newer than the marker; the first run
+      // reaches back 3 days so a just-earned badge isn't swallowed by setup.
+      try {
+        const badgeKey = `qf_badge_celebrated_${profile.id}`;
+        const marker =
+          localStorage.getItem(badgeKey) ??
+          new Date(Date.now() - 3 * 86_400_000).toISOString();
+        const rows = (ach as { title: string; unlocked_at: string }[]) ?? [];
+        const unseen = rows.filter((a) => a.unlocked_at > marker);
+        // mirror the overlay's REAL firing condition — on a first visit
+        // (fresh device) the overlay stays silent, so the net must catch it
+        const hadBigCeremony = (fresh.length > 0 || freshWins.length > 0) && !firstVisit;
+        if (unseen.length > 0 && !hadBigCeremony) {
+          const newest = unseen[0]; // rows arrive newest-first
+          setTimeout(() => microCelebrate("achievement", { subtitle: newest.title }), 1600);
+        }
+        if (rows.length > 0) {
+          localStorage.setItem(badgeKey, rows[0].unlocked_at);
+        }
+      } catch {}
     })();
   }, [profile, theme.questWord]);
 

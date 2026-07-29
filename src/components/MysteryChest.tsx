@@ -34,8 +34,11 @@ export function MysteryChest({
   const [phase, setPhase] = useState<"closed" | "open" | "done">("closed");
   const [reward, setReward] = useState<ChestReward | null>(null);
   const [error, setError] = useState("");
+  // a roll taking suspiciously long shows an escape hint — the child must
+  // NEVER be trapped on a shaking chest (the prize replays on the next tap)
+  const [slow, setSlow] = useState(false);
   const rolledRef = useRef(false);
-  useEscape(active && phase !== "closed", onClose);
+  useEscape(active, onClose);
 
   useEffect(() => {
     if (!active) return;
@@ -45,16 +48,25 @@ export function MysteryChest({
     setReward(null);
     setError("");
     let cancelled = false;
+    setSlow(false);
+    const slowTimer = setTimeout(() => setSlow(true), 4000);
     sfx.chest();
     (async () => {
       const supabase = createClient();
       // a flaky connection gets one quiet retry before we ever say "stuck" —
-      // the server is idempotent (one prize per day), so retrying is safe
+      // the server is idempotent (one prize per day), so retrying is safe.
+      // Every attempt is TIME-BOXED: a hanging request must never trap the
+      // child on a shaking chest (this exact freeze happened to both kids).
       let data: { opened?: boolean; already_opened?: boolean; kind?: string; bonus?: number } | null = null;
       let err: unknown = null;
       for (let attempt = 0; attempt < 2 && !cancelled; attempt++) {
         try {
-          const res = await supabase.rpc("open_daily_chest");
+          const res = await Promise.race([
+            supabase.rpc("open_daily_chest"),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("timeout")), 8000)
+            ),
+          ]);
           data = res.data;
           err = res.error;
         } catch (e) {
@@ -63,9 +75,11 @@ export function MysteryChest({
         if (data && !err) break;
         await new Promise((r) => setTimeout(r, 900));
       }
+      clearTimeout(slowTimer);
       // let the shake play for a beat regardless
       await new Promise((r) => setTimeout(r, 1000));
       if (cancelled) return;
+      setSlow(false);
       if (err || !data) {
         setError("The chest is stuck — try again in a moment. Your treasure is safe!");
         setPhase("done");
@@ -96,6 +110,7 @@ export function MysteryChest({
     })();
     return () => {
       cancelled = true;
+      clearTimeout(slowTimer);
     };
   }, [active, onReward]);
 
@@ -112,10 +127,8 @@ export function MysteryChest({
           role="dialog"
           aria-modal="true"
           aria-label="Mystery chest"
-          className={`fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm ${
-            phase !== "closed" ? "cursor-pointer" : ""
-          }`}
-          onClick={() => phase !== "closed" && onClose()}
+          className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/75 backdrop-blur-sm"
+          onClick={onClose}
         >
           {phase === "open" && (
             <>
@@ -158,9 +171,17 @@ export function MysteryChest({
           >
             <ChestArt open={phase !== "closed"} />
             {phase === "closed" && (
-              <p className="text-display mt-4 text-lg font-bold text-[var(--text-dim)]">
-                A mystery chest appears…
-              </p>
+              <>
+                <p className="text-display mt-4 text-lg font-bold text-[var(--text-dim)]">
+                  A mystery chest appears…
+                </p>
+                {slow && (
+                  <p className="mt-2 text-xs font-bold text-[var(--text-dim)]">
+                    Taking a little long… you can tap anywhere to close — your
+                    treasure is safe and will be waiting!
+                  </p>
+                )}
+              </>
             )}
             {phase !== "closed" && reward && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
