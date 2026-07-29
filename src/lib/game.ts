@@ -694,6 +694,9 @@ export interface Task {
   coin_reward: number;
   xp_reward: number;
   deadline: string | null;
+  /** Parent-marked Main Quest — shown first on the child's board. Routines
+      never carry it (their occurrences always belong to Daily Training). */
+  priority?: boolean;
   status: "active" | "submitted" | "needs_review" | "completed" | "rejected" | "expired";
   created_at: string;
   completed_at: string | null;

@@ -148,12 +148,13 @@ export default function DailyQuests() {
     })();
   }, [profile, theme.questWord]);
 
-  // "Next Quest" is whichever active quest is due soonest — not whichever
-  // was created most recently. Quests without a deadline sort to the end
-  // (newest-first among themselves, matching the old fallback order).
+  // "Next Quest" = parent-marked Main Quests first, then whichever is due
+  // soonest. Quests without a deadline sort to the end (newest-first among
+  // themselves, matching the old fallback order).
   const active = useMemo(() => {
     const list = tasks.filter((t) => t.status === "active" || t.status === "rejected");
     return [...list].sort((a, b) => {
+      if (!!a.priority !== !!b.priority) return a.priority ? -1 : 1;
       const ad = a.deadline ? new Date(a.deadline).getTime() : Infinity;
       const bd = b.deadline ? new Date(b.deadline).getTime() : Infinity;
       if (ad !== bd) return ad - bd;
@@ -484,16 +485,58 @@ export default function DailyQuests() {
           </section>
         )}
 
-        {active.length > 1 && (
-          <section>
-            <SectionTitle icon="sword" title={`More ${theme.questWord}s`} />
-            <div className="flex flex-col gap-3">
-              {active.slice(1).map((t, i) => (
-                <QuestCard key={t.id} task={t} index={i} />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* the board, organized: routines are Daily Training, parent-marked
+            priorities are Main Quests, open-ended ones are Side Quests —
+            three small clear shelves instead of one long mixed pile */}
+        {(() => {
+          const rest = active.filter((t) => t.id !== nextQuest?.id);
+          const training = rest.filter((t) => t.schedule_id);
+          const mains = rest.filter((t) => !t.schedule_id && t.priority);
+          const sides = rest.filter((t) => !t.schedule_id && !t.priority);
+          // today's training ring: every occurrence generated today, any status
+          const todayStr = new Date().toDateString();
+          const occToday = tasks.filter(
+            (t) => t.schedule_id && t.occurrence_date && new Date(t.occurrence_date + "T12:00:00").toDateString() === todayStr
+          );
+          const occDone = occToday.filter((t) => t.status === "completed").length;
+          return (
+            <>
+              {training.length > 0 && (
+                <section>
+                  <SectionTitle
+                    icon="sword"
+                    title={`Daily Training${occToday.length > 0 ? ` — ${occDone}/${occToday.length} today` : ""}`}
+                  />
+                  <div className="flex flex-col gap-3">
+                    {training.map((t, i) => (
+                      <QuestCard key={t.id} task={t} index={i} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {mains.length > 0 && (
+                <section>
+                  <SectionTitle icon="star" title="Main Quests" />
+                  <div className="flex flex-col gap-3">
+                    {mains.map((t, i) => (
+                      <QuestCard key={t.id} task={t} index={i} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {sides.length > 0 && (
+                <section>
+                  <SectionTitle icon="map" title="Side Quests" />
+                  <div className="flex flex-col gap-3">
+                    {sides.map((t, i) => (
+                      <QuestCard key={t.id} task={t} index={i} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          );
+        })()}
 
         {done.length > 0 && (
           <section>

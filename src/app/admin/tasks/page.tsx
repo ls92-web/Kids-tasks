@@ -6,6 +6,7 @@ import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
 import { Input, TextArea, Select, SectionCard, EmptyNote, AdminButton } from "@/components/admin/ui";
 import { IconPicker } from "@/components/admin/IconPicker";
+import { Portrait } from "@/components/Portrait";
 import { Callout } from "@/components/Callout";
 import {
   Profile,
@@ -216,10 +217,6 @@ export default function TasksAdmin() {
   // text-only quest history (approved, last 2 months) — photos and voice
   // recordings are purged as soon as a quest is approved
   const [history, setHistory] = useState<Task[]>([]);
-  // merged "Quests" list controls: hero filter (shared by both views) and
-  // which view is showing — Current (in-flight) or History (approved)
-  const [questHero, setQuestHero] = useState("");
-  const [questView, setQuestView] = useState<"current" | "history">("current");
   const [form, setForm] = useState({
     child_id: "",
     title: "",
@@ -235,6 +232,14 @@ export default function TasksAdmin() {
   // a one-off quest's deadline is optional — unchecked = infinite quest,
   // stays active until the parent completes/deletes it by hand
   const [hasDeadline, setHasDeadline] = useState(true);
+  // parent-marked Main Quest — shown first on the child's board (one-offs only)
+  const [priority, setPriority] = useState(false);
+  // the assign form starts collapsed so the page opens on the hero cards
+  const [formOpen, setFormOpen] = useState(false);
+  // per-hero card view chip: which slice of that hero's quests is showing
+  const [heroChip, setHeroChip] = useState<Record<string, "todo" | "waiting" | "done" | "missed">>({});
+  // routine row expanded to show today's individual occurrences
+  const [openRoutine, setOpenRoutine] = useState<string | null>(null);
   // recurring-quest (routine) state — only used when `repeat` is on
   const [repeat, setRepeat] = useState(false);
   const [weekdays, setWeekdays] = useState<number[]>(EVERY_DAY);
@@ -277,7 +282,7 @@ export default function TasksAdmin() {
         .select("*")
         .eq("family_id", profile.family_id)
         .order("created_at", { ascending: false })
-        .limit(60),
+        .limit(120),
       supabase
         .from("quest_schedules")
         .select("*")
@@ -339,6 +344,8 @@ export default function TasksAdmin() {
     setVerifier("parent");
     setRepeat(false);
     setHasDeadline(true);
+    setPriority(false);
+    setFormOpen(false);
     setWeekdays(EVERY_DAY);
     setSlots(DEFAULT_SLOTS);
     setScheduleEndsAt("");
@@ -450,6 +457,7 @@ export default function TasksAdmin() {
       // unchecked "end date" → no deadline: the quest stays active until
       // the parent completes/deletes it by hand, never auto-expires
       deadline: hasDeadline ? new Date(form.deadline).toISOString() : null,
+      priority,
       created_by: profile.id,
       pillar: libPillar ?? defaultPillar(form.task_type),
       evidence,
@@ -516,6 +524,7 @@ export default function TasksAdmin() {
 
   function editRoutine(s: QuestSchedule) {
     setEditingId(s.id);
+    setFormOpen(true);
     setLibProfileId("");
     setLibPillar(s.pillar ?? null); // keep the routine's existing pillar on edit
     // legacy routines (nulls) display their equivalent: photo + AI pre-screen + parent
@@ -563,26 +572,21 @@ export default function TasksAdmin() {
     load();
   }
 
-  const childName = (id: string) => children.find((c) => c.id === id)?.nickname ?? "?";
   const primaryAction = repeat ? saveRoutine : createTask;
-
-  // Current view: everything still in flight (active/pending review/rejected/
-  // expired) — never approved/completed. Reuses the existing "all quests"
-  // query (60 most recent, any status), just filtered client-side.
-  const currentQuests = tasks.filter(
-    (t) => t.status !== "completed" && (!questHero || t.child_id === questHero)
-  );
-  // History view: only approved quests, from the existing 2-month history
-  // query — unchanged retention window, just filtered client-side to drop
-  // the rejected/expired rows (those now live in Current instead).
-  const historyQuests = history.filter(
-    (t) => t.status === "completed" && (!questHero || t.child_id === questHero)
-  );
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-display text-2xl font-black">Quests</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-display text-2xl font-black">Quests</h1>
+        {/* the page opens on the hero cards; assigning is one tap away */}
+        {!formOpen && (
+          <AdminButton onClick={() => setFormOpen(true)}>
+            <Icon name="plus" size={15} className="mr-1 inline" /> New Quest
+          </AdminButton>
+        )}
+      </div>
 
+      {formOpen && (
       <SectionCard
         title={editingId ? "Edit routine" : "Assign a quest"}
         subtitle={
@@ -810,6 +814,26 @@ export default function TasksAdmin() {
               </label>
             )}
 
+            {/* Main Quest flag — shows first on the child's board, in its own
+                spotlight section. Routines never carry it (Daily Training). */}
+            {!repeat && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2.5 rounded-xl bg-black/20 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={priority}
+                  onChange={(e) => setPriority(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--gold)]"
+                />
+                <span className="text-display text-sm font-bold">
+                  <Icon art name="star" size={15} className="mr-1 inline" />
+                  Main quest
+                </span>
+                <span className="text-xs text-[var(--text-dim)]">
+                  shown first on your hero&apos;s board — for the quests that matter most
+                </span>
+              </label>
+            )}
+
             {/* routine toggle */}
             <label className="mt-4 flex cursor-pointer items-center gap-2.5 rounded-xl bg-black/20 px-4 py-3">
               <input
@@ -965,128 +989,186 @@ export default function TasksAdmin() {
                       ? "Create routine"
                       : "Assign quest"}
               </AdminButton>
-              {(editingId || repeat) && (
-                <AdminButton variant="ghost" onClick={resetForm} disabled={busy}>
-                  Cancel
-                </AdminButton>
-              )}
+              <AdminButton variant="ghost" onClick={resetForm} disabled={busy}>
+                Cancel
+              </AdminButton>
             </div>
           </>
         )}
       </SectionCard>
-
-      {/* routines management */}
-      {schedules.length > 0 && (
-        <SectionCard title="Routines" subtitle="Repeat automatically — pausing or ending never deletes past quests">
-          <div className="flex flex-col gap-2">
-            {schedules.map((s) => {
-              const ended = !!s.ended_at;
-              const slotNames = s.slots
-                .map((sl) => sl.label)
-                .filter(Boolean)
-                .join(" · ");
-              return (
-                <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-display truncate text-sm font-bold">
-                      {s.title}
-                      {slotNames && <span className="text-[var(--text-dim)]"> — {slotNames}</span>}
-                    </p>
-                    <p className="text-xs text-[var(--text-dim)]">
-                      {childName(s.child_id)} — {weekdaySummary(s.weekdays)} —{" "}
-                      {s.slots.length}×/day — +{s.coin_reward}c / +{s.xp_reward}xp
-                      {!ended && s.expires_at &&
-                        ` — ends ${new Date(s.expires_at).toLocaleDateString()}`}
-                    </p>
-                  </div>
-                  <span
-                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
-                    style={{
-                      color: ended ? "var(--text-dim)" : s.active ? "var(--success)" : "var(--gold)",
-                      background: "rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    {ended ? "Ended" : s.active ? "Active" : "Paused"}
-                  </span>
-                  {!ended && (
-                    <>
-                      <AdminButton size="sm" variant="ghost" onClick={() => setRoutineActive(s, !s.active)}>
-                        {s.active ? "Pause" : "Resume"}
-                      </AdminButton>
-                      <AdminButton size="sm" variant="ghost" onClick={() => editRoutine(s)}>
-                        Edit
-                      </AdminButton>
-                      <AdminButton size="sm" variant="ghost" onClick={() => endRoutine(s)}>
-                        End
-                      </AdminButton>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </SectionCard>
       )}
 
-      <SectionCard
-        title="Quests"
-        subtitle={
-          questView === "current"
-            ? "Active, pending review, rejected, and expired quests"
-            : "Approved quests over the last 2 months — photos and voice recordings are removed once a quest is approved"
-        }
-      >
-        <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Select label="Hero" value={questHero} onChange={(e) => setQuestHero(e.target.value)}>
-            <option value="">All Heroes</option>
-            {children.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nickname}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label="View"
-            value={questView}
-            onChange={(e) => setQuestView(e.target.value as "current" | "history")}
-          >
-            <option value="current">Current</option>
-            <option value="history">History</option>
-          </Select>
-        </div>
+      {/* one card per hero: their routines (collapsed to a progress row each)
+          and their one-off quests, sliced by the To do / Waiting / Done /
+          Missed chips. No more one flat stream mixing every kid together. */}
+      {children.map((hero) => {
+        const chip = heroChip[hero.id] ?? "todo";
+        const heroTasks = tasks.filter((t) => t.child_id === hero.id);
+        const heroHistory = history.filter((t) => t.child_id === hero.id);
+        const heroSchedules = schedules.filter((s) => s.child_id === hero.id && !s.ended_at);
+        const today = new Date();
+        const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        const isToday = (d: string | null | undefined) =>
+          !!d && new Date(d).toDateString() === today.toDateString();
 
-        {questView === "current" ? (
-          currentQuests.length === 0 ? (
-            <EmptyNote>No quests yet.</EmptyNote>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {currentQuests.map((t) => (
-                <QuestRow
-                  key={t.id}
-                  task={t}
-                  childName={childName(t.child_id)}
-                  readOnly={false}
-                  onDelete={() => removeTask(t.id)}
-                />
+        // scoreboard — the hero's whole day at a glance (routines included)
+        const todoCount = heroTasks.filter((t) => t.status === "active" || t.status === "rejected").length;
+        const waitingCount = heroTasks.filter((t) => t.status === "submitted" || t.status === "needs_review").length;
+        const doneToday = heroTasks.filter((t) => t.status === "completed" && isToday(t.completed_at)).length;
+
+        // chip slices — routine occurrences stay OUT of the one-off lists
+        // (their routine's summary row owns them); Done/Missed show everything
+        const oneOff = (t: Task) => !t.schedule_id;
+        const rows =
+          chip === "todo"
+            ? heroTasks.filter((t) => oneOff(t) && (t.status === "active" || t.status === "rejected" || t.status === "expired"))
+            : chip === "waiting"
+              ? heroTasks.filter((t) => t.status === "submitted" || t.status === "needs_review")
+              : chip === "done"
+                ? heroHistory.filter((t) => t.status === "completed")
+                : heroHistory.filter((t) => t.status === "expired" || t.status === "rejected");
+
+        const CHIPS = [
+          { id: "todo", label: `To do${todoCount ? ` · ${todoCount}` : ""}` },
+          { id: "waiting", label: `Waiting${waitingCount ? ` · ${waitingCount}` : ""}` },
+          { id: "done", label: "Done" },
+          { id: "missed", label: "Missed" },
+        ] as const;
+
+        return (
+          <SectionCard
+            key={hero.id}
+            title={
+              <span className="flex items-center gap-2.5">
+                <Portrait species={hero.pet} size={34} />
+                {hero.nickname}
+              </span>
+            }
+            subtitle={`${todoCount} to do · ${waitingCount} waiting · ${doneToday} done today`}
+          >
+            {/* routines — one row each, with today's progress */}
+            {chip === "todo" && heroSchedules.length > 0 && (
+              <div className="mb-3 flex flex-col gap-2">
+                {heroSchedules.map((s) => {
+                  const occurrences = heroTasks.filter(
+                    (t) => t.schedule_id === s.id && t.occurrence_date === todayISO
+                  );
+                  const doneCount = occurrences.filter((t) => t.status === "completed").length;
+                  const runsToday = s.weekdays.includes(today.getDay());
+                  const open = openRoutine === s.id;
+                  return (
+                    <div key={s.id} className="rounded-xl bg-black/25 px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Icon art name={s.icon ?? TASK_TYPE_ICON[s.task_type] ?? "star"} size={26} className="shrink-0" muted />
+                        <button
+                          onClick={() => setOpenRoutine(open ? null : s.id)}
+                          className="min-w-0 flex-1 cursor-pointer text-left"
+                          title={open ? "Hide today's quests" : "Show today's quests"}
+                        >
+                          <p className="text-display truncate text-sm font-bold">
+                            {s.title}
+                            {!s.active && <span className="ml-2 text-[10px] font-black uppercase text-[var(--gold)]">Paused</span>}
+                          </p>
+                          <p className="text-xs text-[var(--text-dim)]">
+                            {weekdaySummary(s.weekdays)} — {s.slots.length}×/day — +{s.coin_reward}c / +{s.xp_reward}xp
+                            {s.expires_at && ` — ends ${new Date(s.expires_at).toLocaleDateString()}`}
+                          </p>
+                        </button>
+                        {runsToday && occurrences.length > 0 ? (
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="h-2 w-16 overflow-hidden rounded-full bg-black/40">
+                              <span
+                                className="block h-full rounded-full"
+                                style={{
+                                  width: `${(doneCount / occurrences.length) * 100}%`,
+                                  background: "linear-gradient(90deg, var(--accent-deep), var(--success))",
+                                }}
+                              />
+                            </span>
+                            <span className="text-display text-xs font-black text-[var(--text-dim)]">
+                              {doneCount}/{occurrences.length} today
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-display shrink-0 text-[10px] font-bold uppercase text-[var(--text-dim)]">
+                            {s.active ? "Rest day" : "Paused"}
+                          </span>
+                        )}
+                        <AdminButton size="sm" variant="ghost" onClick={() => setRoutineActive(s, !s.active)}>
+                          {s.active ? "Pause" : "Resume"}
+                        </AdminButton>
+                        <AdminButton size="sm" variant="ghost" onClick={() => editRoutine(s)}>
+                          Edit
+                        </AdminButton>
+                        <AdminButton size="sm" variant="ghost" onClick={() => endRoutine(s)}>
+                          End
+                        </AdminButton>
+                      </div>
+                      {open && occurrences.length > 0 && (
+                        <div className="mt-2 flex flex-col gap-2 border-t border-[var(--surface-border)] pt-2">
+                          {occurrences.map((t) => (
+                            <QuestRow
+                              key={t.id}
+                              task={t}
+                              childName={hero.nickname}
+                              readOnly={false}
+                              onDelete={() => removeTask(t.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* chips: which slice of this hero's quests is showing */}
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CHIPS.map((c) => (
+                <button
+                  key={c.id}
+                  aria-pressed={chip === c.id}
+                  onClick={() => setHeroChip((m) => ({ ...m, [hero.id]: c.id }))}
+                  className={`text-display cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                    chip === c.id
+                      ? "bg-[var(--accent)]/25 text-[var(--text)] ring-1 ring-[var(--accent)]"
+                      : "bg-black/25 text-[var(--text-dim)] hover:bg-black/40"
+                  }`}
+                >
+                  {c.label}
+                </button>
               ))}
             </div>
-          )
-        ) : historyQuests.length === 0 ? (
-          <EmptyNote>No quest history yet.</EmptyNote>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {historyQuests.map((t) => (
-              <QuestRow
-                key={t.id}
-                task={t}
-                childName={childName(t.child_id)}
-                readOnly
-                onDelete={() => {}}
-              />
-            ))}
-          </div>
-        )}
-      </SectionCard>
+
+            {rows.length === 0 ? (
+              <EmptyNote>
+                {chip === "todo"
+                  ? heroSchedules.length > 0
+                    ? "No one-off quests — the routines above carry today."
+                    : "Nothing assigned. Tap New Quest to send one."
+                  : chip === "waiting"
+                    ? "Nothing waiting for review."
+                    : chip === "done"
+                      ? "No approved quests in the last 2 months yet."
+                      : "No missed or rejected quests in the last 2 months."}
+              </EmptyNote>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {rows.map((t) => (
+                  <QuestRow
+                    key={t.id}
+                    task={t}
+                    childName={hero.nickname}
+                    readOnly={chip === "done" || chip === "missed"}
+                    onDelete={() => removeTask(t.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        );
+      })}
     </div>
   );
 }
