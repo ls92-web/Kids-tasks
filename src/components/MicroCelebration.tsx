@@ -35,7 +35,8 @@ export type MicroKind =
   | "levelUp"
   | "rewardGranted"
   | "worldComplete"
-  | "dreamReached";
+  | "dreamReached"
+  | "wishApproved";
 
 export interface MicroConfig {
   /** Random encouragement pool — one is picked per celebration. */
@@ -114,6 +115,13 @@ export const CELEBRATIONS: Record<MicroKind, MicroConfig> = {
     icon: "star",
     accent: "var(--gold)",
     particles: "coins",
+    companion: true,
+  },
+  wishApproved: {
+    titles: ["Wish granted! 🌟", "They said yes!"],
+    icon: "wish",
+    accent: "var(--gold)",
+    particles: "stars",
     companion: true,
   },
 };

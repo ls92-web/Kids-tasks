@@ -178,7 +178,15 @@ function QuestRow({
   const meta = QUEST_ROW_META[task.status] ?? QUEST_ROW_META.expired;
   return (
     <div className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-      <Icon name={meta.icon} size={18} art muted className="shrink-0" />
+      {/* the quest's OWN art — the icon the parent picked, not a status glyph
+          (status already has its chip on the right) */}
+      <Icon
+        name={task.icon ?? TASK_TYPE_ICON[task.task_type] ?? "star"}
+        size={24}
+        art
+        muted
+        className="shrink-0"
+      />
       <div className="min-w-0 flex-1">
         <p className="text-display truncate text-sm font-bold">
           {task.title}
@@ -658,7 +666,11 @@ export default function TasksAdmin() {
                   setForm((f) => ({
                     ...f,
                     task_type: e.target.value,
-                    icon: TASK_TYPE_ICON[e.target.value] ?? "star",
+                    // follow the type ONLY while the icon is an untouched
+                    // default — never clobber an icon the parent hand-picked
+                    icon: Object.values(TASK_TYPE_ICON).includes(f.icon)
+                      ? TASK_TYPE_ICON[e.target.value] ?? "star"
+                      : f.icon,
                   }))
                 }
               >

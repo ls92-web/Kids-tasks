@@ -28,6 +28,14 @@ interface Redemption {
   created_at: string;
 }
 
+/* A wish this hero sent — pending until the grown-up decides. */
+interface WishStatus {
+  id: string;
+  name: string;
+  status: string; // pending | approved | rejected
+  created_at: string;
+}
+
 /* Rewards group by SAVING TIER (Economy v1.1): the store reads as a ladder of
    goals — small treats first, dream goals last — so the question a hero asks
    is "what am I saving for?", never "what can I buy today?". A reward's tier
@@ -37,6 +45,7 @@ export default function ShopPage() {
   const { theme, profile, setProfile } = useWorld();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [treasures, setTreasures] = useState<Redemption[]>([]);
+  const [myWishes, setMyWishes] = useState<WishStatus[]>([]);
   const [bought, setBought] = useState<Reward | null>(null);
   const [chestOpen, setChestOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -95,6 +104,30 @@ export default function ShopPage() {
             microCelebrate("rewardGranted", { subtitle: fresh.reward_name });
           }
           localStorage.setItem(key, JSON.stringify(granted.map((t) => t.id)));
+        } catch {}
+      });
+
+    // the hero's own wishes — pending / approved / declined, with a small
+    // celebration the first time a wish turns approved
+    supabase
+      .from("reward_requests")
+      .select("id, name, status, created_at")
+      .eq("child_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        const list = (data as WishStatus[]) ?? [];
+        setMyWishes(list);
+        try {
+          const key = `qf_wish_seen_${profile.id}`;
+          const raw = localStorage.getItem(key);
+          const seen: string[] = JSON.parse(raw ?? "[]");
+          const resolved = list.filter((w) => w.status !== "pending");
+          const fresh = resolved.find((w) => !seen.includes(w.id));
+          if (fresh && raw !== null && fresh.status === "approved") {
+            microCelebrate("wishApproved", { subtitle: fresh.name });
+          }
+          localStorage.setItem(key, JSON.stringify(resolved.map((w) => w.id)));
         } catch {}
       });
   }, [profile]);
@@ -206,6 +239,14 @@ export default function ShopPage() {
     }
     sfx.complete();
     pingPush();
+    // the new wish appears in "My Wishes" straight away
+    supabase
+      .from("reward_requests")
+      .select("id, name, status, created_at")
+      .eq("child_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => setMyWishes((data as WishStatus[]) ?? []));
     setReqSending(false);
     setReqSent(true);
     setReqName("");
@@ -308,6 +349,40 @@ export default function ShopPage() {
                     }}
                   >
                     {granted ? "Received!" : "On its way!"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* the hero's wishes — every wish shows where it stands, so sending
+          one never feels like dropping it into the void */}
+      {myWishes.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Icon name="wish" size={22} art />
+            <h2 className="text-display text-lg font-black">My Wishes</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-[var(--surface-border)] to-transparent" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {myWishes.map((w) => {
+              const state =
+                w.status === "approved"
+                  ? { label: "Wish granted! 🌟", color: "var(--success)" }
+                  : w.status === "rejected"
+                    ? { label: "Not this time", color: "var(--text-dim)" }
+                    : { label: "With your grown-up", color: "var(--gold)" };
+              return (
+                <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
+                  <Icon name="wish" size={22} art muted className="shrink-0" />
+                  <p className="text-display min-w-0 flex-1 truncate text-sm font-bold">{w.name}</p>
+                  <span
+                    className="text-display shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+                    style={{ color: state.color, background: "rgba(0,0,0,0.3)" }}
+                  >
+                    {state.label}
                   </span>
                 </div>
               );

@@ -50,6 +50,10 @@ function LoginInner() {
   const [heroes, setHeroes] = useState<FamilyHero[] | null>(null);
   const [chosen, setChosen] = useState<FamilyHero | null>(null);
   const [typeInstead, setTypeInstead] = useState(false);
+  // a fresh/cleared device has no cached family → let the hero re-find the
+  // picker with the Family Code (one time; the code is remembered after)
+  const [findCode, setFindCode] = useState("");
+  const [findBusy, setFindBusy] = useState(false);
 
   useEffect(() => {
     let storedCode: string | null = null;
@@ -107,6 +111,42 @@ function LoginInner() {
     // Always confirm — never reveal whether an email has an account
     setBusy(false);
     setResetSent(true);
+  }
+
+  /** Fresh device: the Family Code brings back the Choose-Your-Hero picker
+      (and is remembered, so this is a one-time step per device). */
+  async function findFamily() {
+    const code = findCode.trim().toUpperCase();
+    if (findBusy || code.length < 4) return;
+    setFindBusy(true);
+    setError("");
+    try {
+      const supabase = createClient();
+      const { data, error: err } = await supabase.rpc("family_heroes", { p_code: code });
+      const res = data as { found: boolean; heroes?: FamilyHero[] } | null;
+      if (err || !res?.found) {
+        setError("We couldn't find that family — check the code with your grown-up.");
+        setFindBusy(false);
+        return;
+      }
+      if (!res.heroes || res.heroes.length === 0) {
+        setError("That family has no approved heroes yet.");
+        setFindBusy(false);
+        return;
+      }
+      try {
+        localStorage.setItem(FAMILY_CODE_KEY, code);
+        localStorage.setItem(FAMILY_HEROES_CACHE_KEY, JSON.stringify(res.heroes));
+      } catch {}
+      setHeroes(res.heroes);
+      setTypeInstead(false);
+      setChosen(null);
+      setFindCode("");
+      sfx.chirp();
+    } catch {
+      setError("Something interrupted the magic. Please try again.");
+    }
+    setFindBusy(false);
   }
 
   /** Picker path: resolve the chosen hero's login name (one hero, at PIN
@@ -525,6 +565,33 @@ function LoginInner() {
                     Forgot your secret PIN? Ask your grown-up — they can set a new one from
                     their dashboard.
                   </p>
+                )}
+                {/* fresh device: bring back the tap-your-hero picker with the
+                    Family Code (remembered afterwards) */}
+                {mode === "hero" && !heroes && (
+                  <div className="rounded-xl bg-black/20 p-3">
+                    <p className="text-display mb-2 text-center text-xs font-bold text-[var(--text-dim)]">
+                      Want to tap your hero instead of typing? Enter your Family Code once:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        value={findCode}
+                        onChange={(e) => setFindCode(e.target.value)}
+                        placeholder="QF-XXXX"
+                        autoCapitalize="characters"
+                        className="min-w-0 flex-1 rounded-xl border border-[var(--surface-border)] bg-black/30 px-3 py-2.5 text-center font-mono text-sm font-bold uppercase tracking-widest outline-none focus:[box-shadow:0_0_0_2px_var(--glow-soft)]"
+                      />
+                      <GameButton
+                        type="button"
+                        variant="ghost"
+                        onClick={findFamily}
+                        disabled={findBusy || findCode.trim().length < 4}
+                        className="shrink-0 text-sm"
+                      >
+                        {findBusy ? "Looking…" : "Find my family"}
+                      </GameButton>
+                    </div>
+                  </div>
                 )}
                 {showBackToHeroes && (
                   <button

@@ -9,6 +9,7 @@ import { IconPicker } from "@/components/admin/IconPicker";
 import { REWARD_ICONS } from "@/components/RewardCard";
 import { Reward } from "@/lib/game";
 import { REWARD_LIBRARY, REWARD_CATEGORIES } from "@/lib/rewardLibrary";
+import { pingPush } from "@/lib/push";
 
 interface Wish {
   id: string;
@@ -77,6 +78,8 @@ export default function RewardsAdmin() {
   // outcome of the last create attempt — a silent failure looked exactly like
   // success (form cleared, nothing in the store), so the parent must SEE both
   const [createMsg, setCreateMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // the wish being read in full (photo + complete text) before deciding
+  const [openWish, setOpenWish] = useState<Wish | null>(null);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -195,6 +198,7 @@ export default function RewardsAdmin() {
 
   async function resolveWish(w: Wish, approved: boolean) {
     // clear the wish from the list at once; approving prefills the form below
+    setOpenWish(null);
     setWishes((list) => list.filter((x) => x.id !== w.id));
     if (approved) {
       setForm((f) => ({ ...f, name: w.name, description: w.description }));
@@ -205,6 +209,7 @@ export default function RewardsAdmin() {
       .update({ status: approved ? "approved" : "rejected" })
       .eq("id", w.id);
     pingAdminRefresh();
+    pingPush(); // best-effort: the hero hears the verdict on their device
   }
 
   return (
@@ -216,29 +221,28 @@ export default function RewardsAdmin() {
           <div className="flex flex-col gap-2">
             {wishes.map((w) => (
               <div key={w.id} className="flex items-center gap-3 rounded-xl bg-black/25 px-4 py-3">
-                {w.signedUrl ? (
-                  <a
-                    href={w.signedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative block h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[var(--surface-border)]"
-                    aria-label={`View the picture ${w.profiles?.nickname ?? "your hero"} attached`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={w.signedUrl} alt="" className="h-full w-full object-cover" />
-                    <span className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
-                      <Icon name="eye" size={16} />
+                {/* the whole row opens the full wish — photo + every word */}
+                <button
+                  onClick={() => setOpenWish(w)}
+                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
+                  aria-label={`Read ${w.profiles?.nickname ?? "your hero"}'s full wish`}
+                >
+                  {w.signedUrl ? (
+                    <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[var(--surface-border)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={w.signedUrl} alt="" className="h-full w-full object-cover" />
                     </span>
-                  </a>
-                ) : (
-                  <Icon name="wish" size={20} art muted className="shrink-0" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-display truncate text-sm font-bold">{w.name}</p>
-                  <p className="truncate text-xs text-[var(--text-dim)]">
-                    {w.profiles?.nickname ?? "A hero"} — {w.description || "no reason given"}
-                  </p>
-                </div>
+                  ) : (
+                    <Icon name="wish" size={20} art muted className="shrink-0" />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="text-display block truncate text-sm font-bold">{w.name}</span>
+                    <span className="block truncate text-xs text-[var(--text-dim)]">
+                      {w.profiles?.nickname ?? "A hero"} — {w.description || "no reason given"} —{" "}
+                      <span className="text-[var(--accent)]">tap to read</span>
+                    </span>
+                  </span>
+                </button>
                 <AdminButton size="sm" onClick={() => resolveWish(w, true)}>
                   <Icon art muted name="check" size={14} /> Approve
                 </AdminButton>
@@ -411,6 +415,62 @@ export default function RewardsAdmin() {
           </div>
         )}
       </SectionCard>
+
+      {/* the full wish: photo + every word the hero wrote, then the decision */}
+      {openWish && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${openWish.profiles?.nickname ?? "A hero"}'s wish`}
+          className="fixed inset-0 z-[90] grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
+          onClick={() => setOpenWish(null)}
+        >
+          <div
+            className="panel panel-glow max-h-[90vh] w-full max-w-md overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-display text-xs font-bold uppercase tracking-wider text-[var(--accent-2)]">
+                  {openWish.profiles?.nickname ?? "A hero"} wishes for
+                </p>
+                <h3 className="text-display mt-0.5 break-words text-xl font-black">{openWish.name}</h3>
+              </div>
+              <button
+                onClick={() => setOpenWish(null)}
+                aria-label="Close"
+                className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-[var(--text-dim)] transition-colors hover:bg-black/25 hover:text-[var(--text)]"
+              >
+                <Icon name="x" size={18} />
+              </button>
+            </div>
+            {openWish.signedUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={openWish.signedUrl}
+                alt={`Picture ${openWish.profiles?.nickname ?? "your hero"} attached to the wish`}
+                className="mb-3 max-h-80 w-full rounded-xl border border-[var(--surface-border)] object-contain"
+                style={{ background: "rgba(0,0,0,0.3)" }}
+              />
+            )}
+            <p className="whitespace-pre-wrap break-words rounded-xl bg-black/25 px-4 py-3 text-sm leading-relaxed">
+              {openWish.description || "No reason given — just a big wish!"}
+            </p>
+            <div className="mt-4 flex gap-2">
+              <AdminButton onClick={() => resolveWish(openWish, true)}>
+                <Icon art muted name="check" size={14} /> Approve wish
+              </AdminButton>
+              <AdminButton variant="ghost" onClick={() => resolveWish(openWish, false)}>
+                Decline
+              </AdminButton>
+            </div>
+            <p className="mt-2 text-[11px] text-[var(--text-dim)]">
+              Your hero will be told the outcome either way. Approving pre-fills the create
+              form below so you can set the price.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
