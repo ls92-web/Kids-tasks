@@ -44,6 +44,7 @@ import {
   campaignStep,
   campaignWorldIndex,
   CHAPTER_SPAN,
+  CAMPAIGN_TOTAL,
   campaignCompleted,
 } from "@/lib/worlds";
 import { getCampaign, campaignWorlds } from "@/lib/campaign";
@@ -219,11 +220,11 @@ export default function HeroHub() {
               {pElement.label}
             </span>
             <span className="text-display rounded-md bg-black/30 px-2 py-0.5 text-[10px] font-black text-[var(--accent-2)]">
-              CHAMPION LV {cLevel}
+              {pForm.name} Form
             </span>
           </div>
           <p className="mt-0.5 text-sm text-[var(--text-dim)]">
-            {petMeta.species} — <span className="font-bold text-[var(--accent-2)]">{pForm.name} Form</span> — {petMoodLabel(pMood)}
+            {petMeta.species} — {petMoodLabel(pMood)}
           </p>
           <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/40">
             <div
@@ -861,25 +862,27 @@ function HallDetail({
             </div>
           </div>
         ) : (
-          /* the journey so far — an active or future partner */
+          /* the journey so far — an active or future partner. The champion
+             speaks in STORY terms only: form + campaign steps, no second
+             level number competing with the hero's. */
           bond &&
-          prog &&
           form && (
             <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-black/25 p-4 text-left">
               <div className="flex items-center justify-between">
                 <span className="text-display text-sm font-black">
-                  Champion LV {prog.level}{" "}
-                  <span className="text-xs font-bold text-[var(--accent-2)]">— {form.name} Form</span>
+                  {form.name} Form
                 </span>
                 <span className="text-display text-[10px] font-bold text-[var(--text-dim)]">
-                  {prog.level >= 100 ? "Fully evolved" : `${prog.into}/${prog.needed} XP`}
+                  {campaignStep(bond) >= CAMPAIGN_TOTAL
+                    ? "Campaign complete!"
+                    : `${campaignStep(bond)}/${CAMPAIGN_TOTAL} map steps`}
                 </span>
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-black/40">
                 <div
                   className="h-full rounded-full"
                   style={{
-                    width: `${prog.pct}%`,
+                    width: `${Math.min(100, (campaignStep(bond) / CAMPAIGN_TOTAL) * 100)}%`,
                     background: `linear-gradient(90deg, var(--accent-deep), ${el.color})`,
                     boxShadow: `0 0 8px ${el.color}`,
                   }}
