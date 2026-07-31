@@ -21,6 +21,8 @@ import {
 export interface CompanionContext {
   profile: Profile;
   tasks: Task[];
+  /** Own submissions — keeps the "so close to Early Bird" line honest. */
+  submissions?: { task_id: string; created_at: string }[];
   nextRewardName?: string | null;
   coinsToReward?: number | null;
 }
@@ -121,7 +123,10 @@ export function companionMessages(ctx: CompanionContext, theme: ThemeId): string
   // 2) Memory: a true fact worth celebrating — WHICH fact varies visit to
   // visit (never just the highest-priority one, forever), and the phrasing
   // within it varies too. Every candidate here must currently be true.
-  const counts = computeCounts(tasks);
+  const counts = computeCounts(
+    tasks,
+    ctx.submissions && ctx.submissions.length > 0 ? ctx.submissions : undefined
+  );
   const nearBadge = BADGES.map((b) => ({ b, remaining: b.target - b.progress({ profile, counts }) }))
     .filter((x) => x.remaining > 0 && x.remaining <= 3 && x.b.target <= 260)
     .sort((a, z) => a.remaining - z.remaining)[0];

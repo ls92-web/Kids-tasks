@@ -617,8 +617,29 @@ export const BADGES: BadgeDef[] = [
   { key: "first_legend", title: "First Legend", icon: "trophy", rarity: "legendary", description: "Guide a companion to become a Legend.", target: 1, progress: () => 0 },
 ];
 
-export function computeCounts(tasks: Task[]): TaskCounts {
+export function computeCounts(
+  tasks: Task[],
+  /** The child's own submissions — when provided, "morning" counts quests the
+      child actually SUBMITTED before noon (matching the server's Early Bird
+      rule). Without them we fall back to the legacy created_at heuristic,
+      which over-counts routines (they all generate in the morning). */
+  submissions?: { task_id: string; created_at: string }[]
+): TaskCounts {
   const done = tasks.filter((t) => t.status === "completed");
+  let morning: number;
+  if (submissions && submissions.length > 0) {
+    const firstSub = new Map<string, string>();
+    for (const s of submissions) {
+      const cur = firstSub.get(s.task_id);
+      if (!cur || s.created_at < cur) firstSub.set(s.task_id, s.created_at);
+    }
+    morning = done.filter((t) => {
+      const f = firstSub.get(t.id);
+      return !!f && new Date(f).getHours() < 12;
+    }).length;
+  } else {
+    morning = done.filter((t) => new Date(t.created_at).getHours() < 12).length;
+  }
   return {
     total: done.length,
     homework: done.filter((t) => t.task_type === "homework").length,
@@ -631,7 +652,7 @@ export function computeCounts(tasks: Task[]): TaskCounts {
     quran: done.filter((t) => t.task_type === "quran").length,
     helper: done.filter((t) => t.task_type === "other" || t.task_type === "habit").length,
     bed: done.filter((t) => t.task_type === "chore" && t.title.toLowerCase().includes("bed")).length,
-    morning: done.filter((t) => new Date(t.created_at).getHours() < 12).length,
+    morning,
   };
 }
 

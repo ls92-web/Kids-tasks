@@ -76,8 +76,8 @@ export function MysteryChest({
         await new Promise((r) => setTimeout(r, 900));
       }
       clearTimeout(slowTimer);
-      // let the shake play for a beat regardless
-      await new Promise((r) => setTimeout(r, 1000));
+      // a short shake beat — long enough to feel magical, never laggy
+      await new Promise((r) => setTimeout(r, 650));
       if (cancelled) return;
       setSlow(false);
       if (err || !data) {
@@ -127,7 +127,9 @@ export function MysteryChest({
           role="dialog"
           aria-modal="true"
           aria-label="Mystery chest"
-          className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/75 backdrop-blur-sm"
+          // no backdrop-blur: a full-screen backdrop-filter drops iPads to a
+          // stuttering crawl during the shake/coin animations ("it lags")
+          className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/80"
           onClick={onClose}
         >
           {phase === "open" && (

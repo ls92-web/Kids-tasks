@@ -42,6 +42,7 @@ export default function DailyQuests() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [nextReward, setNextReward] = useState<Reward | null>(null);
   const [allRewards, setAllRewards] = useState<Reward[]>([]);
+  const [submissions, setSubmissions] = useState<{ task_id: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const [chestActive, setChestActive] = useState(false);
@@ -73,7 +74,7 @@ export default function DailyQuests() {
       // (idempotent + family-scoped; also expires yesterday's stale routines),
       // and settle any challenges whose end time has passed (bonus XP payout)
       await Promise.all([supabase.rpc("generate_due_quests"), supabase.rpc("settle_challenges")]);
-      const [{ data: t }, { data: r }, { data: ach }, { data: wins }, { data: chestEv }] = await Promise.all([
+      const [{ data: t }, { data: r }, { data: ach }, { data: wins }, { data: chestEv }, { data: subs }] = await Promise.all([
         supabase.from("tasks").select("*").eq("child_id", profile.id).order("created_at", { ascending: false }),
         supabase.from("rewards").select("*").eq("available", true).order("coin_cost", { ascending: true }),
         supabase
@@ -97,7 +98,10 @@ export default function DailyQuests() {
           .gte("created_at", `${todayISO}T00:00:00Z`)
           .order("created_at", { ascending: false })
           .limit(1),
+        // own submissions — honest Early Bird counting for the companion
+        supabase.from("submissions").select("task_id, created_at").eq("child_id", profile.id),
       ]);
+      setSubmissions((subs as { task_id: string; created_at: string }[]) ?? []);
       const prize = (chestEv?.[0]?.payload ?? null) as { kind: string; bonus: number } | null;
       if (prize?.kind && prize?.bonus) setChestPrize(prize);
       const list = (t as Task[]) ?? [];
@@ -216,12 +220,13 @@ export default function DailyQuests() {
       {
         profile,
         tasks,
+        submissions,
         nextRewardName: nextReward?.name,
         coinsToReward: nextReward ? Math.max(0, nextReward.coin_cost - profile.coins) : null,
       },
       theme.id
     );
-  }, [profile, tasks, nextReward, theme.id]);
+  }, [profile, tasks, submissions, nextReward, theme.id]);
 
   const nextMilestone = profile
     ? STREAK_MILESTONES.find((m) => m > profile.streak_days)

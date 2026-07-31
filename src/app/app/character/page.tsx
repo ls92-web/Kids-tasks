@@ -68,13 +68,15 @@ export default function HeroHub() {
   const [bonds, setBonds] = useState<CompanionBond[]>([]);
   // every sibling's ACTIVE bond — powers the family progress cards
   const [familyBonds, setFamilyBonds] = useState<(CompanionBond & { child_id: string })[]>([]);
+  // own submissions — the honest Early Bird morning count
+  const [submissions, setSubmissions] = useState<{ task_id: string; created_at: string }[]>([]);
   const [hallPick, setHallPick] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
     const supabase = createClient();
     (async () => {
-      const [{ data: a }, { data: t }, { data: fam }, { data: b }, { data: fb }] = await Promise.all([
+      const [{ data: a }, { data: t }, { data: fam }, { data: b }, { data: fb }, { data: subs }] = await Promise.all([
         supabase.from("achievements").select("key, title, unlocked_at").eq("child_id", profile.id),
         supabase.from("tasks").select("*").eq("child_id", profile.id),
         supabase
@@ -89,16 +91,23 @@ export default function HeroHub() {
           .select("child_id, species, xp, quests_done, steps_done, status, bonded_at, legend_at, id")
           .eq("family_id", profile.family_id)
           .eq("status", "active"),
+        // own submissions — powers the honest Early Bird count (first
+        // submission before noon), matching the server's award rule
+        supabase.from("submissions").select("task_id, created_at").eq("child_id", profile.id),
       ]);
       setAchievements((a as Ach[]) ?? []);
       setTasks((t as Task[]) ?? []);
       setFamily((fam as Profile[]) ?? []);
       setBonds((b as CompanionBond[]) ?? []);
       setFamilyBonds((fb as (CompanionBond & { child_id: string })[]) ?? []);
+      setSubmissions((subs as { task_id: string; created_at: string }[]) ?? []);
     })();
   }, [profile]);
 
-  const counts = useMemo(() => computeCounts(tasks), [tasks]);
+  const counts = useMemo(
+    () => computeCounts(tasks, submissions.length > 0 ? submissions : undefined),
+    [tasks, submissions]
+  );
 
   // the ceremony fades home INTO the Hall — land there after the reload
   useEffect(() => {
