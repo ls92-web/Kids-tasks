@@ -158,4 +158,19 @@ begin
   loop
     insert into public.achievements (child_id, family_id, key, title)
     values (p_child, p.family_id, d.key, d.title)
+    on conflict (child_id, key) do nothing;
+    if found then
+      if d.xp_reward > 0 or d.coin_reward > 0 then
+        update public.profiles
+           set xp = xp + d.xp_reward,
+               coins = coins + d.coin_reward,
+               total_coins_earned = total_coins_earned + d.coin_reward
+         where id = p_child;
+      end if;
+      unlocked := array_append(unlocked, d.title);
+    end if;
+  end loop;
 
+  return unlocked;
+end;
+$$;
