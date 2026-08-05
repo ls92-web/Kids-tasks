@@ -11,8 +11,8 @@ self.addEventListener("push", (event) => {
   } catch {
     data = {};
   }
-  const title = typeof data.title === "string" && data.title ? data.title : "WonderNest";
-  const body = typeof data.body === "string" && data.body ? data.body : "Something magical happened!";
+  const title = typeof data.title === "string" && data.title ? data.title : "WonderNest update";
+  const body = typeof data.body === "string" && data.body ? data.body : "Open WonderNest to see what's new.";
   // untrusted payload: only recognised INTERNAL routes may be a destination
   const dest =
     typeof data.destination === "string" && /^\/(app|admin)(\/|$)?/.test(data.destination)

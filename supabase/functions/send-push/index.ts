@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     // ---- pull due deliveries
     let q = service
       .from("notification_deliveries")
-      .select("id, family_id, recipient_user_id, title, body, destination, attempts, status")
+      .select("id, family_id, recipient_user_id, title, body, destination, tag, attempts, status")
       .in("status", ["queued", "failed"])
       .lt("attempts", MAX_ATTEMPTS)
       .lte("scheduled_for", new Date().toISOString())
@@ -148,7 +148,9 @@ Deno.serve(async (req) => {
               title: d.title,
               body: d.body,
               destination: d.destination,
-              tag: d.id,
+              // stable per-item tag (e.g. submission-review:<id>) so an updated
+              // alert REPLACES its sibling; unrelated alerts never collide
+              tag: (d as { tag?: string }).tag ?? d.id,
             }),
             { urgency: webpush.Urgency.Normal }
           );

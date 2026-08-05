@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
@@ -85,6 +85,22 @@ export default function ReviewPage() {
     load();
   }, [load]);
 
+  // A push notification deep-links to /admin/review?submission=<id> — once
+  // the queue is on screen, scroll that exact card into view and glow it.
+  // (window.location instead of useSearchParams: no Suspense boundary needed)
+  const focusedRef = useRef(false);
+  useEffect(() => {
+    if (focusedRef.current || subs.length === 0) return;
+    const wanted = new URLSearchParams(window.location.search).get("submission");
+    if (!wanted) return;
+    focusedRef.current = true;
+    const el = document.getElementById(`submission-${wanted}`);
+    if (!el) return; // already decided or not in this queue — the list itself is the answer
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.style.boxShadow = "0 0 0 3px var(--gold)";
+    setTimeout(() => { el.style.boxShadow = ""; }, 2600);
+  }, [subs]);
+
   /* Three outcomes:
      approve      → coins + XP awarded, task completed (parent authority)
      redo         → task reopens so the child can try again
@@ -158,10 +174,11 @@ export default function ReviewPage() {
               return (
                 <motion.div
                   key={s.id}
+                  id={`submission-${s.id}`}
                   layout
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.25, ease: EASE_OUT }}
-                  className="overflow-hidden rounded-xl bg-black/25"
+                  className="overflow-hidden rounded-xl bg-black/25 transition-shadow duration-500"
                 >
                   {s.signedUrl && isAudio && (
                     <div className="px-4 pt-4">

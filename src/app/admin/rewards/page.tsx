@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useWorld } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
@@ -121,6 +121,19 @@ export default function RewardsAdmin() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // A push notification deep-links to /admin/rewards?wish=<id> — open that
+  // wish's full review card the moment the pending list arrives, exactly as
+  // if the parent had tapped it. Runs once; a decided wish just shows the page.
+  const openedWishRef = useRef(false);
+  useEffect(() => {
+    if (openedWishRef.current || wishes.length === 0) return;
+    const wanted = new URLSearchParams(window.location.search).get("wish");
+    if (!wanted) return;
+    openedWishRef.current = true;
+    const wish = wishes.find((w) => w.id === wanted);
+    if (wish) setOpenWish(wish);
+  }, [wishes]);
 
   // ---- pick an Official Library reward from the dropdown ---------------------
   // Auto-fills name, description, cost and the matching official icon — every
